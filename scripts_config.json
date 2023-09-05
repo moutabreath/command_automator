@@ -1,0 +1,14 @@
+{
+    "scripts": [
+      {  
+        "script_name": "convert.sh",
+        "short_description": "Convert Slashes to Windows and UNIX Style",
+        "detailed_Description": "Display input from additional text box as windows and unix style Slashes"
+      },
+      {  
+        "script_name": "double_the_slash.sh",
+        "short_description": "Change \\ to \\\\",
+        "detailed_Description": "Change \\ to \\\\"
+      }
+    ]
+}
