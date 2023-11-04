@@ -1,8 +1,8 @@
 import traceback
 
-from PyQt5.QtCore import QThreadPool
+from PyQt6.QtCore import QThreadPool
 
-from python_utils.signal import Worker
+from signal import Worker
 
 
 class ThreadRunner:
