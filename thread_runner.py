@@ -2,6 +2,7 @@ import traceback
 
 from PyQt6.QtCore import QThreadPool
 
+from logger import Logger
 from signal import Worker
 
 
@@ -19,7 +20,7 @@ class ThreadRunner:
             self.worker.set_arguments(process_input)
             self.thread_pool.start(self.worker)
         except IOError:
-            traceback.print_exc()
+            Logger.print_error_message("run_command: error", IOError)
             
     def stop_command(self):
         self.worker.cancel_execution()

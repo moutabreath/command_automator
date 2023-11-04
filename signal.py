@@ -35,7 +35,7 @@ class Worker(QRunnable):
             self.process_output, self.err = self.run_internal()
             Logger.print_log("[signal.run] process output " + str(self.process_output))
             if self.err is not None and len(self.err) > 0:
-                Logger.print_log(f"[signal.run] error {str(self.err)} {type(self.err)}" )
+                Logger.print_log(f"[signal.run] error {str(self.err)} {type(self.err)}")
         except TimeoutError as ex:
             self.err = str(ex)
             Logger.print_error_message(self.err, ex)
@@ -49,14 +49,20 @@ class Worker(QRunnable):
         except Exception as ex2:
             Logger.print_error_message(self.err, ex2)
 
-
     def cancel_execution(self):
         self.proc.kill()
         self.signals.completed.emit(self.n)
 
     def run_internal(self):
         Logger.print_log("[signal.run_internal] entered")
-        self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.process_venv)
+        if self.process_venv is None:
+            Logger.print_log("[signal.run_internal] No venv")
+            self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        else:
+            Logger.print_log("[signal.run_internal] With venv")
+            self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+                                         env=self.process_venv)
+
         Logger.print_log("[signal.run_internal] popen done")
         output, err = self.proc.communicate()
         Logger.print_log("[signal.run_internal] proc communicate done")

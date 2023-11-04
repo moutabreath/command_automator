@@ -241,7 +241,7 @@ class CommandAutomator(QWidget):
                 "Missing argument. Please fill the text box for Additional Text")
             return
         self.txt_box_result.document().setPlainText(f'Executing at {datetime.now()}\n{script_path}\nargs: {args}')
-        new_venv = self.logic_handler.get_updated_venv()
+        new_venv = self.logic_handler.get_updated_venv(args[0])
         try:
             self.thread_runner.run_command(args, self.stop_animation, self.start_animation, new_venv)
         except ex:

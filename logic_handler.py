@@ -70,7 +70,7 @@ class LogicHandler:
             args.append('/c')
         if script_name.endswith('py'):
             args.append('python')
-        else:
+        if script_name.endswith('sh'):
             args.append('bash')
         args.append(script_path)
         if self.should_use_free_text(script_name):
@@ -81,7 +81,9 @@ class LogicHandler:
         return args
 
     @staticmethod
-    def get_updated_venv():
+    def get_updated_venv(arg):
+        if arg != 'python':
+            return
         new_venv = os.environ
         python_env = new_venv.get("PYTHONPATH", "")
         Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
