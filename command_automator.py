@@ -150,7 +150,7 @@ class CommandAutomator(QWidget):
     @staticmethod
     def set_selected_value(data, combo_box, attribute):
         if data[attribute] != "":
-            index = combo_box.findText(data[attribute], Qt.MatchFixedString)
+            index = combo_box.findText(data[attribute])
             if index != -1:
                 combo_box.setCurrentText(data[attribute])
 
@@ -235,14 +235,17 @@ class CommandAutomator(QWidget):
         script_path = self.logic_handler.get_name_to_scripts()[file_name]
         if script_path is None:
             script_path = file_name
-        args = self.logic_handler.get_arguments_for_script(script_path, one_v, mono, self.txt_box_free_text.text())
+        args = self.logic_handler.get_arguments_for_script(script_path, self.txt_box_free_text.text())
         if args is None:
             self.txt_box_result.document().setPlainText(
                 "Missing argument. Please fill the text box for Additional Text")
             return
         self.txt_box_result.document().setPlainText(f'Executing at {datetime.now()}\n{script_path}\nargs: {args}')
         new_venv = self.logic_handler.get_updated_venv()
-        self.thread_runner.run_command(args, self.stop_animation, self.start_animation, new_venv)
+        try:
+            self.thread_runner.run_command(args, self.stop_animation, self.start_animation, new_venv)
+        except ex:
+            Logger.print_error_message("Error running script", ex)
 
     def start_animation(self, n):
         self.start_animation_in_movie()

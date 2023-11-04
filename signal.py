@@ -21,7 +21,7 @@ class Worker(QRunnable):
         self.use_python_class = False
         self.proc = None
         self.process_root = None
-        self.proces_venv = None
+        self.process_venv = None
 
     def set_arguments(self, arguments):
         self.script_arguments = arguments
@@ -56,7 +56,7 @@ class Worker(QRunnable):
 
     def run_internal(self):
         Logger.print_log("[signal.run_internal] entered")
-        self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.proces_venv)
+        self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.process_venv)
         Logger.print_log("[signal.run_internal] popen done")
         output, err = self.proc.communicate()
         Logger.print_log("[signal.run_internal] proc communicate done")

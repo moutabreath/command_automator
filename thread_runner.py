@@ -13,7 +13,7 @@ class ThreadRunner:
     def run_command(self, process_input, on_complete, on_start, new_venv):
         try:
             self.worker = Worker(1)
-            self.worker.proces_venv = new_venv
+            self.worker.process_venv = new_venv
             self.worker.signals.completed.connect(on_complete)
             self.worker.signals.started.connect(on_start)
             self.worker.set_arguments(process_input)

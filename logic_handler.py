@@ -15,8 +15,6 @@ class LogicHandler:
         self.scripts_attributes = {}
         Logger.init_logger()
         self.load_scripts_config()
-        self.mono_list = []
-        self.mono_versions = defaultdict()
 
     def load_scripts_config(self):
         try:
@@ -63,7 +61,7 @@ class LogicHandler:
     def get_script_description(self, file):
         return self.get_script_attribute(file, 'detailed_Description')
 
-    def get_arguments_for_script(self, script_path, one_v, mono, additional_text):
+    def get_arguments_for_script(self, script_path, additional_text):
         script_name = os.path.basename(script_path)
         args = []
 
