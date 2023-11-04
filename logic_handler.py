@@ -1,10 +1,8 @@
 import glob
 import json
-import ntpath
 import os
 import subprocess
 from collections import defaultdict
-from pathlib import Path
 
 import chardet
 
@@ -28,8 +26,9 @@ class LogicHandler:
         data = json.load(f)
         scripts_config = data['scripts']
         for script in scripts_config:
-            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_Description']
-            if script_name == "" or tag_name == "" or script_desc == "":
+            script_name, tag_name, script_desc, free_text = script['script_name'], script['short_description'], script[
+                'detailed_Description'], script['free_text_required']
+            if script_name == "" or tag_name == "" or script_desc == "" or free_text == "":
                 continue
             self.scripts_attributes[script_name] = script
 
@@ -38,27 +37,28 @@ class LogicHandler:
 
     def load_scripts(self):
         executables = []
-
         files = glob.glob(os.getcwd() + '\\actionables/**/*.py', recursive=True)
         files2 = glob.glob(os.getcwd() + '\\actionables/**/*.sh', recursive=True)
+        files3 = glob.glob(os.getcwd() + '\\actionables/**/*.cmd', recursive=True)
         files.extend(files2)
+        files.extend(files3)
         for file in files:
             file_name = self.get_name_from_script(file)
             if file_name is None:
                 file_name = file
             self.names_to_scripts[file_name] = file
             executables.append(file_name)
-        executables = sorted( executables, key=lambda x: x.lower())
+        executables = sorted(executables, key=lambda x: x.lower())
         return executables
 
-
     def get_script_attribute(self, file, attribute):
-        script_name =  os.path.basename(file)
+        script_name = os.path.basename(file)
         if script_name in self.scripts_attributes:
             return self.scripts_attributes[script_name][attribute]
         return ""
+
     def get_name_from_script(self, file):
-        return  self.get_script_attribute(file, 'short_description')
+        return self.get_script_attribute(file, 'short_description')
 
     def get_script_description(self, file):
         return self.get_script_attribute(file, 'detailed_Description')
@@ -66,18 +66,15 @@ class LogicHandler:
     def get_arguments_for_script(self, script_path, one_v, mono, additional_text):
         script_name = os.path.basename(script_path)
         args = []
+
+        if script_name.endswith('cmd'):
+            args.append('cmd')
+            args.append('/c')
         if script_name.endswith('py'):
             args.append('python')
         else:
             args.append('bash')
         args.append(script_path)
-        if self.should_add_one_v(script_name):
-            args.append(one_v)
-        if self.should_add_mono(script_name):
-            if self.is_for_qa(script_name):
-                args.append(self.mono_versions[mono])
-            else:
-                args.append(mono)
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
                 return None
@@ -90,7 +87,7 @@ class LogicHandler:
         new_venv = os.environ
         python_env = new_venv.get("PYTHONPATH", "")
         Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
-        if (len(python_env) != 0) and (python_env[-1] != ';' ):
+        if (len(python_env) != 0) and (python_env[-1] != ';'):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + ";"
         if not (os.getcwd() in python_env):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + ";"
@@ -130,12 +127,6 @@ class LogicHandler:
         if len(str_result) == 0:
             str_result = "Execution Done"
         return str_result
-
-
-    def is_for_qa(self, script_name):
-        if 'for_qa' in self.scripts_attributes[script_name]:
-            return self.scripts_attributes[script_name]['for_qa']
-        return  False
 
     def should_use_free_text(self, script_name):
         return self.scripts_attributes[script_name]['free_text_required']

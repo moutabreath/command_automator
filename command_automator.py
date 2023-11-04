@@ -74,7 +74,7 @@ class CommandAutomator(QWidget):
                                                                        spacer_item)
         self.sub_main_vertical_box_layout = self.add_blank_line(self.sub_main_vertical_box_layout, None,
                                                                 horizontal_box_scripts_and_button)
-        separator = self.create_horizontal_seperator()
+        separator = self.create_horizontal_separator()
         self.sub_main_vertical_box_layout.addWidget(separator)
         label_description = QLabel("Script Description")
         self.txt_box_description = QPlainTextEdit()
@@ -86,7 +86,7 @@ class CommandAutomator(QWidget):
         free_text_and_result = QVBoxLayout()
         self.box_layout_additional = self.create_vertical_box(label_free_text, self.txt_box_free_text)
         self.box_layout_result = self.create_vertical_box(label_result_text, self.txt_box_result)
-        separator = self.create_horizontal_seperator()
+        separator = self.create_horizontal_separator()
         free_text_and_result.addLayout(self.box_layout_additional)
         free_text_and_result.addWidget(separator)
         free_text_and_result.addLayout(self.box_layout_result)
@@ -182,17 +182,17 @@ class CommandAutomator(QWidget):
         QPlainTextEdit {color: #fff; border: 2px solid green}  """)
 
     @staticmethod
-    def add_blank_line(vertical_box_layout, layout_above_seperator, layout_below_seperator):
-        separator = CommandAutomator.create_horizontal_seperator()
-        if layout_above_seperator is not None:
-            vertical_box_layout.addLayout(layout_above_seperator)
+    def add_blank_line(vertical_box_layout, layout_above_separator, layout_below_separator):
+        separator = CommandAutomator.create_horizontal_separator()
+        if layout_above_separator is not None:
+            vertical_box_layout.addLayout(layout_above_separator)
         vertical_box_layout.addWidget(separator)
-        if layout_below_seperator is not None:
-            vertical_box_layout.addLayout(layout_below_seperator)
+        if layout_below_separator is not None:
+            vertical_box_layout.addLayout(layout_below_separator)
         return vertical_box_layout
 
     @staticmethod
-    def create_horizontal_seperator():
+    def create_horizontal_separator():
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.HLine)
         separator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
@@ -200,7 +200,7 @@ class CommandAutomator(QWidget):
         return separator
 
     @staticmethod
-    def create_vertical_seperator():
+    def create_vertical_separator():
         separator = QFrame()
         separator.setFrameShape(QFrame.Shape.VLine)
         separator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
@@ -231,8 +231,6 @@ class CommandAutomator(QWidget):
 
     def execute_script(self):
         Logger.print_log(f"script execution started")
-        one_v = self.combo_box_one_v_options.currentText()
-        mono = self.combo_box_part_two_options.currentText()
         file_name = self.action_list.currentText()
         script_path = self.logic_handler.get_name_to_scripts()[file_name]
         if script_path is None:
