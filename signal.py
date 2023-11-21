@@ -62,8 +62,13 @@ class Worker(QRunnable):
             Logger.print_log("[signal.run_internal] With venv")
             self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                          env=self.process_venv)
+        try:
+            Logger.print_log("[signal.run_internal] popen done. Starting communicate")
+            output, err = self.proc.communicate()
+            Logger.print_log("[signal.run_internal] proc communicate done")
+            return output, err
+        except Exception as ex1:
+            self.err = str(ex1)
+            Logger.print_error_message(self.err, ex1)
+            return None ,None
 
-        Logger.print_log("[signal.run_internal] popen done")
-        output, err = self.proc.communicate()
-        Logger.print_log("[signal.run_internal] proc communicate done")
-        return output, err

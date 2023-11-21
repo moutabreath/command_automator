@@ -3,12 +3,14 @@ import json
 import sys
 import threading
 from datetime import datetime
+
 import keyboard
+from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QComboBox, QPushButton, QPlainTextEdit, QLabel, \
-    QVBoxLayout, QHBoxLayout, QFrame, QLineEdit, QFileDialog, QSizePolicy
-from PyQt6.QtCore import Qt, QSize
+    QVBoxLayout, QHBoxLayout, QLineEdit, QFileDialog
 
+import pyqt_utils
 from logger import Logger
 from logic_handler import LogicHandler
 from thread_runner import ThreadRunner
@@ -56,7 +58,7 @@ class CommandAutomator(QWidget):
         self.movie_label.setMovie(self.movie)
 
     def init_display(self):
-        self.make_dark_mode()
+        pyqt_utils.make_dark_mode(self)
         self.txt_box_free_text.textEdited.connect(self.save_additional_text)
 
         self.sub_main_vertical_box_layout = QVBoxLayout()
@@ -70,11 +72,11 @@ class CommandAutomator(QWidget):
 
         spacer_item = None  # The code for creating a spacer item in PyQt6 is different.
 
-        horizontal_box_scripts_and_button = self.create_horizontal_box(self.action_list, button_execute_script,
-                                                                       spacer_item)
-        self.sub_main_vertical_box_layout = self.add_blank_line(self.sub_main_vertical_box_layout, None,
-                                                                horizontal_box_scripts_and_button)
-        separator = self.create_horizontal_separator()
+        horizontal_box_scripts_and_button = pyqt_utils.create_horizontal_box(self.action_list, button_execute_script,
+                                                                             spacer_item)
+        self.sub_main_vertical_box_layout = pyqt_utils.add_blank_line(self.sub_main_vertical_box_layout, None,
+                                                                      horizontal_box_scripts_and_button)
+        separator = pyqt_utils.create_horizontal_separator()
         self.sub_main_vertical_box_layout.addWidget(separator)
         label_description = QLabel("Script Description")
         self.txt_box_description = QPlainTextEdit()
@@ -84,9 +86,9 @@ class CommandAutomator(QWidget):
         label_free_text = QLabel('Command Text (Ony If Applicable)')
         label_result_text = QLabel('Command Result')
         free_text_and_result = QVBoxLayout()
-        self.box_layout_additional = self.create_vertical_box(label_free_text, self.txt_box_free_text)
-        self.box_layout_result = self.create_vertical_box(label_result_text, self.txt_box_result)
-        separator = self.create_horizontal_separator()
+        self.box_layout_additional = pyqt_utils.create_vertical_box(label_free_text, self.txt_box_free_text)
+        self.box_layout_result = pyqt_utils.create_vertical_box(label_result_text, self.txt_box_result)
+        separator = pyqt_utils.create_horizontal_separator()
         free_text_and_result.addLayout(self.box_layout_additional)
         free_text_and_result.addWidget(separator)
         free_text_and_result.addLayout(self.box_layout_result)
@@ -112,7 +114,7 @@ class CommandAutomator(QWidget):
         self.setLayout(layout)
 
         # Add event listener to drop-down list
-        self.action_list.currentIndexChanged.connect(self.selectionchange)
+        self.action_list.currentIndexChanged.connect(self.selection_change)
         self.load_configuration()
 
         # self.setGeometry(300, 300, 250, 150)
@@ -141,18 +143,11 @@ class CommandAutomator(QWidget):
         try:
             with open('commands-executor-config.json') as f:
                 data = json.load(f)
-                self.set_selected_value(data, self.action_list, "selected_script")
+                pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
                 if 'additional_text' in data and data['additional_text'] != "":
                     self.txt_box_free_text.setText(data["additional_text"])
         except IOError:
             return
-
-    @staticmethod
-    def set_selected_value(data, combo_box, attribute):
-        if data[attribute] != "":
-            index = combo_box.findText(data[attribute])
-            if index != -1:
-                combo_box.setCurrentText(data[attribute])
 
     def start_animation_in_movie(self):
         self.sub_main_vertical_box_layout.addLayout(self.spinner_and_cancel_v_layout)
@@ -169,61 +164,7 @@ class CommandAutomator(QWidget):
     def execute_on_keypress(self):
         self.execute_script()
 
-    def make_dark_mode(self):
-        # Set dark mode style
-        self.setStyleSheet("""QWidget { color: #333; background-color: #222; }
-        QLabel { color: #fff; border: 1px; border-radius: 5px; padding: 5px; } 
-        QCheckBox { color: #fff; border: 1px; border-radius: 5px; padding: 5px; } 
-        QPushButton { color: #fff; background-color: green; border-radius: 5px; padding: 5px;} 
-        QComboBox {color: #fff; background-color: #222; border: 2px solid green} 
-        QComboBox:items{ color: #fff; border: 2px solid green }
-        QListView{ color:  #fff; }
-        QLineEdit {color: #fff; border: 2px solid green } 
-        QPlainTextEdit {color: #fff; border: 2px solid green}  """)
-
-    @staticmethod
-    def add_blank_line(vertical_box_layout, layout_above_separator, layout_below_separator):
-        separator = CommandAutomator.create_horizontal_separator()
-        if layout_above_separator is not None:
-            vertical_box_layout.addLayout(layout_above_separator)
-        vertical_box_layout.addWidget(separator)
-        if layout_below_separator is not None:
-            vertical_box_layout.addLayout(layout_below_separator)
-        return vertical_box_layout
-
-    @staticmethod
-    def create_horizontal_separator():
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.HLine)
-        separator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        separator.setLineWidth(3)
-        return separator
-
-    @staticmethod
-    def create_vertical_separator():
-        separator = QFrame()
-        separator.setFrameShape(QFrame.Shape.VLine)
-        separator.setSizePolicy(QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
-        separator.setLineWidth(3)
-        return separator
-
-    @staticmethod
-    def create_horizontal_box(widget1, widget2, spacer_item=None):
-        horizontal_box = QHBoxLayout()
-        horizontal_box.addWidget(widget1)
-        if spacer_item is not None:
-            horizontal_box.addItem(spacer_item)
-        horizontal_box.addWidget(widget2)
-        return horizontal_box
-
-    @staticmethod
-    def create_vertical_box(widget1, widget2):
-        vertical_box = QVBoxLayout()
-        vertical_box.addWidget(widget1)
-        vertical_box.addWidget(widget2)
-        return vertical_box
-
-    def selectionchange(self, i):
+    def selection_change(self, i):
         script_list_name = self.action_list.currentText()
         script_file = self.logic_handler.get_name_to_scripts()[script_list_name]
         text = self.logic_handler.get_script_description(script_file)
@@ -271,6 +212,8 @@ class CommandAutomator(QWidget):
         self.txt_box_result.document().setPlainText(
             "Starting app at " + str(datetime.now()) + " args:\n " + run_version_command)
         run_version_thread.start()
+
+
 
 
 if __name__ == '__main__':
