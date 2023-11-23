@@ -1,0 +1,5 @@
+/commands-executor-config.json
+/command_automator.log
+/.idea/*
+/poetry.lock
+/.vscode/launch.json
