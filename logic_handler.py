@@ -85,11 +85,12 @@ class LogicHandler:
         if arg != 'python':
             return
         new_venv = os.environ
-        python_env = new_venv.get("PYTHONPATH", "")
+        python_venv = new_venv.get("PYTHONPATH", "")
         Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
-        if (len(python_env) != 0) and (python_env[-1] != ';'):
+        new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "").replace("/", "\\")
+        if (len(python_venv) != 0) and (python_venv[-1] != ';'):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + ";"
-        if not (os.getcwd() in python_env):
+        if not (os.getcwd() in python_venv):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + ";"
         Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH after " + new_venv.get("PYTHONPATH", ""))
         return new_venv

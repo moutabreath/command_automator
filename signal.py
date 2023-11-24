@@ -54,7 +54,7 @@ class Worker(QRunnable):
         self.signals.completed.emit(self.n)
 
     def run_internal(self):
-        Logger.print_log("[signal.run_internal] entered")
+        Logger.print_log(f'[signal.run_internal] entered with args: {self.script_arguments}')
         if self.process_venv is None:
             Logger.print_log("[signal.run_internal] No venv")
             self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
@@ -62,8 +62,8 @@ class Worker(QRunnable):
             Logger.print_log("[signal.run_internal] With venv")
             self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                                          env=self.process_venv)
+        Logger.print_log("[signal.run_internal] Popen done. Starting communicate")
         try:
-            Logger.print_log("[signal.run_internal] popen done. Starting communicate")
             output, err = self.proc.communicate()
             Logger.print_log("[signal.run_internal] proc communicate done")
             return output, err
