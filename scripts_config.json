@@ -17,6 +17,12 @@
       "short_description": "Show free space on drive C:",
       "detailed_Description": "Show free space on drive C: in GB",
       "free_text_required": false
+    },
+    {
+      "script_name": "my_test.py",
+      "short_description": "Test",
+      "detailed_Description": "Show free space on drive C: in GB",
+      "free_text_required": false
     }
   ]
 }
