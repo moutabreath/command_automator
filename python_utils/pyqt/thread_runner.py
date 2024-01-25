@@ -1,9 +1,7 @@
-import traceback
-
 from PyQt6.QtCore import QThreadPool
 
-from logger import Logger
-from signal import Worker
+from python_utils.logger import Logger
+from python_utils.pyqt.signal import Worker
 
 
 class ThreadRunner:

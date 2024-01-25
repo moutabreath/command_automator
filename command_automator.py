@@ -10,10 +10,10 @@ from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QComboBox, QPushButton, QPlainTextEdit, QLabel, \
     QVBoxLayout, QHBoxLayout, QLineEdit, QFileDialog
 
-import pyqt_utils
-from logger import Logger
+from python_utils.logger import Logger
+from python_utils.pyqt import pyqt_utils
 from logic_handler import LogicHandler
-from thread_runner import ThreadRunner
+from python_utils.pyqt.thread_runner import ThreadRunner
 
 
 class CommandAutomator(QWidget):
@@ -136,12 +136,12 @@ class CommandAutomator(QWidget):
             "selected_script": self.action_list.currentText(),
             "additional_text": self.txt_box_free_text.text()
         }
-        with open("commands-executor-config.json", "w") as write:
+        with open("config\\commands-executor-config.json", "w") as write:
             json.dump(data, write)
 
     def load_configuration(self):
         try:
-            with open('commands-executor-config.json') as f:
+            with open('config\\commands-executor-config.json') as f:
                 data = json.load(f)
                 pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
                 if 'additional_text' in data and data['additional_text'] != "":

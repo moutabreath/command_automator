@@ -2,7 +2,7 @@ import subprocess
 
 from PyQt6.QtCore import QRunnable, QObject, pyqtSignal as Signal, pyqtSlot as Slot
 
-from logger import Logger
+from python_utils.logger import Logger
 
 
 class Signals(QObject):

@@ -6,7 +6,7 @@ from collections import defaultdict
 
 import chardet
 
-from logger import Logger
+from python_utils.logger import Logger
 
 
 class LogicHandler:
@@ -18,7 +18,7 @@ class LogicHandler:
 
     def load_scripts_config(self):
         try:
-            f = open('scripts_config.json')
+            f = open('config\\scripts_config.json')
         except IOError:
             return
         data = json.load(f)
