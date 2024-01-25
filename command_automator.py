@@ -136,8 +136,8 @@ class CommandAutomator(QWidget):
             "selected_script": self.action_list.currentText(),
             "additional_text": self.txt_box_free_text.text()
         }
-        with open("config\\commands-executor-config.json", "w") as write:
-            json.dump(data, write)
+        with open("config\\commands-executor-config.json", "w") as file:
+            json.dump(data, file, indent=4)
 
     def load_configuration(self):
         try:
