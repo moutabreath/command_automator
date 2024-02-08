@@ -4,15 +4,16 @@ import sys
 import threading
 from datetime import datetime
 
+import PyQt6
 import keyboard
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QComboBox, QPushButton, QPlainTextEdit, QLabel, \
     QVBoxLayout, QHBoxLayout, QLineEdit, QFileDialog
-
+from qtpy import QtWidgets, QtCore
 from python_utils.logger import Logger
-from python_utils.pyqt import pyqt_utils
 from logic_handler import LogicHandler
+from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.thread_runner import ThreadRunner
 
 
@@ -36,13 +37,13 @@ class CommandAutomator(QWidget):
         self.txt_box_result = QPlainTextEdit()
         self.txt_box_description = QPlainTextEdit()
 
-        self.sub_main_vertical_box_layout = None
+        self.code_tab_layout = None
         self.btn_cancel_exec = QPushButton('Cancel')
         self.spinner_and_cancel_v_layout = None
-        self.window_alt = QMainWindow()
+        self.window_alt = QtWidgets.QMainWindow()
         self.movie = QMovie('loader.gif')
-        self.central_widget = QWidget(self.window_alt)
-        self.movie_label = QLabel(self)
+        self.central_widget = QtWidgets.QWidget(self.window_alt)
+        self.movie_label = QtWidgets.QLabel(self)
 
         self.setup_spinner()
         self.init_display()
@@ -59,9 +60,16 @@ class CommandAutomator(QWidget):
 
     def init_display(self):
         pyqt_utils.make_dark_mode(self)
+
+        # Create a tab widget
+        tab_widget = PyQt6.QtWidgets.QTabWidget()
+
+        # Create the tab for the code snippet
+        code_tab = PyQt6.QtWidgets.QWidget()
+
         self.txt_box_free_text.textEdited.connect(self.save_additional_text)
 
-        self.sub_main_vertical_box_layout = QVBoxLayout()
+        self.code_tab_layout = QVBoxLayout()
 
         items = self.logic_handler.load_scripts()
         self.action_list.addItems(items)
@@ -74,14 +82,14 @@ class CommandAutomator(QWidget):
 
         horizontal_box_scripts_and_button = pyqt_utils.create_horizontal_box(self.action_list, button_execute_script,
                                                                              spacer_item)
-        self.sub_main_vertical_box_layout = pyqt_utils.add_blank_line(self.sub_main_vertical_box_layout, None,
-                                                                      horizontal_box_scripts_and_button)
+        self.code_tab_layout = pyqt_utils.add_blank_line(self.code_tab_layout, None,
+                                                         horizontal_box_scripts_and_button)
         separator = pyqt_utils.create_horizontal_separator()
-        self.sub_main_vertical_box_layout.addWidget(separator)
+        self.code_tab_layout.addWidget(separator)
         label_description = QLabel("Script Description")
         self.txt_box_description = QPlainTextEdit()
-        self.sub_main_vertical_box_layout.addWidget(label_description)
-        self.sub_main_vertical_box_layout.addWidget(self.txt_box_description)
+        self.code_tab_layout.addWidget(label_description)
+        self.code_tab_layout.addWidget(self.txt_box_description)
 
         label_free_text = QLabel('Command Text (Ony If Applicable)')
         label_result_text = QLabel('Command Result')
@@ -93,25 +101,23 @@ class CommandAutomator(QWidget):
         free_text_and_result.addWidget(separator)
         free_text_and_result.addLayout(self.box_layout_result)
 
-        self.spinner_and_cancel_v_layout = QVBoxLayout()
+        self.spinner_and_cancel_v_layout = QtWidgets.QVBoxLayout()
         self.btn_cancel_exec.clicked.connect(self.cancel_script_exec)
         self.spinner_and_cancel_v_layout.addWidget(self.movie_label)
-        cancel_btn_layout = QHBoxLayout()
+        cancel_btn_layout = PyQt6.QtWidgets.QHBoxLayout()
         cancel_btn_layout.addWidget(self.btn_cancel_exec)
         cancel_btn_layout.addItem(spacer_item)
+        self.code_tab_layout.addWidget(separator)
+        self.code_tab_layout.addLayout(free_text_and_result)
         self.spinner_and_cancel_v_layout.addLayout(cancel_btn_layout)
-        # self.sub_main_vertical_box_layout.addLayout(self.spinner_and_cancel_v_layout)
-        self.sub_main_vertical_box_layout.addWidget(separator)
-        self.sub_main_vertical_box_layout.addLayout(free_text_and_result)
 
-        # Create horizontal box layout for the entire window
-        layout = QHBoxLayout()
+        code_tab.setLayout(self.code_tab_layout)
+        tab_widget.addTab(code_tab, "App and Scripts Runner")
+        # tab_widget.addTab(self.tests_tab, "Tests runner")
 
-        # Add vertical box layout to horizontal box layout
-        layout.addLayout(self.sub_main_vertical_box_layout)
-
-        # Set layout
-        self.setLayout(layout)
+        # Add the tab widget to the main window
+        self.setLayout(PyQt6.QtWidgets.QHBoxLayout())
+        self.layout().addWidget(tab_widget)
 
         # Add event listener to drop-down list
         self.action_list.currentIndexChanged.connect(self.selection_change)
@@ -150,7 +156,7 @@ class CommandAutomator(QWidget):
             return
 
     def start_animation_in_movie(self):
-        self.sub_main_vertical_box_layout.addLayout(self.spinner_and_cancel_v_layout)
+        self.code_tab_layout.addLayout(self.spinner_and_cancel_v_layout)
         self.btn_cancel_exec.show()
         self.movie_label.show()
         self.movie.start()
@@ -159,7 +165,7 @@ class CommandAutomator(QWidget):
         self.movie.stop()
         self.btn_cancel_exec.hide()
         self.movie_label.hide()
-        self.sub_main_vertical_box_layout.removeItem(self.spinner_and_cancel_v_layout)
+        self.code_tab_layout.removeItem(self.spinner_and_cancel_v_layout)
 
     def execute_on_keypress(self):
         self.execute_script()
@@ -212,8 +218,6 @@ class CommandAutomator(QWidget):
         self.txt_box_result.document().setPlainText(
             "Starting app at " + str(datetime.now()) + " args:\n " + run_version_command)
         run_version_thread.start()
-
-
 
 
 if __name__ == '__main__':

@@ -19,6 +19,12 @@
       "free_text_required": false
     },
     {
+      "script_name": "fast_copy.cmd",
+      "short_description": "fast copy",
+      "detailed_Description": "Copy with cmd",
+      "free_text_required": false
+    },
+    {
       "script_name": "my_test.py",
       "short_description": "Test",
       "detailed_Description": "Show free space on drive C: in GB",
