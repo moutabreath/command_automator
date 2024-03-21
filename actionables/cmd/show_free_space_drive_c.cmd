@@ -1,14 +1,15 @@
-@echo off
-setlocal
+fsutil volume diskfree C:
+@REM @echo off
+@REM setlocal
 
-echo Checking free space on drive C:
+@REM echo Checking free space on drive C:
 
-for /f "skip=1" %%a in ('wmic logicaldisk where "DeviceID='C:'" get FreeSpace') do (
-    set "freeSpace=%%a"
-    goto :done
-)
+@REM for /f "skip=1" %%a in ('wmic logicaldisk where "DeviceID='C:'" get FreeSpace') do (
+@REM     set "freeSpace=%%a"
+@REM     goto :done
+@REM )
 
-:done
-echo Free space on drive C: %freeSpace% bytes
+@REM :done
+@REM echo Free space on drive C: %freeSpace% bytes
 
-endlocal
+@REM endlocal

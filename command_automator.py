@@ -1,5 +1,6 @@
 import ctypes
 import json
+import logging
 import sys
 import threading
 from datetime import datetime
@@ -8,9 +9,9 @@ import PyQt6
 import keyboard
 from PyQt6.QtCore import QSize
 from PyQt6.QtGui import QIcon, QMovie
-from PyQt6.QtWidgets import QApplication, QMainWindow, QWidget, QComboBox, QPushButton, QPlainTextEdit, QLabel, \
-    QVBoxLayout, QHBoxLayout, QLineEdit, QFileDialog
-from qtpy import QtWidgets, QtCore
+from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QPushButton, QPlainTextEdit, QLabel, \
+    QVBoxLayout, QLineEdit, QFileDialog
+from qtpy import QtWidgets
 from python_utils.logger import Logger
 from logic_handler import LogicHandler
 from python_utils.pyqt import pyqt_utils
@@ -19,13 +20,16 @@ from python_utils.pyqt.thread_runner import ThreadRunner
 
 class CommandAutomator(QWidget):
     txt_box_result: QPlainTextEdit
+    logging.basicConfig(filename='command_automator.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+
 
     def __init__(self):
         super().__init__()
+        logging.info('Application started')
         self.logic_handler = LogicHandler()
         self.thread_runner = ThreadRunner()
         self.txt_box_selected_override = QLineEdit()
-        self.setWindowIcon(QIcon('CommandsAutomator.png'))
+        self.setWindowIcon(QIcon('resources\\CommandsAutomator.png'))
         my_app_id = 'tal.CommandsAutomator.1'  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(my_app_id)
 
@@ -41,7 +45,7 @@ class CommandAutomator(QWidget):
         self.btn_cancel_exec = QPushButton('Cancel')
         self.spinner_and_cancel_v_layout = None
         self.window_alt = QtWidgets.QMainWindow()
-        self.movie = QMovie('loader.gif')
+        self.movie = QMovie('resources\\loader.gif')
         self.central_widget = QtWidgets.QWidget(self.window_alt)
         self.movie_label = QtWidgets.QLabel(self)
 
@@ -162,10 +166,12 @@ class CommandAutomator(QWidget):
         self.movie.start()
 
     def stop_animation_in_movie(self):
-        self.movie.stop()
-        self.btn_cancel_exec.hide()
-        self.movie_label.hide()
-        self.code_tab_layout.removeItem(self.spinner_and_cancel_v_layout)
+        pyqt_utils.stop_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec, 
+                                           self.movie_label, self.movie)
+        result,err = self.thread_runner.get_run_result()
+        string_result = self.logic_handler.get_string_from_thread_result(result, err)
+        if len(string_result) != 0:
+            self.txt_box_result.document().setPlainText(string_result)
 
     def execute_on_keypress(self):
         self.execute_script()
@@ -195,13 +201,13 @@ class CommandAutomator(QWidget):
             Logger.print_error_message("Error running script", ex)
 
     def start_animation(self, n):
-        self.start_animation_in_movie()
+        pyqt_utils.start_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec,
+                                            self.movie_label, self.movie)
 
     def stop_animation(self, n):
-        self.movie.stop()
-        self.btn_cancel_exec.hide()
-        self.movie_label.hide()
-        result, err = self.thread_runner.get_run_result()
+        pyqt_utils.stop_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec, 
+                                           self.movie_label, self.movie)
+        result,err = self.thread_runner.get_run_result()
         string_result = self.logic_handler.get_string_from_thread_result(result, err)
         if len(string_result) != 0:
             self.txt_box_result.document().setPlainText(string_result)
