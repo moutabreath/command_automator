@@ -7,8 +7,7 @@ import os
 class Logger:
     @staticmethod
     def init_logger():
-        handler = logging.handlers.WatchedFileHandler(
-        os.environ.get("LOGFILE", "command_automator.log"))
+        handler = logging.handlers.WatchedFileHandler(os.environ.get("LOGFILE", "command_automator.log"))
         formatter =logging.Formatter("%(asctime)s:%(name)s:%(levelname)s:%(message)s")
         handler.setFormatter(formatter)
         root = logging.getLogger()

@@ -16,11 +16,12 @@ from python_utils.logger import Logger
 from logic_handler import LogicHandler
 from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.thread_runner import ThreadRunner
+from PyQt6 import QtCore
+from qtpy import QtWidgets, QtCore
 
 
 class CommandAutomator(QWidget):
     txt_box_result: QPlainTextEdit
-    logging.basicConfig(filename='command_automator.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
 
     def __init__(self):
@@ -56,9 +57,9 @@ class CommandAutomator(QWidget):
 
     def setup_spinner(self):
         self.central_widget.setObjectName("main-widget")
-        self.movie_label.setGeometry(25, 25, 200, 200)
-        self.movie_label.setMinimumSize(QSize(250, 250))
-        self.movie_label.setMaximumSize(QSize(250, 250))
+        self.movie_label.setGeometry(QtCore.QRect(25, 25, 200, 200))
+        self.movie_label.setMinimumSize(QtCore.QSize(250, 250))
+        self.movie_label.setMaximumSize(QtCore.QSize(250, 250))
         self.movie_label.setObjectName("lb1")
         self.movie_label.setMovie(self.movie)
 
@@ -158,20 +159,6 @@ class CommandAutomator(QWidget):
                     self.txt_box_free_text.setText(data["additional_text"])
         except IOError:
             return
-
-    def start_animation_in_movie(self):
-        self.code_tab_layout.addLayout(self.spinner_and_cancel_v_layout)
-        self.btn_cancel_exec.show()
-        self.movie_label.show()
-        self.movie.start()
-
-    def stop_animation_in_movie(self):
-        pyqt_utils.stop_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec, 
-                                           self.movie_label, self.movie)
-        result,err = self.thread_runner.get_run_result()
-        string_result = self.logic_handler.get_string_from_thread_result(result, err)
-        if len(string_result) != 0:
-            self.txt_box_result.document().setPlainText(string_result)
 
     def execute_on_keypress(self):
         self.execute_script()

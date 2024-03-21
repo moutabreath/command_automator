@@ -3,3 +3,5 @@
 /.idea/*
 /poetry.lock
 /.vscode/launch.json
+python_utils/__pycache__/*
+actionables/python/my_test.py
