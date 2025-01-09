@@ -14,7 +14,7 @@ class ThreadRunner:
             self.worker = Worker(1)
             self.worker.process_venv = new_venv
             self.worker.signals.completed.connect(on_complete)
-            # self.worker.signals.started.connect(on_start)
+            self.worker.signals.started.connect(on_start)
             self.worker.set_arguments(process_input)
             self.thread_pool.start(self.worker)
         except IOError:

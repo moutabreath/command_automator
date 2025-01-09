@@ -1,37 +1,40 @@
 import ctypes
 import json
-import logging
 import sys
 import threading
+import os
 from datetime import datetime
 
 import PyQt6
 import keyboard
-from PyQt6.QtCore import QSize
+from PyQt6.QtWidgets import QWidget, QPlainTextEdit, QSpacerItem, QComboBox, QPushButton, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget, QSizePolicy, QFileDialog, QApplication
 from PyQt6.QtGui import QIcon, QMovie
-from PyQt6.QtWidgets import QApplication, QWidget, QComboBox, QPushButton, QPlainTextEdit, QLabel, \
-    QVBoxLayout, QLineEdit, QFileDialog
-from qtpy import QtWidgets
-from python_utils.logger import Logger
-from logic_handler import LogicHandler
-from python_utils.pyqt import pyqt_utils
-from python_utils.pyqt.thread_runner import ThreadRunner
 from PyQt6 import QtCore
 from qtpy import QtWidgets, QtCore
+from PyQt6.QtCore import Qt
+
+from logic_handler import LogicHandler
 
 
-class CommandAutomator(QWidget):
+from python_utils.logger import Logger
+from python_utils.pyqt.thread_runner import ThreadRunner
+from python_utils.pyqt import pyqt_utils    
+
+
+class CommandAutomator(PyQt6.QtWidgets.QWidget):
+
     txt_box_result: QPlainTextEdit
-
+    RUN_APP_KEY_SHORTCUT = 'alt + r'
+    KILL_APP_KEY_SHORTCUT = 'alt + g'
+    EXECUTE_SCRIPT_KEY_SHORTCUT = 'ctrl + alt + e'
 
     def __init__(self):
         super().__init__()
-        logging.info('Application started')
         self.logic_handler = LogicHandler()
         self.thread_runner = ThreadRunner()
         self.txt_box_selected_override = QLineEdit()
         self.setWindowIcon(QIcon('resources\\CommandsAutomator.png'))
-        my_app_id = 'tal.CommandsAutomator.1'  # arbitrary string
+        my_app_id = 'tal.commandsAutomator.1'  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(my_app_id)
 
         self.action_list = QComboBox()
@@ -40,10 +43,13 @@ class CommandAutomator(QWidget):
         self.box_layout_additional = None
         self.box_layout_result = None
         self.txt_box_result = QPlainTextEdit()
-        self.txt_box_description = QPlainTextEdit()
+        self.txt_box_description = PyQt6.QtWidgets.QPlainTextEdit()
 
+
+        self.sub_main_vertical_box_layout = None
         self.code_tab_layout = None
-        self.btn_cancel_exec = QPushButton('Cancel')
+        
+        self.btn_cancel_exec = PyQt6.QtWidgets.QPushButton('Cancel')
         self.spinner_and_cancel_v_layout = None
         self.window_alt = QtWidgets.QMainWindow()
         self.movie = QMovie('resources\\loader.gif')
@@ -52,8 +58,11 @@ class CommandAutomator(QWidget):
 
         self.setup_spinner()
         self.init_display()
-
-        keyboard.add_hotkey('ctrl + shift + e', self.execute_on_keypress)  # , args=('Hotkey', 'Detected')
+        self.init_keyboard_shortcuts()
+        
+    def init_keyboard_shortcuts(self):
+        keyboard.add_hotkey(CommandAutomator.EXECUTE_SCRIPT_KEY_SHORTCUT, self.execute_on_keypress)  # , args=('Hotkey', 'Detected'))
+      
 
     def setup_spinner(self):
         self.central_widget.setObjectName("main-widget")
@@ -65,37 +74,35 @@ class CommandAutomator(QWidget):
 
     def init_display(self):
         pyqt_utils.make_dark_mode(self)
+        self.setup_save_configuration_events()
 
         # Create a tab widget
-        tab_widget = PyQt6.QtWidgets.QTabWidget()
+        tab_widget = QTabWidget()
 
         # Create the tab for the code snippet
-        code_tab = PyQt6.QtWidgets.QWidget()
+        code_tab = QWidget()
 
-        self.txt_box_free_text.textEdited.connect(self.save_additional_text)
-
+        # Create a vertical box layout for the code snippet tab
         self.code_tab_layout = QVBoxLayout()
 
+        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding)
+        work_trees_layout = self.create_work_trees_elements(spacer_item)
         items = self.logic_handler.load_scripts()
         self.action_list.addItems(items)
         self.action_list.activated.connect(self.save_configuration)
-
         button_execute_script = QPushButton('Execute')
+        button_execute_script.setToolTip(CommandAutomator.EXECUTE_SCRIPT_KEY_SHORTCUT)
         button_execute_script.clicked.connect(self.execute_script)
-
-        spacer_item = None  # The code for creating a spacer item in PyQt6 is different.
-
         horizontal_box_scripts_and_button = pyqt_utils.create_horizontal_box(self.action_list, button_execute_script,
                                                                              spacer_item)
-        self.code_tab_layout = pyqt_utils.add_blank_line(self.code_tab_layout, None,
+        self.code_tab_layout = pyqt_utils.add_blank_line(self.code_tab_layout, work_trees_layout,
                                                          horizontal_box_scripts_and_button)
-        separator = pyqt_utils.create_horizontal_separator()
-        self.code_tab_layout.addWidget(separator)
+        seperator = pyqt_utils.create_horizontal_separator()
+        self.code_tab_layout.addWidget(seperator)
         label_description = QLabel("Script Description")
         self.txt_box_description = QPlainTextEdit()
         self.code_tab_layout.addWidget(label_description)
         self.code_tab_layout.addWidget(self.txt_box_description)
-
         label_free_text = QLabel('Command Text (Ony If Applicable)')
         label_result_text = QLabel('Command Result')
         free_text_and_result = QVBoxLayout()
@@ -106,64 +113,98 @@ class CommandAutomator(QWidget):
         free_text_and_result.addWidget(separator)
         free_text_and_result.addLayout(self.box_layout_result)
 
-        self.spinner_and_cancel_v_layout = QtWidgets.QVBoxLayout()
+        self.spinner_and_cancel_v_layout = QVBoxLayout()
         self.btn_cancel_exec.clicked.connect(self.cancel_script_exec)
         self.spinner_and_cancel_v_layout.addWidget(self.movie_label)
-        cancel_btn_layout = PyQt6.QtWidgets.QHBoxLayout()
+        cancel_btn_layout = QHBoxLayout()
         cancel_btn_layout.addWidget(self.btn_cancel_exec)
         cancel_btn_layout.addItem(spacer_item)
         self.code_tab_layout.addWidget(separator)
         self.code_tab_layout.addLayout(free_text_and_result)
         self.spinner_and_cancel_v_layout.addLayout(cancel_btn_layout)
 
+        # Set the layout for the code snippet tab
         code_tab.setLayout(self.code_tab_layout)
+
+        # Add the code snippet tab to the tab widget
         tab_widget.addTab(code_tab, "App and Scripts Runner")
-        # tab_widget.addTab(self.tests_tab, "Tests runner")
 
         # Add the tab widget to the main window
-        self.setLayout(PyQt6.QtWidgets.QHBoxLayout())
+        self.setLayout(QHBoxLayout())
         self.layout().addWidget(tab_widget)
 
         # Add event listener to drop-down list
-        self.action_list.currentIndexChanged.connect(self.selection_change)
+        self.action_list.currentIndexChanged.connect(self.selectionchange)
         self.load_configuration()
-
+        self.setFocusPolicy(Qt.StrongFocus)
         # self.setGeometry(300, 300, 250, 150)
         self.setWindowTitle('Commands Automator')
         self.show()
+        
+    # def event(self, event):
+    #     if event.type() == QEvent.FocusIn:
+    #         self.init_keyboard_shortcuts(self)
+    #     return super().event(event)
 
+    def setup_save_configuration_events(self):
+        self.txt_box_free_text.textEdited.connect(self.save_additional_text)
+        
     def cancel_script_exec(self):
         self.thread_runner.stop_command()
 
-    def get_file(self):
-        selected_file_name, _ = QFileDialog.getOpenFileName(self, 'Open file', 'c:\\', "XML files (*.xml)")
-        self.txt_box_selected_override.setText(selected_file_name)
-
     def save_additional_text(self, text):
         self.save_configuration()
+
+
+    def load_configuration(self):
+        try:
+            f = open('configs\\commands-executor-config.json')
+        except IOError:
+            return
+
+        data = json.load(f)
+        pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
+        if 'additional_text' in data and data['additional_text'] != "":
+            self.txt_box_free_text.setText(data["additional_text"])
+        try:
+            f.close()
+        except IOError:
+            return
+
 
     def save_configuration(self):
         data = {
             "selected_script": self.action_list.currentText(),
             "additional_text": self.txt_box_free_text.text()
         }
-        with open("config\\commands-executor-config.json", "w") as file:
+        with open("configs\\commands-executor-config.json", "w") as file:
             json.dump(data, file, indent=4)
-
-    def load_configuration(self):
-        try:
-            with open('config\\commands-executor-config.json') as f:
-                data = json.load(f)
-                pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
-                if 'additional_text' in data and data['additional_text'] != "":
-                    self.txt_box_free_text.setText(data["additional_text"])
-        except IOError:
-            return
 
     def execute_on_keypress(self):
         self.execute_script()
 
-    def selection_change(self, i):
+    def create_work_trees_elements(self,spacer_item):
+        
+        work_trees_layout = QVBoxLayout()
+        seperator = pyqt_utils.create_horizontal_separator()
+
+        button_kill_mono = QPushButton('Kill App')
+        button_kill_mono.setToolTip(CommandAutomator.KILL_APP_KEY_SHORTCUT)
+        button_kill_mono.setStyleSheet("color: #fff; background-color: red; border-radius: 5px; padding: 5px;}")
+        button_run_mono = QPushButton('Start app')
+        button_run_mono.setToolTip(CommandAutomator.RUN_APP_KEY_SHORTCUT)
+
+        horizontal_box_powerup_provision = QHBoxLayout()
+        horizontal_box_powerup_provision.addItem(spacer_item)
+
+        work_trees_layout.addWidget(seperator)
+        work_trees_layout.addWidget(seperator)
+        work_trees_layout.addLayout(horizontal_box_powerup_provision)
+        work_trees_layout.addWidget(seperator)
+        return work_trees_layout
+
+
+    def selectionchange(self, i):
         script_list_name = self.action_list.currentText()
         script_file = self.logic_handler.get_name_to_scripts()[script_list_name]
         text = self.logic_handler.get_script_description(script_file)
@@ -177,15 +218,11 @@ class CommandAutomator(QWidget):
             script_path = file_name
         args = self.logic_handler.get_arguments_for_script(script_path, self.txt_box_free_text.text())
         if args is None:
-            self.txt_box_result.document().setPlainText(
-                "Missing argument. Please fill the text box for Additional Text")
+            self.txt_box_result.document().setPlainText("Missing argument. Please fill the text box for Additional Text")
             return
         self.txt_box_result.document().setPlainText(f'Executing at {datetime.now()}\n{script_path}\nargs: {args}')
         new_venv = self.logic_handler.get_updated_venv(args[0])
-        try:
-            self.thread_runner.run_command(args, self.stop_animation, self.start_animation, new_venv)
-        except ex:
-            Logger.print_error_message("Error running script", ex)
+        self.thread_runner.run_command(args, self.stop_animation, self.start_animation, new_venv)
 
     def start_animation(self, n):
         pyqt_utils.start_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec,
@@ -199,22 +236,14 @@ class CommandAutomator(QWidget):
         if len(string_result) != 0:
             self.txt_box_result.document().setPlainText(string_result)
 
-    def kill_app(self):
-        running_version = "dummy place holder"
-        kill_command = f'wmic Path win32_process Where "CommandLine like \'%{running_version}\'" Call Terminate'
-        self.logic_handler.run_windows_command(kill_command)
 
-    def start_app_in_thread(self):
-        run_version_command = 'dummy place holder'
-        run_version_thread = threading.Thread(target=self.logic_handler.run_app, args=[str(run_version_command)])
-
-        self.txt_box_result.document().setPlainText(
-            "Starting app at " + str(datetime.now()) + " args:\n " + run_version_command)
-        run_version_thread.start()
-
+    # def kill_app(self):
+    #     running_version = self.combo_box_mono_options.currentText()
+    #     kill_command = f'wmic Path win32_process Where "CommandLine like \'%{running_version}\\Qrelease%\'" Call Terminate'
+    #     self.logic_handler.run_windows_command(kill_command)
 
 if __name__ == '__main__':
     app = QApplication(sys.argv)
     ex = CommandAutomator()
     app.gif_window = ex
-    sys.exit(app.exec())
+    sys.exit(app.exec_())

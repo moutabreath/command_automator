@@ -1,11 +1,12 @@
 import glob
 import json
+import ntpath
 import os
 import subprocess
 from collections import defaultdict
+from pathlib import Path
 
 import chardet
-
 from python_utils.logger import Logger
 
 
@@ -15,18 +16,19 @@ class LogicHandler:
         self.scripts_attributes = {}
         Logger.init_logger()
         self.load_scripts_config()
+        self.mono_list = []
+        self.mono_versions = defaultdict()
 
     def load_scripts_config(self):
         try:
-            f = open('config\\scripts_config.json')
+            f = open('configs\\scripts_config.json')
         except IOError:
             return
         data = json.load(f)
         scripts_config = data['scripts']
         for script in scripts_config:
-            script_name, tag_name, script_desc, free_text = script['script_name'], script['short_description'], script[
-                'detailed_Description'], script['free_text_required']
-            if script_name == "" or tag_name == "" or script_desc == "" or free_text == "":
+            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_Description']
+            if script_name == "" or tag_name == "" or script_desc == "":
                 continue
             self.scripts_attributes[script_name] = script
 
@@ -35,11 +37,14 @@ class LogicHandler:
 
     def load_scripts(self):
         executables = []
+
         files = glob.glob(os.getcwd() + '\\actionables/**/*.py', recursive=True)
         files2 = glob.glob(os.getcwd() + '\\actionables/**/*.sh', recursive=True)
         files3 = glob.glob(os.getcwd() + '\\actionables/**/*.cmd', recursive=True)
+        files4 = glob.glob(os.getcwd() + '\\actionables/**/*.exe', recursive=True)
         files.extend(files2)
         files.extend(files3)
+        files.extend(files4)
         for file in files:
             file_name = self.get_name_from_script(file)
             if file_name is None:
@@ -64,33 +69,38 @@ class LogicHandler:
     def get_arguments_for_script(self, script_path, additional_text):
         script_name = os.path.basename(script_path)
         args = []
-
-        if script_name.endswith('cmd'):
-            args.append('cmd')
-            args.append('/c')
         if script_name.endswith('py'):
             args.append('python')
         if script_name.endswith('sh'):
             args.append('bash')
-        args.append(script_path)
+        if script_name.endswith('cmd'):
+            args.append('cmd')
+            args.append('/c')            
+        args.append(script_path)       
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
-                return None
-            args.append(additional_text)
+                return None            
+            free_text_args = additional_text.split(" ")
+            split_arr = list(filter(None, ' '.join(free_text_args).split()))
+            args.extend(split_arr)
+        other_script_name_as_input = self.get_other_script_name_as_input(script_name)
+        if other_script_name_as_input is not None:
+            files = glob.glob(os.getcwd() + f'\\cleaners/**/{other_script_name_as_input}', recursive=True)
+            f_drive_cleaner_path = files[0]
+            args.append(f_drive_cleaner_path)
         Logger.print_log("[logic_handler.get_arguments_for_script] running " + str(args))
         return args
 
     @staticmethod
     def get_updated_venv(arg):
-        if arg != 'python':
+        if not ('python' in arg):
             return
         new_venv = os.environ
-        python_venv = new_venv.get("PYTHONPATH", "")
+        python_env = new_venv.get("PYTHONPATH", "")
         Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
-        new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "").replace("/", "\\")
-        if (len(python_venv) != 0) and (python_venv[-1] != ';'):
+        if (len(python_env) != 0) and (python_env[-1] != ';'):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + ";"
-        if not (os.getcwd() in python_venv):
+        if not (os.getcwd() in python_env):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + ";"
         Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH after " + new_venv.get("PYTHONPATH", ""))
         return new_venv
@@ -129,5 +139,52 @@ class LogicHandler:
             str_result = "Execution Done"
         return str_result
 
+    def should_add_one_v(self, script_name):
+        return self.scripts_attributes[script_name]['one_v_required']
+
+    def should_add_mono(self, script_name):
+        return self.scripts_attributes[script_name]['monolith_required']
+
+    def is_for_qa(self, script_name):
+        if 'for_qa' in self.scripts_attributes[script_name]:
+            return self.scripts_attributes[script_name]['for_qa']
+        return False
+
     def should_use_free_text(self, script_name):
         return self.scripts_attributes[script_name]['free_text_required']
+    
+    def get_other_script_name_as_input(self, script_name):
+        if 'other_script_name_as_input' in self.scripts_attributes[script_name]:
+            return self.scripts_attributes[script_name]['other_script_name_as_input']
+        else:
+            return None
+
+
+    @staticmethod
+    def is_dir_empty(dir_path):
+        return not next(os.scandir(dir_path), None)
+
+    @staticmethod
+    def get_bin_folder_parent_path(version_path: Path):
+        if os.path.isfile(version_path.joinpath("qrelease", "Bin", "starter.exe")):
+            return version_path.joinpath("qrelease")
+        elif os.path.isfile(version_path.joinpath("Bin", "starter.exe")):
+            return version_path
+
+    def get_run_command_text(self, running_version_text, is_provision_10, is_powerup_checked, override_file):
+        running_version = self.get_version_path(running_version_text)
+        running_version = LogicHandler.get_bin_folder_parent_path(running_version)
+        version = "PROVision"
+        if is_provision_10:
+            version = 'PROVision10'
+        powerup = ""
+        if is_powerup_checked:
+            powerup = '-powerup'
+        override = ""
+        if override_file != "":
+            override = f' -J-Dwf.override.filename="{os.path.abspath(override_file)}"'
+        arguments = f'Bin\\Starter.exe -S-platform {version} -login {powerup} -no_second_screen -frame -useHD -newLnF' \
+                    f' -ignore16bits -S-debug {override}'
+
+        run_version_command = f'{running_version}\\{arguments}'
+        return run_version_command
