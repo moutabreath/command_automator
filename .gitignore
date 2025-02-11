@@ -4,4 +4,10 @@
 /poetry.lock
 /.vscode/launch.json
 python_utils/__pycache__/*
+python_utils/pyqt/__pycache__/*
 actionables/python/my_test.py
+/__pycache__/*
+/.venv/*
+/build/*
+command_automator.executor
+command_automator.spec
