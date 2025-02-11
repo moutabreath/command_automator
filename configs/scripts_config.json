@@ -29,6 +29,18 @@
       "short_description": "Annonymize",
       "detailed_Description": "Given a file and a list of tokens, replace the value after the tokens with 'dummy'",
       "free_text_required": true
+    },
+    {
+      "script_name": "convert_win_2_unix.py",
+      "short_description": "PY Convert Slashes to Win and UNIX Style",
+      "detailed_Description": "Display input from additional text box as windows and unix style Slashes",
+      "free_text_required": true
+    },
+    {
+      "script_name": "replace_string.py",
+      "short_description": "Replace strings",
+      "detailed_Description": "Replace one string with another within a given text",
+      "free_text_required": true
     }
   ]
 }
