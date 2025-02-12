@@ -11,3 +11,4 @@ actionables/python/my_test.py
 /build/*
 command_automator.executor
 command_automator.spec
+command_automator.exe
