@@ -40,6 +40,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.action_list = QComboBox()
 
         self.txt_box_free_text = QPlainTextEdit()
+        self.txt_box_flags = QLineEdit()        
         self.box_layout_additional = None
         self.box_layout_result = None
         self.txt_box_result = QPlainTextEdit()
@@ -105,11 +106,14 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.code_tab_layout.addWidget(self.txt_box_description)
         label_free_text = QLabel('Command Text (Ony If Applicable)')
         label_result_text = QLabel('Command Result')
+        label_flags = QLabel('Additional Arguments/Flags')
         free_text_and_result = QVBoxLayout()
         self.box_layout_additional = pyqt_utils.create_vertical_box(label_free_text, self.txt_box_free_text)
+        self.box_layout_flags = pyqt_utils.create_vertical_box(label_flags, self.txt_box_flags)
         self.box_layout_result = pyqt_utils.create_vertical_box(label_result_text, self.txt_box_result)
         separator = pyqt_utils.create_horizontal_separator()
         free_text_and_result.addLayout(self.box_layout_additional)
+        free_text_and_result.addLayout(self.box_layout_flags)
         free_text_and_result.addWidget(separator)
         free_text_and_result.addLayout(self.box_layout_result)
 
@@ -166,6 +170,8 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
         if 'additional_text' in data and data['additional_text'] != "":
             self.txt_box_free_text.document().setPlainText(data["additional_text"])
+        if 'flags' in data and data['flags'] != "":
+            self.txt_box_flags.setText(data['flags'])
         try:
             f.close()
         except IOError:
@@ -175,7 +181,8 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
     def save_configuration(self):
         data = {
             "selected_script": self.action_list.currentText(),
-            "additional_text": self.txt_box_free_text.toPlainText()
+            "additional_text": self.txt_box_free_text.toPlainText(),
+            "flags": self.txt_box_flags.text()
         }
         with open("configs\\commands-executor-config.json", "w") as file:
             json.dump(data, file, indent=4)
@@ -216,7 +223,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         script_path = self.logic_handler.get_name_to_scripts()[file_name]
         if script_path is None:
             script_path = file_name
-        args = self.logic_handler.get_arguments_for_script(script_path, self.txt_box_free_text.toPlainText())
+        args = self.logic_handler.get_arguments_for_script(script_path, self.txt_box_free_text.toPlainText(), self.txt_box_flags.text())
         if args is None:
             self.txt_box_result.document().setPlainText("Missing argument. Please fill the text box for Additional Text")
             return

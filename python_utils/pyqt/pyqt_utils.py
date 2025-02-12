@@ -31,10 +31,12 @@ def create_horizontal_box(widget1, widget2, spacer_item=None):
     return horizontal_box
 
 
-def create_vertical_box(widget1, widget2):
+def create_vertical_box(widget1, widget2, widget3 = None):
     vertical_box = QVBoxLayout()
     vertical_box.addWidget(widget1)
     vertical_box.addWidget(widget2)
+    if widget3 != None:
+        vertical_box.addWidget(widget3)
     return vertical_box
 
 

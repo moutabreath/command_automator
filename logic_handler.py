@@ -66,7 +66,7 @@ class LogicHandler:
     def get_script_description(self, file):
         return self.get_script_attribute(file, 'detailed_Description')
 
-    def get_arguments_for_script(self, script_path, additional_text):
+    def get_arguments_for_script(self, script_path, additional_text, flags):
         script_name = os.path.basename(script_path)
         args = []
         if script_name.endswith('py'):
@@ -76,11 +76,12 @@ class LogicHandler:
         if script_name.endswith('cmd'):
             args.append('cmd')
             args.append('/c')            
-        args.append(script_path)       
+        args.append(script_path)   
+        args.extend(additional_text)    
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
                 return None            
-            free_text_args = additional_text.split(" ")
+            free_text_args = flags.split(" ")
             split_arr = list(filter(None, ' '.join(free_text_args).split()))
             args.extend(split_arr)
         other_script_name_as_input = self.get_other_script_name_as_input(script_name)
