@@ -12,3 +12,5 @@ actionables/python/my_test.py
 command_automator.executor
 command_automator.spec
 command_automator.exe
+configs/commands-executor-config.json
+dist/command_automator.log

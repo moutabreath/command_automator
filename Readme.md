@@ -11,7 +11,5 @@ To extend the main GUI:
 run poetry install
 
 To make an exe out of it:
-pyinstaller command_automator.pyw -i resources/CommandsAutomator.ico -F
-icon taken from 
-<a href="https://www.flaticon.com/free-icons/dragon" title="dragon icons">Dragon icons created by Freepik - Flaticon</a>
+pyinstaller command_automator.pyw -i resources/Commands_Automator.ico -F
 put the exe file at the root of the project.
