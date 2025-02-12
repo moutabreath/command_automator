@@ -37,9 +37,15 @@
       "free_text_required": true
     },
     {
-      "script_name": "replace_string.py",
-      "short_description": "Replace strings",
-      "detailed_Description": "Replace one string with another within a given text",
+      "script_name": "replace_parenthesis.py",
+      "short_description": "Replace parenthesis",
+      "detailed_Description": "Replace '[' with '{' and  ']' with '}'",
+      "free_text_required": true
+    },
+    {
+      "script_name": "remove_parenthesis.py",
+      "short_description": "Remove parenthesis",
+      "detailed_Description": "Remove '{' and  '}' from input",
       "free_text_required": true
     }
   ]

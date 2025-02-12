@@ -39,11 +39,11 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
         self.action_list = QComboBox()
 
-        self.txt_box_free_text = QLineEdit()
+        self.txt_box_free_text = QPlainTextEdit()
         self.box_layout_additional = None
         self.box_layout_result = None
         self.txt_box_result = QPlainTextEdit()
-        self.txt_box_description = PyQt6.QtWidgets.QPlainTextEdit()
+        self.txt_box_description = QPlainTextEdit()
 
 
         self.sub_main_vertical_box_layout = None
@@ -147,12 +147,12 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
     #     return super().event(event)
 
     def setup_save_configuration_events(self):
-        self.txt_box_free_text.textEdited.connect(self.save_additional_text)
+        self.txt_box_free_text.textChanged.connect(self.save_additional_text)
         
     def cancel_script_exec(self):
         self.thread_runner.stop_command()
 
-    def save_additional_text(self, text):
+    def save_additional_text(self):
         self.save_configuration()
 
 
@@ -165,7 +165,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         data = json.load(f)
         pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
         if 'additional_text' in data and data['additional_text'] != "":
-            self.txt_box_free_text.setText(data["additional_text"])
+            self.txt_box_free_text.document().setPlainText(data["additional_text"])
         try:
             f.close()
         except IOError:
@@ -175,7 +175,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
     def save_configuration(self):
         data = {
             "selected_script": self.action_list.currentText(),
-            "additional_text": self.txt_box_free_text.text()
+            "additional_text": self.txt_box_free_text.toPlainText()
         }
         with open("configs\\commands-executor-config.json", "w") as file:
             json.dump(data, file, indent=4)
@@ -216,7 +216,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         script_path = self.logic_handler.get_name_to_scripts()[file_name]
         if script_path is None:
             script_path = file_name
-        args = self.logic_handler.get_arguments_for_script(script_path, self.txt_box_free_text.text())
+        args = self.logic_handler.get_arguments_for_script(script_path, self.txt_box_free_text.toPlainText())
         if args is None:
             self.txt_box_result.document().setPlainText("Missing argument. Please fill the text box for Additional Text")
             return
