@@ -33,7 +33,6 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.logic_handler = LogicHandler()
         self.thread_runner = ThreadRunner()
         self.txt_box_selected_override = QLineEdit()
-        self.setWindowIcon(QIcon('resources\\CommandsAutomator.png'))
         my_app_id = 'tal.commandsAutomator.1'  # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(my_app_id)
 
@@ -143,6 +142,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         # self.setGeometry(300, 300, 250, 150)
         self.setWindowTitle('Commands Automator')
+        self.setWindowIcon(QIcon('resources\\Commands_Automator.png'))
         self.show()
         
     # def event(self, event):
@@ -152,6 +152,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
     def setup_save_configuration_events(self):
         self.txt_box_free_text.textChanged.connect(self.save_additional_text)
+        self.txt_box_flags.textChanged.connect(self.save_additional_text)
         
     def cancel_script_exec(self):
         self.thread_runner.stop_command()

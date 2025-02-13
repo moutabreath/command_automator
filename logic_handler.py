@@ -77,7 +77,7 @@ class LogicHandler:
             args.append('cmd')
             args.append('/c')            
         args.append(script_path)   
-        args.extend(additional_text)    
+        args.append(additional_text)    
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
                 return None            
