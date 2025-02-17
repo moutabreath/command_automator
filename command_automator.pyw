@@ -142,7 +142,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.setFocusPolicy(Qt.StrongFocus)
         # self.setGeometry(300, 300, 250, 150)
         self.setWindowTitle('Commands Automator')
-        self.setWindowIcon(QIcon('resources\\Commands_Automator.png'))
+        self.setWindowIcon(QIcon('resources\\Commands_Automator.ico'))
         self.show()
         
     # def event(self, event):
