@@ -5,6 +5,7 @@ description = "Enable to run scripts that automate common tasks"
 authors = ["Tal Druckmann <tdruck@gmail.com>"]
 license = "MIT"
 readme = "README.md"
+package-mode = false
 
 [tool.poetry.dependencies]
 python = "^3.9,<3.13"
@@ -15,6 +16,7 @@ chardet = "^5.1.0"
 pyinstaller = "^5.13.0"
 pyqt6 = "^6.5.3"
 pillow = "^11.1.0"
+openai = "^0.26.1"
 
 [build-system]
 requires = ["poetry-core"]

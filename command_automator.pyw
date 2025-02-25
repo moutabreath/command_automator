@@ -18,7 +18,8 @@ from logic_handler import LogicHandler
 
 from python_utils.logger import Logger
 from python_utils.pyqt.thread_runner import ThreadRunner
-from python_utils.pyqt import pyqt_utils    
+from python_utils.pyqt import pyqt_utils
+from tabs.llm_prompt_tab import LLMPromptTab    
 
 
 class CommandAutomator(PyQt6.QtWidgets.QWidget):
@@ -131,6 +132,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
         # Add the code snippet tab to the tab widget
         tab_widget.addTab(code_tab, "App and Scripts Runner")
+        tab_widget.addTab(LLMPromptTab(), "Chat GPT")
 
         # Add the tab widget to the main window
         self.setLayout(QHBoxLayout())

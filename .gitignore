@@ -15,3 +15,4 @@ command_automator.exe
 configs/commands-executor-config.json
 dist/command_automator.log
 configs/openapi_key.txt
+tabs/__pycache__/*
