@@ -29,6 +29,7 @@ class LLMLogicHanlder():
         key_line_parts = key_line.split("=")
         key = key_line_parts[1]
         self.gemin_client = genai.Client(api_key=key)
+        self.chat = self.gemin_client.chats.create(model="gemini-2.0-flash")
 
 
     def chat_with_gpt(self, prompt):
@@ -66,3 +67,16 @@ class LLMLogicHanlder():
             model='gemini-2.0-flash-001', contents=prompt
         )
         return response.text
+    
+
+    def stream_chat_with_gemini(self, prompt):
+        
+        response = self.chat.send_message_stream(prompt)
+        for chunk in response:            
+            yield chunk.text
+        # response = chat.send_message_stream("How many paws are in my house?")
+        # for chunk in response:
+        #     print(chunk.text, end="")
+        # for message in chat._curated_history:
+        #     print(f'role - ', message.role, end=": ")
+        #     print(message.parts[0].text)

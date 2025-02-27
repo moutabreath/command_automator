@@ -14,5 +14,8 @@ command_automator.spec
 command_automator.exe
 configs/commands-executor-config.json
 dist/command_automator.log
-tabs/__pycache__/*
 configs/chat_bot_keys.txt
+tabs/llm/__pycache__/*
+tabs/*__pycache__
+*.docx
+*.pdf
