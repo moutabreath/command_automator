@@ -1,8 +1,5 @@
-import PyQt6
-from PyQt6.QtGui import QIcon, QMovie
-from PyQt6 import QtCore
-from qtpy import QtWidgets, QtCore
-from PyQt6.QtWidgets import QTextEdit, QSpacerItem, QPlainTextEdit, QPushButton, QLabel, QVBoxLayout, QHBoxLayout,  QSizePolicy
+from qtpy import QtWidgets
+from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
 
 from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.text_editor import TextEditor
@@ -15,26 +12,30 @@ class LLMPromptTab(QtWidgets.QWidget):
 
         self.lLLMLogicHanldeR = LLMLogicHanlder()
 
-        self.btn_query_llm = QPushButton('Send Query')
-        self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
-
         self.llm_layout = QVBoxLayout()
         
-        hBoxLayoutResponse = QHBoxLayout()
-        hBoxLayoutButtonAndQuery = QHBoxLayout()
-        
+        hBoxLayoutResponse = QHBoxLayout()       
         self.txtBoxResponse = QTextEdit()
         self.txtBoxResponse.setReadOnly(True)
-
-        self.txtBoxQuery = TextEditor('Message LLM')
-
-
-        hBoxLayoutResponse.addWidget(self.txtBoxResponse)
-        hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
-        hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)
-
+        hBoxLayoutResponse.addWidget(self.txtBoxResponse)        
         self.llm_layout.addLayout(hBoxLayoutResponse)
+
+        hBoxLayoutButtonAndQuery = QHBoxLayout()               
+        self.btn_query_llm = QPushButton('Send Query')
+        self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
+        self.txtBoxQuery = TextEditor('Message LLM')
+        hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
+        hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)        
         self.llm_layout.addLayout(hBoxLayoutButtonAndQuery)
+
+
+        hBoxFiles = QHBoxLayout()
+        self.txt_bx_main_file_input = QLineEdit()
+        btn_select_main_file = QPushButton("Select Resumee File")
+        btn_select_main_file.clicked.connect(self.get_file)        
+        self.txt_bx_secondaryfiles_input = QLineEdit()
+        btn_select_seconadary_dir = QPushButton("Job descriptions direcotry")
+        btn_select_seconadary_dir.clicked.connect(self.get_file)        
 
         self.setLayout(self.llm_layout)
 
@@ -51,4 +52,8 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.btn_query_llm.setStyleSheet(old_style_sheet)
 
         self.txtBoxResponse.setText(text)
-         
+    
+    def get_file(self):
+        selected_file_name = QFileDialog.getOpenFileName(self, 'Open file',
+                                                         'c:\\', "XML files (*.xml)")
+        self.txt_bx_main_file_input.setText(selected_file_name[0])
