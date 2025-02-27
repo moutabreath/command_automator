@@ -3,7 +3,7 @@ from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QH
 
 from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.text_editor import TextEditor
-from tabs.llm_logic_handler import LLMLogicHanlder
+from tabs.llm.llm_logic_handler import LLMLogicHanlder
 
 
 class LLMPromptTab(QtWidgets.QWidget):
