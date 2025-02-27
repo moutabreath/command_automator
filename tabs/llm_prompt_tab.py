@@ -15,30 +15,40 @@ class LLMPromptTab(QtWidgets.QWidget):
 
         self.lLLMLogicHanldeR = LLMLogicHanlder()
 
-        btn_query_llm = QPushButton('Send Query')
-        btn_query_llm.clicked.connect(self.send_to_chat_gpt)
+        self.btn_query_llm = QPushButton('Send Query')
+        self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
 
         self.llm_layout = QVBoxLayout()
         
         hBoxLayoutResponse = QHBoxLayout()
         hBoxLayoutButtonAndQuery = QHBoxLayout()
         
-        txtBoxResponse = QTextEdit()
-        txtBoxResponse.setReadOnly(True)
+        self.txtBoxResponse = QTextEdit()
+        self.txtBoxResponse.setReadOnly(True)
 
         self.txtBoxQuery = TextEditor('Message LLM')
 
 
-        hBoxLayoutResponse.addWidget(txtBoxResponse)
-        hBoxLayoutButtonAndQuery.addWidget( self.txtBoxQuery)
-        hBoxLayoutButtonAndQuery.addWidget(btn_query_llm)
+        hBoxLayoutResponse.addWidget(self.txtBoxResponse)
+        hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
+        hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)
 
         self.llm_layout.addLayout(hBoxLayoutResponse)
         self.llm_layout.addLayout(hBoxLayoutButtonAndQuery)
 
         self.setLayout(self.llm_layout)
 
-    def send_to_chat_gpt(self):
+    def send_to_chat_gpt(self): 
+        self.btn_query_llm.setEnabled(False)
+        old_style_sheet = self.btn_query_llm.styleSheet()
+        self.btn_query_llm.setStyleSheet("color: gray;")
+
         text = self.txtBoxQuery.toPlainText()
-        text = self.lLLMLogicHanldeR.chat_with_gpt(text)
+        text = self.lLLMLogicHanldeR.chat_with_gemini(text)
+
+
+        self.btn_query_llm.setEnabled(True)
+        self.btn_query_llm.setStyleSheet(old_style_sheet)
+
+        self.txtBoxResponse.setText(text)
          
