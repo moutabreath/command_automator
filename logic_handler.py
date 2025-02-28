@@ -1,12 +1,13 @@
 import glob
 import json
-import ntpath
+import logging
 import os
 import subprocess
 from collections import defaultdict
 from pathlib import Path
 
 import chardet
+
 from python_utils.logger import Logger
 
 
@@ -89,7 +90,7 @@ class LogicHandler:
             files = glob.glob(os.getcwd() + f'\\cleaners/**/{other_script_name_as_input}', recursive=True)
             f_drive_cleaner_path = files[0]
             args.append(f_drive_cleaner_path)
-        Logger.print_log("[logic_handler.get_arguments_for_script] running " + str(args))
+        logging.log(logging.DEBUG, "running " + str(args))
         return args
 
     @staticmethod
@@ -98,12 +99,12 @@ class LogicHandler:
             return
         new_venv = os.environ
         python_env = new_venv.get("PYTHONPATH", "")
-        Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
+        logging.log(logging.DEBUG, "PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
         if (len(python_env) != 0) and (python_env[-1] != ';'):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + ";"
         if not (os.getcwd() in python_env):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + ";"
-        Logger.print_log("[logic_handler.get_updated_venv] PYTHONPATH after " + new_venv.get("PYTHONPATH", ""))
+        logging.log(logging.DEBUG, "PYTHONPATH after " + new_venv.get("PYTHONPATH", ""))
         return new_venv
 
     @staticmethod
@@ -121,19 +122,19 @@ class LogicHandler:
     @staticmethod
     def get_string_from_thread_result(result, err):
         str_result = ""
-        Logger.print_log("[logic.handler.get_string_from_thread_result] entered.")
+        logging.log(logging.DEBUG, "entered.")
         if isinstance(result, (bytes, bytearray)):
             encoding_stats = chardet.detect(result)
             encoding = encoding_stats['encoding']
             if encoding is not None:
                 str_result = result.decode(encoding)
-                Logger.print_log(f"[logic.handler.get_string_from_thread_result] str_result is {str_result}.")
+                logging.log(logging.DEBUG, f"str_result is {str_result}.")
             else:
-                Logger.print_log("[logic.handler.get_string_from_thread_result] encoding is None")
+                logging.log(logging.DEBUG, "encoding is None")
                 str_result = ""
             if err is not None:
                 if isinstance(err, str):
-                    Logger.print_error_message(str(err), err)
+                    logging.log(logging.ERROR, str(err), err)
                     str_result = str_result + " " + err
 
         if len(str_result) == 0:

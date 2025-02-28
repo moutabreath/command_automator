@@ -1,8 +1,7 @@
 import ctypes
 import json
+import logging
 import sys
-import threading
-import os
 from datetime import datetime
 
 import PyQt6
@@ -16,7 +15,6 @@ from PyQt6.QtCore import Qt
 from logic_handler import LogicHandler
 
 
-from python_utils.logger import Logger
 from python_utils.pyqt.thread_runner import ThreadRunner
 from python_utils.pyqt import pyqt_utils
 from tabs.llm.llm_prompt_tab import LLMPromptTab    
@@ -221,7 +219,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.txt_box_description.document().setPlainText(text)
 
     def execute_script(self):
-        Logger.print_log(f"script execution started")
+        logging.log(logging.DEBUG, f"script execution started")
         file_name = self.action_list.currentText()
         script_path = self.logic_handler.get_name_to_scripts()[file_name]
         if script_path is None:

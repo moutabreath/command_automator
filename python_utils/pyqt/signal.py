@@ -1,3 +1,4 @@
+import logging
 import subprocess
 
 from PyQt6.QtCore import QRunnable, QObject, pyqtSignal as Signal, pyqtSlot as Slot
@@ -28,26 +29,26 @@ class Worker(QRunnable):
 
     @Slot()
     def run(self):
-        Logger.print_log("[signal.run] entered")
+        logging.log(logging.DEBUG, "entered")
         self.signals.started.emit(self.n)
-        Logger.print_log("[signal.run] emit 'started'")
+        logging.log(logging.DEBUG, "emit 'started'")
         try:
             self.process_output, self.err = self.run_internal()
-            Logger.print_log("[signal.run] process output " + str(self.process_output))
+            logging.log(logging.DEBUG, "process output " + str(self.process_output))
             if self.err is not None and len(self.err) > 0:
-                Logger.print_log(f"[signal.run] error {str(self.err)} {type(self.err)}" )
+                logging.log(logging.ERORR, f"error {str(self.err)} {type(self.err)}" )
         except TimeoutError as ex:
             self.err = str(ex)
-            Logger.print_error_message(self.err, ex)
+            logging.log(logging.ERROR, self.err, ex)
 
         except Exception as ex1:
             self.err = str(ex1)
-            Logger.print_error_message(self.err, ex1)
+            logging.log(logging.ERROR, self.err, ex)
         try:
             self.signals.completed.emit(self.n)
-            Logger.print_log("[signal.run] emit 'completed'")
+            logging.log(logging.DEBUG, "emit 'completed'")
         except Exception as ex2:
-            Logger.print_error_message(self.err, ex2)
+            logging.log(logging.ERROR, self.err, ex2)
 
 
     def cancel_execution(self):
@@ -55,9 +56,9 @@ class Worker(QRunnable):
         self.signals.completed.emit(self.n)
 
     def run_internal(self):
-        Logger.print_log("[signal.run_internal] entered")
+        logging.log(logging.DEBUG, "entered")
         self.proc = subprocess.Popen(self.script_arguments, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=self.proces_venv)
-        Logger.print_log("[signal.run_internal] popen done")
+        logging.log(logging.DEBUG, "popen done")
         output, err = self.proc.communicate()
-        Logger.print_log("[signal.run_internal] proc communicate done")
+        logging.log(logging.DEBUG, "proc communicate done")
         return output, err

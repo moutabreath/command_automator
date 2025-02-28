@@ -1,7 +1,7 @@
+import logging
 from openai import OpenAI
 from google import genai
 
-from python_utils.logger import Logger
 
 class LLMLogicHanlder():
     def __init__(self):
@@ -57,9 +57,9 @@ class LLMLogicHanlder():
             ],
             model="gpt-4o-mini",
             )
-            Logger.print_log(chat_completion)
-        except Exception:
-            Logger.print_error_message(f"Error with gpt", Exception)
+            logging.log(logging.DEBUG, chat_completion)
+        except Exception as ex:
+            logging.log(logging.ERROR, "error with gtp", ex)
 
 
     def chat_with_gemini(self, prompt):

@@ -1,6 +1,6 @@
+import logging
 from PyQt6.QtCore import QThreadPool
 
-from python_utils.logger import Logger
 from python_utils.pyqt.signal import Worker
 
 
@@ -17,8 +17,8 @@ class ThreadRunner:
             self.worker.signals.started.connect(on_start)
             self.worker.set_arguments(process_input)
             self.thread_pool.start(self.worker)
-        except IOError:
-            Logger.print_error_message("run_command: error", IOError)
+        except IOError as e:
+            logging.log(logging.ERROR, "run_command: error", e)
             
     def stop_command(self):
         self.worker.cancel_execution()
