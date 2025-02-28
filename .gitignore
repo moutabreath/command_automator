@@ -19,3 +19,4 @@ tabs/llm/__pycache__/*
 tabs/*__pycache__
 *.docx
 *.pdf
+tabs/llm/llm-config.json

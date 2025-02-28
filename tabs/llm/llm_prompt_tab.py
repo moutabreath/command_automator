@@ -1,3 +1,4 @@
+import json
 import os
 from qtpy import QtWidgets
 from PyQt6.QtWidgets import QTextEdit, QSpacerItem, QSizePolicy, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
@@ -9,24 +10,41 @@ from tabs.llm.llm_logic_handler import LLMLogicHanlder
 
 
 class LLMPromptTab(QtWidgets.QWidget):
+    CURRENT_PATH = '/tabs/llm'
+    MAIN_FILE_PATH = 'main_file_path'
+    SECONDARY_FILE_PATH = 'secondary_file_dir'
+    CONFIG_FILE_PATH = f'{os.getcwd()}/{CURRENT_PATH}/llm-config.json'
+  
     def __init__(self):
         super().__init__()
 
         self.lLLMLogicHanldeR = LLMLogicHanlder()
 
         self.llm_layout = QVBoxLayout()
+
+        self.txtBoxResponse = QTextEdit()
+        self.btn_query_llm = QPushButton('Send Query')
+        self.txtBoxQuery = TextEditor('Message LLM')
+
+        self.txt_bx_main_file_input = QLineEdit()
+        self.btn_select_main_file = QPushButton("Select Resume File")
+
+        self.txt_bx_secondary_files_input = QLineEdit()
+        self.btn_select_seconadary_dir = QPushButton("Job files dir")
+        self.btn_send_files_to_llm = QPushButton("Chat using files")
+
         
         hBoxLayoutResponse = QHBoxLayout()
-        self.txtBoxResponse = QTextEdit()
+        
         self.txtBoxResponse.setReadOnly(True)
         self.txtBoxResponse.setStyleSheet("color: white;")
-        hBoxLayoutResponse.addWidget(self.txtBoxResponse)        
+        hBoxLayoutResponse.addWidget(self.txtBoxResponse)      
         self.llm_layout.addLayout(hBoxLayoutResponse)
 
-        hBoxLayoutButtonAndQuery = QHBoxLayout()               
-        self.btn_query_llm = QPushButton('Send Query')
+        hBoxLayoutButtonAndQuery = QHBoxLayout()            
+        
         self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
-        self.txtBoxQuery = TextEditor('Message LLM')
+        
         self.txtBoxQuery.setStyleSheet("color: white;")
         hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
         hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)        
@@ -36,26 +54,20 @@ class LLMPromptTab(QtWidgets.QWidget):
         # File inputs section        
         bxFiles = QHBoxLayout()
 
-        self.txt_bx_main_file_input = QLineEdit()
-        self.btn_select_main_file = QPushButton("Select Resume File")
-        self.btn_select_main_file.clicked.connect(self.get_resume) 
+        self.btn_select_main_file.clicked.connect(self.get_resume)        
+        self.btn_select_seconadary_dir.clicked.connect(self.get_job_desc_dir)        
+        self.btn_send_files_to_llm.clicked.connect(self.start_resume_building)        
 
-        self.txt_bx_secondary_files_input = QLineEdit()
-        self.btn_select_seconadary_dir = QPushButton("Job files dir")
-        self.btn_select_seconadary_dir.clicked.connect(self.get_job_desc_dir)
+        self.init_files_display(bxFiles)
 
-        self.btn_send_files_to_llm = QPushButton("Chat using files")
-        self.btn_send_files_to_llm.clicked.connect(self.start_resume_building)
-        
-
-        self.init_display(bxFiles)
-
+        self.load_configuration()
+        self.setup_save_configuration_events()
      
         self.llm_layout.addLayout(bxFiles)
 
         self.setLayout(self.llm_layout)
 
-    def init_display(self, vBoxFiles: QVBoxLayout):
+    def init_files_display(self, vBoxFiles: QVBoxLayout):
         boxTxtBx = QVBoxLayout()
 
         boxTxtBx.addWidget(self.txt_bx_main_file_input)
@@ -116,3 +128,40 @@ class LLMPromptTab(QtWidgets.QWidget):
             return ""
         
         return content
+    
+    
+    def setup_save_configuration_events(self):
+        self.txt_bx_main_file_input.textChanged.connect(self.save_additional_text)
+        self.txt_bx_secondary_files_input.textChanged.connect(self.save_additional_text)
+
+   
+    def save_additional_text(self):
+        self.save_configuration()
+
+    
+    def load_configuration(self):
+        try:
+            if not os.path.exists(self.CONFIG_FILE_PATH):
+                return
+            f = open(self.CONFIG_FILE_PATH)
+        except IOError:
+            return
+
+        data = json.load(f)
+        if self.MAIN_FILE_PATH in data and data[self.MAIN_FILE_PATH] != "":
+            self.txt_bx_main_file_input.setText(data[self.MAIN_FILE_PATH])
+        if self.SECONDARY_FILE_PATH  in data and data[self.SECONDARY_FILE_PATH] != "":
+            self.txt_bx_secondary_files_input.setText(data[self.SECONDARY_FILE_PATH])
+        try:
+            f.close()
+        except IOError:
+            return
+
+
+    def save_configuration(self):
+        data = {
+            self.MAIN_FILE_PATH: self.txt_bx_main_file_input.text(),
+            self.SECONDARY_FILE_PATH: self.txt_bx_secondary_files_input.text()
+        }
+        with open(self.CONFIG_FILE_PATH, "w") as file:
+            json.dump(data, file, indent=4)
