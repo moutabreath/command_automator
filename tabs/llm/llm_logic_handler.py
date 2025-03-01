@@ -63,10 +63,13 @@ class LLMLogicHanlder():
 
 
     def chat_with_gemini(self, prompt):
-        response = self.gemin_client.models.generate_content(
-            model='gemini-2.0-flash-001', contents=prompt
-        )
-        return response.text
+        try:
+            response = self.gemin_client.models.generate_content(
+                model='gemini-2.0-flash-001', contents=prompt
+            )
+            return response.text
+        except Exception as ex:
+            logging.log(logging.ERROR, "error communicating with gemini", ex)
     
 
     def stream_chat_with_gemini(self, prompt):

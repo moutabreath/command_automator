@@ -20,3 +20,4 @@ tabs/*__pycache__
 *.docx
 *.pdf
 tabs/llm/llm-config.json
+tabs/llm/resume/*
