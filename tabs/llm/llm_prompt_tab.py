@@ -2,6 +2,7 @@ import json
 import os
 from qtpy import QtWidgets
 from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
+from PyQt6.QtCore import Qt 
 
 from python_utils.pyqt.text_editor import TextEditor
 from tabs.llm.llm_logic_handler import LLMLogicHanlder
@@ -60,11 +61,18 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.btn_send_files_to_llm.clicked.connect(self.start_resume_building)        
 
         self.init_files_display(bxFiles)
+        self.llm_layout.addLayout(bxFiles)
+        
+        button_layout = QHBoxLayout()  # Create a QHBoxLayout
+        button_layout.addWidget(self.btn_send_files_to_llm)  # Add the button
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)  # Align to right
+        self.llm_layout.addLayout(button_layout)  # Add the layout to the main layout
+
 
         self.load_configuration()
         self.setup_save_configuration_events()
      
-        self.llm_layout.addLayout(bxFiles)
+     
 
         self.setLayout(self.llm_layout)
 
@@ -79,7 +87,6 @@ class LLMPromptTab(QtWidgets.QWidget):
         bxButtons = QVBoxLayout()
         bxButtons.addWidget(self.btn_select_main_file)
         bxButtons.addWidget(self.btn_select_seconadary_dir)
-        bxButtons.addWidget(self.btn_send_files_to_llm)
         
         vBoxFiles.addLayout(bxButtons)
 
