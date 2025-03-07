@@ -43,7 +43,7 @@ class Worker(QRunnable):
 
         except Exception as ex1:
             self.err = str(ex1)
-            logging.log(logging.ERROR, self.err, ex)
+            logging.log(logging.ERROR, self.err, ex1)
         try:
             self.signals.completed.emit(self.n)
             logging.log(logging.DEBUG, "emit 'completed'")
