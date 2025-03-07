@@ -130,7 +130,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
         # Add the code snippet tab to the tab widget
         tab_widget.addTab(code_tab, "App and Scripts Runner")
-        tab_widget.addTab(LLMPromptTab(), "Chat GPT")
+        tab_widget.addTab(LLMPromptTab(), "LLM")
 
         # Add the tab widget to the main window
         self.setLayout(QHBoxLayout())

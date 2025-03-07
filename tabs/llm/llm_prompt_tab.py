@@ -4,6 +4,7 @@ from qtpy import QtWidgets
 from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
 from PyQt6.QtCore import Qt 
 
+from python_utils.pyqt.runnable_worker import Signals
 from python_utils.pyqt.text_editor import TextEditor
 from tabs.llm.llm_logic_handler import LLMLogicHanlder
 
@@ -20,7 +21,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.lLLMLogicHanlder = LLMLogicHanlder()
         self.CONFIG_FILE_PATH = f'{os.getcwd()}/{self.lLLMLogicHanlder.CURRENT_PATH}/llm-config.json'
 
-        self.worker = None
+        self.signals = Signals()
 
         self.llm_layout = QVBoxLayout()
 

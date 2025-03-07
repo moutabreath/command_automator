@@ -1,7 +1,5 @@
-from io import TextIOWrapper
 import logging
 import os
-import chardet
 from typing import List
 import re
 

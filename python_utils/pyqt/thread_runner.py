@@ -1,7 +1,7 @@
 import logging
 from PyQt6.QtCore import QThreadPool
 
-from python_utils.pyqt.signal import Worker
+from python_utils.pyqt.runnable_worker import RunnableWorker
 
 
 class ThreadRunner:
@@ -11,7 +11,7 @@ class ThreadRunner:
 
     def run_command(self, process_input, on_complete, on_start, new_venv):
         try:
-            self.worker = Worker(1)
+            self.worker = RunnableWorker(1)
             self.worker.process_venv = new_venv
             self.worker.signals.completed.connect(on_complete)
             self.worker.signals.started.connect(on_start)
