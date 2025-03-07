@@ -12,7 +12,7 @@ from tabs.llm.llm_agents.gpt_agent import GptAgent
 class LLMLogicHanlder():
 
     CURRENT_PATH = '/tabs/llm'
-    RESUME_FILES_PATH_PREFIX = f'{os.getcwd()}/{CURRENT_PATH}/resources'
+    RESUME_FILES_PATH_PREFIX = f'{os.getcwd()}/{CURRENT_PATH}/resources/resume'
     OUTPUT_RESUME_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/tailored_resume'
     CONFIG_PATH_PREFIX = f'{os.getcwd()}/{CURRENT_PATH}/config'
 
@@ -37,30 +37,43 @@ class LLMLogicHanlder():
 
     def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str):
         guide_lines = self.get_guide_lines(applicant_name_value)
-        succes, guide_lines_response = self.gemini_agent.chat_with_gemini(guide_lines)
-        if (not(succes)):
-            logging.log("Error sending guidelines", guide_lines_response)
-            return "Something went wrong"
-        success, resume_response = self.send_file_to_gemini(resume_path)
-        if (not(succes)):
+        resume = self.read_file(resume_path)
+        prompt = f"{guide_lines} \n\n my resume:\n "
+        prompt += resume
+        success, resume_response = self.gemini_agent.chat_with_gemini(prompt)
+        if (not(success)):
             logging.log("Error sending resume", resume_response)
             return "Something went wrong"
-        success, jobs_desc_response = self.send_file_to_gemini(job_desc_path)
-        if (not(succes)):
+        prompt = "Here are the job descriptions\n"
+        job_desc__content = self.read_file(job_desc_path)
+        if (job_desc__content == ""):
+            logging.log("Error reading job descriptions")
+            return "Something went wrong"        
+        prompt += job_desc__content
+        success, jobs_desc_response = self.gemini_agent.chat_with_gemini(prompt)
+        if (not(success)):
             logging.log("Error sending job descriptions", jobs_desc_response)
             return "Something went wrong"
-        self.save_to_file(applicant_name_value, jobs_desc_response)
+        self.get_tesullt_to_save(applicant_name_value, jobs_desc_response)
         return jobs_desc_response
 
     
-    def save_to_file(self, applicant_name, text):
+    def get_tesullt_to_save(self, applicant_name, text):
         pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
-        # Search for the pattern in the text
         match = pattern.search(text)
         if match:
-            full_string = match.group()
-            logging.log(logging.DEBUG, f"found full string {full_string}")
-            docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}', applicant_name, text)
+            self.save_to_file(applicant_name, text)
+        else:
+            text = self.gemini_agent.chat_with_gemini("I want you to give me the resume as per the "
+            "previous guidelines, not the job description")
+            self.save_to_file(applicant_name,  pattern.search(text))
+
+    def save_to_file(self, applicant_name, match):
+        full_string = match.group()
+        logging.log(logging.DEBUG, f"found full string {full_string}")
+    
+        docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}', applicant_name, text)
+
 
     def analyze_from_links(self, links_text):
         links = self.get_links(links_text)
@@ -82,10 +95,7 @@ class LLMLogicHanlder():
 
     
     def get_links_from_html(self,html_snippet):
-        # Regular expression to find the HREF attribute value
         link_pattern = re.compile(r'HREF="([^"]+)"')
-
-        # Search for the pattern in the HTML snippet
         match = link_pattern.search(html_snippet)
 
         if match:
@@ -113,19 +123,9 @@ class LLMLogicHanlder():
             return ""
         
         return content
-    
-    def send_file_to_gemini(self, file_path):
-        file_text = self.read_file(file_path)
-        if file_text == None or file_text == "":
-            logging.log(logging.ERROR, "file content null")
-            return False, "Error while trying to reach gemini"
-        logging.log(logging.DEBUG, "file has been read, sending to LLM")
-        text = self.gemini_agent.chat_with_gemini(file_text)
-        return True, text
-    
+        
     def get_guide_lines(self, applicant_name):
-        file_path = f'{os.getcwd()}/{self.CURRENT_PATH}'    
+        file_path = f'{self.RESUME_FILES_PATH_PREFIX}/guidelines.txt'    
         file_text = self.read_file(file_path)
         guide_lines = file_text.replace('***applicant_name***', applicant_name)
         return guide_lines
-        
