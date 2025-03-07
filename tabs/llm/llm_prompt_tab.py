@@ -65,7 +65,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         
         button_layout = QHBoxLayout()  # Create a QHBoxLayout
         button_layout.addWidget(self.btn_send_files_to_llm)  # Add the button
-        button_layout.setAlignment(Qt.AlignmentFlag.AlignRight)  # Align to right
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)  # Align to right
         self.llm_layout.addLayout(button_layout)  # Add the layout to the main layout
 
 
