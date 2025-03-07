@@ -21,3 +21,7 @@ tabs/*__pycache__
 *.pdf
 tabs/llm/llm-config.json
 tabs/llm/resume/*
+tabs/llm/llm_agents/__pycache__/*
+tabs/llm/file_stylers/__pycache__/*
+*/__pycache__/*
+tabs/llm/config/chat_bot_keys.txt
