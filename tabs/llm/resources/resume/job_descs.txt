@@ -1,0 +1,31 @@
+Java Backend Developer- Infra
+Tel Aviv, Israel · Full-time
+About the position
+As we continue to grow, we are looking for a talented and experienced Backend Developer to join our Infrastructure Team and play a key role in shaping the foundation of our products. 
+
+Responsibilities
+Work closely with architects, product managers, and cross-functional teams to design, build, and enhance the infrastructure powering our products
+Provide long-term solutions for deep and complex problems affecting multiple teams/products, ensuring high performance, scalability and maintainability
+Full ownership of the entire development cycle, including requirements gathering and refinement, design, development, testing, deployment and maintenance
+Research, evaluate, and recommend new technologies, creative solutions and architectural approaches with cross-organizational impact
+Take ownership of infrastructure design and implementation, optimizing for hybrid deployment models (SaaS, on-prem, cloud)
+Deliver design and code that meet high standards of quality, efficiency and flexibility
+Troubleshoot and debug backend issues and provide timely resolution
+Requirements
+Bachelor's degree in Computer Science, Software Engineering, or a related field
+3-5 years of experience in backend development, with a focus on infrastructure and system design
+Strong proficiency in Java, with experience in designing scalable systems
+Hands-on experience with K8s
+Solid understanding of databases (SQL & NoSQL)
+Proactive, self-motivated team player with a growth mindset and ability to work independently
+Excellent problem-solving and analytical skills
+Excellent communication skills—ability to articulate technical concepts to various stakeholders
+Passion for learning and adapting to new technologies
+Nice to have
+Experience with Python
+Experience with Helm
+Experience with Cloud platforms (AWS, GCP, or Azure)
+Familiarity with CI/CD pipelines and automation tools
+Exposure to microservices architecture and distributed systems
+Familiarity with Agile development methodologies
+Knowledge of observability tools

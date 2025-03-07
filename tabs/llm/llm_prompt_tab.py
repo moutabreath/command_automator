@@ -1,25 +1,25 @@
 import json
 import os
-import chardet
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QTextEdit, QSpacerItem, QSizePolicy, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
-import logging
+from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
 
-from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.text_editor import TextEditor
 from tabs.llm.llm_logic_handler import LLMLogicHanlder
 
 
 class LLMPromptTab(QtWidgets.QWidget):
-    CURRENT_PATH = '/tabs/llm'
-    MAIN_FILE_PATH = 'main_file_path'
+    MAIN_FILE_PATH = 'main_file_path' 
     SECONDARY_FILE_PATH = 'secondary_file_dir'
-    CONFIG_FILE_PATH = f'{os.getcwd()}/{CURRENT_PATH}/llm-config.json'
+    APPLICANT_NAME_TAG = 'applicant_name'
+    applicant_name_value = ''
   
     def __init__(self):
         super().__init__()
 
-        self.lLLMLogicHanldeR = LLMLogicHanlder()
+        self.lLLMLogicHanlder = LLMLogicHanlder()
+        self.CONFIG_FILE_PATH = f'{os.getcwd()}/{self.lLLMLogicHanlder.CURRENT_PATH}/llm-config.json'
+
+        self.worker = None
 
         self.llm_layout = QVBoxLayout()
 
@@ -90,8 +90,9 @@ class LLMPromptTab(QtWidgets.QWidget):
         # self.btn_query_llm.setStyleSheet("color: gray;")
 
         text = self.txtBoxQuery.toPlainText()
-        text = self.lLLMLogicHanldeR.chat_with_gemini(text)
-
+        success, text = self.lLLMLogicHanlder.gemini_agent.chat_with_gemini(text)
+        if (not(success)):
+            self.txtBoxResponse.setText("An error occured when chatting with llm")
 
         self.btn_query_llm.setEnabled(True)
         self.btn_query_llm.setStyleSheet(old_style_sheet)
@@ -99,63 +100,29 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txtBoxResponse.setText(text)
     
     def get_resume(self):
-        initial_dir = os.getcwd() + "/tabs/llm/resume"
         selected_file_name = QFileDialog.getOpenFileName(self, 'Open file',
-                                                         initial_dir, "Docx, PDF or txtfiles (*.docx *.pdf, *.txt)")
+                                                         self.lLLMLogicHanlder.RESUME_FILES_PATH_PREFIX, "Docx, PDF or txt files (*.docx *.pdf, *.txt)")
         self.txt_bx_main_file_input.setText(selected_file_name[0])
 
     def get_job_desc_dir(self):
-        initial_dir = os.getcwd() + "/tabs/llm/jobs_descriptions"
-        selected_dir = QFileDialog.getExistingDirectory(self, 'Select Directory', initial_dir)
-        self.txt_bx_secondary_files_input.setText(selected_dir)
+        # initial_dir = os.getcwd() + "/tabs/llm/jobs_descriptions"
+        # selected_dir = QFileDialog.getExistingDirectory(self, 'Select Directory', initial_dir)
+        selected_file_name = QFileDialog.getOpenFileName(self, 'Open file',
+                                                          self.lLLMLogicHanlder.RESUME_FILES_PATH_PREFIX, "txt files (*.txt)")
+        self.txt_bx_secondary_files_input.setText(selected_file_name[0])
 
     def start_resume_building(self):
         resume_path = self.txt_bx_main_file_input.text()
-        reume_text = self.get_resume_from_file(resume_path)
-        if reume_text == None or reume_text == "":
-            logging.log(logging.ERROR, "file content null")
-            self.txtBoxResponse.setText("Error while trying to reach gemini")
-            return
-        logging.log(logging.DEBUG, "Resume file has been read, sending to LLM")
-        for chunk in self.lLLMLogicHanldeR.stream_chat_with_gemini(reume_text):
-            self.txtBoxResponse.append(chunk)
-
-
-    def get_resume_from_file(self, file_path):
-        line = None
-        content = ''
-        try:
-            with open(file_path, 'rb') as file:
-                raw_data = file.read()
-                result = chardet.detect(raw_data)
-                file_encoding = result['encoding']
-
-
-            with open(file_path, 'r',  encoding=file_encoding) as file:
-               
-                line = file.readline()
-                
-                while line:
-                    content += line
-                    line = file.readline()
-        except UnicodeDecodeError as e:
-            logging.log(logging.ERROR,"Error reading resume file: UnicodeDecodeError", e)
-            return ""
-        except IOError as e:
-            logging.log(logging.ERROR,"Error reading resume file", e)
-            return ""
-        
-        return content
-    
+        job_desc_path = self.txt_bx_secondary_files_input.text()
+        response = self.lLLMLogicHanlder.start_resume_building(self.applicant_name_value, resume_path, job_desc_path)
+        self.txtBoxResponse.setText(response)
     
     def setup_save_configuration_events(self):
         self.txt_bx_main_file_input.textChanged.connect(self.save_additional_text)
         self.txt_bx_secondary_files_input.textChanged.connect(self.save_additional_text)
-
    
     def save_additional_text(self):
         self.save_configuration()
-
     
     def load_configuration(self):
         try:
@@ -170,6 +137,8 @@ class LLMPromptTab(QtWidgets.QWidget):
             self.txt_bx_main_file_input.setText(data[self.MAIN_FILE_PATH])
         if self.SECONDARY_FILE_PATH  in data and data[self.SECONDARY_FILE_PATH] != "":
             self.txt_bx_secondary_files_input.setText(data[self.SECONDARY_FILE_PATH])
+        if self.APPLICANT_NAME_TAG  in data and data[self.APPLICANT_NAME_TAG] != "":
+            self.applicant_name_value = data[self.APPLICANT_NAME_TAG]
         try:
             f.close()
         except IOError:
@@ -179,7 +148,8 @@ class LLMPromptTab(QtWidgets.QWidget):
     def save_configuration(self):
         data = {
             self.MAIN_FILE_PATH: self.txt_bx_main_file_input.text(),
-            self.SECONDARY_FILE_PATH: self.txt_bx_secondary_files_input.text()
+            self.SECONDARY_FILE_PATH: self.txt_bx_secondary_files_input.text(),
+            self.SECONDARY_FILE_PATH: self.applicant_name_value
         }
         with open(self.CONFIG_FILE_PATH, "w") as file:
             json.dump(data, file, indent=4)

@@ -1,0 +1,16 @@
+I am going to give you two prompts.
+The first is this, with my resume, and guidlines.
+The second will be one or more job descriptions
+For each job description, adjust my resume according to those job descriptions.
+
+Guidelines:
+Indicate years of experience, roles, and relevant work environments.
+Emphasizing achievements and practical results.
+Detail relevant technical skills and software.
+Summarize the relevant education.
+Emphasizing added values and keywords suitable for the job.
+after loading a job description, extract the company name and print ***applicant_name****_[company_name].docx, and replace [company_name] with the company name you have extracted.
+Important:
+Full suitability for the job.
+Use only information that appears on my resume.
+Indicate missing keywords at the end.
