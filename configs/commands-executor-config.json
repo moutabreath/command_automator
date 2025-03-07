@@ -1,5 +1,0 @@
-{
-    "selected_script": "Replace parenthesis",
-    "additional_text": "{\n            {1,1,0},\n            {0,1,1},\n            {0,1,1},\n            {0,1,1},\n            {0,1,1},\n            {0,1,1},\n            {0,1,2}\n        };  ",
-    "flags": "{ [ } ]"
-}
