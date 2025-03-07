@@ -1,0 +1,2 @@
+openai=<your gemini api key>
+gemini=<your chat gpt api key>
