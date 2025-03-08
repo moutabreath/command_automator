@@ -60,26 +60,23 @@ class LLMLogicHanlder():
         pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
         match = pattern.search(text)
         if match:
-            self.save_to_file(applicant_name, text)
+            self.save_to_file(applicant_name, match, text)
         else:
             text = self.gemini_agent.chat_with_gemini("I want you to give me the resume as per the "
             "previous guidelines, not the job description")
-            self.save_to_file(applicant_name,  pattern.search(text))
+            self.save_to_file(applicant_name,  pattern.search(text), text)
 
-    def save_to_file(self, applicant_name, match):
+    def save_to_file(self, applicant_name, match, text):
         full_string = match.group()
-        logging.log(logging.DEBUG, f"found full string {full_string}")
-    
+        logging.log(logging.DEBUG, f"found full string {full_string}")    
         docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}', applicant_name, text)
-
 
     def analyze_from_links(self, links_text):
         links = self.get_links(links_text)
         response = ""
         for link in links:    
             text = self.gemini_agent.chat_with_gemini(link)
-            response +=text     
-
+            response +=text
 
     def get_links(self, links_text) -> List[str]:
         links_array = links_text.split('\n')
