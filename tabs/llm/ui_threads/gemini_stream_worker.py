@@ -16,4 +16,4 @@ class GeminiStreamWorker(QThread):
         # Each 'chunk' is expected to have a 'text' attribute.
         response = self.gemini_agent.stream_chat_with_gemini(self.prompt)
         for chunk in response:
-            self.chunk_signal.emit(chunk.text)
+            self.chunk_signal.emit(chunk)

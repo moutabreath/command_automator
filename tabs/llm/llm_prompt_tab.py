@@ -1,12 +1,17 @@
 import json
+import logging
 import os
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit
+from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
 from PyQt6.QtCore import Qt 
+from PyQt6.QtCore import QThreadPool
+from PyQt6.QtGui import QMovie
 
 from python_utils.pyqt.runnable_worker import Signals
 from python_utils.pyqt.text_editor import TextEditor
 from tabs.llm.llm_logic_handler import LLMLogicHanlder
+from tabs.llm.ui_threads.gemini_stream_worker import GeminiStreamWorker
+from tabs.llm.ui_threads.gemini_ui_worker import GeminiUIWorker
 
 
 class LLMPromptTab(QtWidgets.QWidget):
@@ -17,13 +22,25 @@ class LLMPromptTab(QtWidgets.QWidget):
   
     def __init__(self):
         super().__init__()
-
+        # Consts
         self.lLLMLogicHanlder = LLMLogicHanlder()
         self.CONFIG_FILE_PATH = f'{os.getcwd()}/{self.lLLMLogicHanlder.CURRENT_PATH}/llm-config.json'
 
+        # UI threads
         self.signals = Signals()
+        self.thread_pool = QThreadPool.globalInstance()
+        self.gemini_ui_worker = None
 
-        self.llm_layout = QVBoxLayout()
+        # modal window
+        self.modal_layout = None
+        self.modal_window = QtWidgets.QMainWindow()
+        self.movie = QMovie('resources\\loader.gif')
+        self.central_widget = QtWidgets.QWidget(self.modal_window)
+        self.movie_label = QtWidgets.QLabel(self)
+
+
+        # UI layout
+        self.main_layout = QVBoxLayout()
 
         self.txtBoxResponse = QTextEdit()
         self.btn_query_llm = QPushButton('Send Query')
@@ -35,14 +52,13 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txt_bx_secondary_files_input = QLineEdit()
         self.btn_select_seconadary_dir = QPushButton("Job files dir")
         self.btn_send_files_to_llm = QPushButton("Chat using files")
-
         
         hBoxLayoutResponse = QHBoxLayout()
         
         self.txtBoxResponse.setReadOnly(True)
         self.txtBoxResponse.setStyleSheet("color: white;")
         hBoxLayoutResponse.addWidget(self.txtBoxResponse)      
-        self.llm_layout.addLayout(hBoxLayoutResponse)
+        self.main_layout.addLayout(hBoxLayoutResponse)
 
         hBoxLayoutButtonAndQuery = QHBoxLayout()            
         
@@ -51,7 +67,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txtBoxQuery.setStyleSheet("color: white;")
         hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
         hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)        
-        self.llm_layout.addLayout(hBoxLayoutButtonAndQuery)    
+        self.main_layout.addLayout(hBoxLayoutButtonAndQuery)    
     
 
         # File inputs section        
@@ -62,20 +78,20 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.btn_send_files_to_llm.clicked.connect(self.start_resume_building)        
 
         self.init_files_display(bxFiles)
-        self.llm_layout.addLayout(bxFiles)
+        self.main_layout.addLayout(bxFiles)
         
-        button_layout = QHBoxLayout()  # Create a QHBoxLayout
-        button_layout.addWidget(self.btn_send_files_to_llm)  # Add the button
-        button_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)  # Align to right
-        self.llm_layout.addLayout(button_layout)  # Add the layout to the main layout
+        button_layout = QHBoxLayout()
+        button_layout.addWidget(self.btn_send_files_to_llm)
+        button_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
+        self.main_layout.addLayout(button_layout)
 
+        self.setLayout(self.main_layout)
 
+        # Configurations
         self.load_configuration()
         self.setup_save_configuration_events()
-     
-     
 
-        self.setLayout(self.llm_layout)
+ 
 
     def init_files_display(self, vBoxFiles: QVBoxLayout):
         boxTxtBx = QVBoxLayout()
@@ -92,20 +108,17 @@ class LLMPromptTab(QtWidgets.QWidget):
         vBoxFiles.addLayout(bxButtons)
 
 
-    def send_to_chat_gpt(self): 
-        self.btn_query_llm.setEnabled(False)
-        old_style_sheet = self.btn_query_llm.styleSheet()
-        # self.btn_query_llm.setStyleSheet("color: gray;")
-
+    def send_to_chat_gpt(self):
         text = self.txtBoxQuery.toPlainText()
-        success, text = self.lLLMLogicHanlder.gemini_agent.chat_with_gemini(text)
-        if (not(success)):
-            self.txtBoxResponse.setText("An error occured when chatting with llm")
+        
+        self.worker = GeminiStreamWorker(text, self.lLLMLogicHanlder.gemini_agent)        
+        self.worker.chunk_signal.connect(self.update_text)        
+        self.worker.start()
 
-        self.btn_query_llm.setEnabled(True)
-        self.btn_query_llm.setStyleSheet(old_style_sheet)
+    def update_text(self, chunk):
+        # Append the new text chunk to the text area
+        self.txtBoxResponse.insertPlainText(chunk)
 
-        self.txtBoxResponse.setText(text)
     
     def get_resume(self):
         selected_file_name = QFileDialog.getOpenFileName(self, 'Open file',
@@ -124,14 +137,45 @@ class LLMPromptTab(QtWidgets.QWidget):
         job_desc_path = self.txt_bx_secondary_files_input.text()
         response = self.lLLMLogicHanlder.start_resume_building(self.applicant_name_value, resume_path, job_desc_path)
         self.txtBoxResponse.setText(response)
+
+
+    def run_command(self, process_input):
+        try:
+            self.gemini_ui_worker = GeminiUIWorker(1)
+            self.gemini_ui_worker.signals.completed.connect(self.start_animation)
+            self.gemini_ui_worker.signals.started.connect(self.stop_animation)
+            self.gemini_ui_worker.prompt = process_input
+            self.thread_pool.start(self.gemini_ui_worker)
+        except IOError as e:
+            logging.log(logging.ERROR, "run_command: error", e)
+
+    def start_animation(self, n):
+        self.start_animation_in_movie(self.main_layout, self.modal_layout,
+                                            self.movie_label, self.movie)
+
+    def stop_animation(self, n):
+        self.stop_animation_in_movie(self.main_layout, self.modal_layout, 
+                                           self.movie_label, self.movie)
+
     
+    def start_animation_in_movie(main_layout: QtWidgets.QVBoxLayout, spinner_layout: QVBoxLayout,
+                             movie_label: QLabel, movie: QMovie):
+        main_layout.addLayout(spinner_layout)
+        movie_label.show()
+        movie.start()
+
+
+    def stop_animation_in_movie(main_layout: QtWidgets.QHBoxLayout, spinner_layout: QVBoxLayout,
+                           movie_label: QLabel, movie: QMovie):
+        movie.stop()
+        movie_label.hide()
+        main_layout.removeItem(spinner_layout)
+            
+    # save and load previous texts
     def setup_save_configuration_events(self):
-        self.txt_bx_main_file_input.textChanged.connect(self.save_additional_text)
-        self.txt_bx_secondary_files_input.textChanged.connect(self.save_additional_text)
-   
-    def save_additional_text(self):
-        self.save_configuration()
-    
+        self.txt_bx_main_file_input.textChanged.connect(self.save_configuration)
+        self.txt_bx_secondary_files_input.textChanged.connect(self.save_configuration)
+  
     def load_configuration(self):
         try:
             if not os.path.exists(self.CONFIG_FILE_PATH):
