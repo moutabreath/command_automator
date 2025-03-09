@@ -1,9 +1,11 @@
 import logging
+from typing import Tuple
 
 from PyQt6.QtCore import QRunnable, QObject, pyqtSignal as Signal, pyqtSlot as Slot
 
 from tabs.llm.llm_agents.gemini_agent import GeminiAgent
-from typing import Tuple
+from tabs.llm.llm_logic_handler import LLMLogicHanlder
+
 
 class Signals(QObject):
     started = Signal(int)
@@ -13,36 +15,33 @@ class Signals(QObject):
 class GeminiUIWorker(QRunnable):
     def __init__(self, n):
         super().__init__()
-        self.n = n
         self.signals = Signals()
-        self.agent_response: Tuple[bool, str] = None
-        self.err = []
-        self.use_python_class = False
-        self.gemini_agent = GeminiAgent()
-        self.prompt = ""
+        self.agent_response: str = None
+        self.err = None
+        self.n = n 
+        self.llm_logic_handler: LLMLogicHanlder = None
+        self.gemini_agent = None
+        self.input = []
     
-    def set_prompt(self, prompt):
-        self.prompt = prompt
 
     @Slot()
     def run(self):
-        logging.log(logging.DEBUG, "entered")
+        logging.debug("entered")
         self.signals.started.emit(self.n)
-        logging.log(logging.DEBUG, "emit 'started'")
+        logging.debug("emit 'started'")
         try:
-            success, response = self.gemini_agent.chat_with_gemini(self.prompt)
-            if not(success):
-                logging.log(logging.ERORR, f"error {str(self.err)} {type(self.err)}" )
-                return
-            self.agent_response = success, response
+            applicant_name = input[0]
+            resume_path = input[1]
+            job_desc_path = input[2]
+            logging.debug(f'({applicant_name}, {resume_path}, {job_desc_path})')
+            response = self.llm_logic_handler.start_resume_building(applicant_name, resume_path, job_desc_path)
+            self.agent_response = response
         except TimeoutError as ex:
-            self.err = str(ex)
-            logging.log(logging.ERROR, self.err, ex)
+            logging.error("Error" , ex)
         except Exception as ex1:
-            self.err = str(ex1)
-            logging.log(logging.ERROR, self.err, ex1)
+            logging.error("Error" , ex1)
         try:
             self.signals.completed.emit(self.n)
-            logging.log(logging.DEBUG, "emit 'completed'")
+            logging.debug("emit 'completed'")
         except Exception as ex2:
-            logging.log(logging.ERROR, self.err, ex2)
+            logging.error("error" , ex2)

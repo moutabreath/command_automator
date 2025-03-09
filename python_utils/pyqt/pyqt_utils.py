@@ -74,7 +74,12 @@ def stop_animation_in_movie(code_tab_layout: QtWidgets.QHBoxLayout, spinner_and_
 
 def make_dark_mode(pyqtWidget):
     # Set dark mode style
-    pyqtWidget.setStyleSheet("""QWidget { color: #333; background-color: #222; }
+    pyqtWidget.setStyleSheet("""
+    QWidget { 
+        color: #333; 
+        background-color: #222; 
+    }
+
 
     QTabBar::tab {
         color: #fff; 

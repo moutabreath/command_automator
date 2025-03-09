@@ -188,7 +188,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
         button_kill_mono = QPushButton('Kill App')
         button_kill_mono.setToolTip(CommandAutomator.KILL_APP_KEY_SHORTCUT)
-        button_kill_mono.setStyleSheet("color: #fff; background-color: red; border-radius: 5px; padding: 5px;}")
+        # button_kill_mono.setStyleSheet("color: #fff; background-color: red; border-radius: 5px; padding: 5px;}")
         button_run_mono = QPushButton('Start app')
         button_run_mono.setToolTip(CommandAutomator.RUN_APP_KEY_SHORTCUT)
 

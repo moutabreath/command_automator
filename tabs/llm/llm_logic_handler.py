@@ -35,7 +35,8 @@ class LLMLogicHanlder():
 
     def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str):
         guide_lines = self.get_guide_lines(applicant_name_value)
-        resume = self.read_file(resume_path)
+        logging.debug(f"guide_lines: {guide_lines}")
+        resume = self.read_file(resume_path)        
         prompt = f"{guide_lines} \n\n my resume:\n "
         prompt += resume
         success, resume_response = self.gemini_agent.chat_with_gemini(prompt)

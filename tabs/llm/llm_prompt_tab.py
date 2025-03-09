@@ -32,7 +32,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.gemini_ui_worker = None
 
         # modal window
-        self.modal_layout = None
+        self.modal_layout = QVBoxLayout()
         self.modal_window = QtWidgets.QMainWindow()
         self.movie = QMovie('resources\\loader.gif')
         self.central_widget = QtWidgets.QWidget(self.modal_window)
@@ -56,7 +56,6 @@ class LLMPromptTab(QtWidgets.QWidget):
         hBoxLayoutResponse = QHBoxLayout()
         
         self.txtBoxResponse.setReadOnly(True)
-        self.txtBoxResponse.setStyleSheet("color: white;")
         hBoxLayoutResponse.addWidget(self.txtBoxResponse)      
         self.main_layout.addLayout(hBoxLayoutResponse)
 
@@ -64,7 +63,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         
         self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
         
-        self.txtBoxQuery.setStyleSheet("color: white;")
+        # self.txtBoxQuery.setStyleSheet("color: white;")
         hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
         hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)        
         self.main_layout.addLayout(hBoxLayoutButtonAndQuery)    
@@ -134,17 +133,13 @@ class LLMPromptTab(QtWidgets.QWidget):
 
     def start_resume_building(self):
         resume_path = self.txt_bx_main_file_input.text()
-        job_desc_path = self.txt_bx_secondary_files_input.text()
-        response = self.lLLMLogicHanlder.start_resume_building(self.applicant_name_value, resume_path, job_desc_path)
-        self.txtBoxResponse.setText(response)
-
-
-    def run_command(self, process_input):
+        job_desc_path = self.txt_bx_secondary_files_input.text()        
         try:
             self.gemini_ui_worker = GeminiUIWorker(1)
+            self.gemini_ui_worker.llm_logic_handler = self.lLLMLogicHanlder
             self.gemini_ui_worker.signals.completed.connect(self.start_animation)
             self.gemini_ui_worker.signals.started.connect(self.stop_animation)
-            self.gemini_ui_worker.prompt = process_input
+            self.gemini_ui_worker.input = [self.applicant_name_value, resume_path, job_desc_path]
             self.thread_pool.start(self.gemini_ui_worker)
         except IOError as e:
             logging.log(logging.ERROR, "run_command: error", e)
@@ -158,14 +153,14 @@ class LLMPromptTab(QtWidgets.QWidget):
                                            self.movie_label, self.movie)
 
     
-    def start_animation_in_movie(main_layout: QtWidgets.QVBoxLayout, spinner_layout: QVBoxLayout,
+    def start_animation_in_movie(self, main_layout: QtWidgets.QVBoxLayout, spinner_layout: QVBoxLayout,
                              movie_label: QLabel, movie: QMovie):
         main_layout.addLayout(spinner_layout)
         movie_label.show()
         movie.start()
 
 
-    def stop_animation_in_movie(main_layout: QtWidgets.QHBoxLayout, spinner_layout: QVBoxLayout,
+    def stop_animation_in_movie(self, main_layout: QtWidgets.QHBoxLayout, spinner_layout: QVBoxLayout,
                            movie_label: QLabel, movie: QMovie):
         movie.stop()
         movie_label.hide()
