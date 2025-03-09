@@ -1,10 +1,10 @@
 import json
 import logging
 import os
+
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
-from PyQt6.QtCore import Qt 
-from PyQt6.QtCore import QThreadPool
+from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
+from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
 from PyQt6.QtGui import QMovie
 
 from python_utils.pyqt.runnable_worker import Signals
@@ -31,13 +31,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.thread_pool = QThreadPool.globalInstance()
         self.gemini_ui_worker = None
 
-        # modal window
-        self.modal_layout = QVBoxLayout()
-        self.modal_window = QtWidgets.QMainWindow()
-        self.movie = QMovie('resources\\loader.gif')
-        self.central_widget = QtWidgets.QWidget(self.modal_window)
-        self.movie_label = QtWidgets.QLabel(self)
-
+       
 
         # UI layout
         self.main_layout = QVBoxLayout()
@@ -86,9 +80,26 @@ class LLMPromptTab(QtWidgets.QWidget):
 
         self.setLayout(self.main_layout)
 
+        # modal window
+        self.spinner_layout = QVBoxLayout()
+        self.modal_window = QMainWindow()
+        self.movie = QMovie('resources\\loader.gif')
+        self.central_widget = QWidget(self.modal_window)
+        self.movie_label = QLabel(self)
+        self.spinner_layout.addWidget(self.movie_label)
+
+        self.setup_spinner()
         # Configurations
         self.load_configuration()
         self.setup_save_configuration_events()
+
+    def setup_spinner(self):
+        self.central_widget.setObjectName("main-widget")
+        self.movie_label.setGeometry(QRect(25, 25, 200, 200))
+        self.movie_label.setMinimumSize(QSize(250, 250))
+        self.movie_label.setMaximumSize(QSize(250, 250))
+        self.movie_label.setObjectName("lb1")
+        self.movie_label.setMovie(self.movie)
 
  
 
@@ -137,19 +148,19 @@ class LLMPromptTab(QtWidgets.QWidget):
         try:
             self.gemini_ui_worker = GeminiUIWorker(1)
             self.gemini_ui_worker.llm_logic_handler = self.lLLMLogicHanlder
-            self.gemini_ui_worker.signals.completed.connect(self.start_animation)
-            self.gemini_ui_worker.signals.started.connect(self.stop_animation)
+            self.gemini_ui_worker.signals.completed.connect(self.stop_animation)
+            self.gemini_ui_worker.signals.started.connect(self.start_animation)
             self.gemini_ui_worker.input = [self.applicant_name_value, resume_path, job_desc_path]
             self.thread_pool.start(self.gemini_ui_worker)
         except IOError as e:
             logging.log(logging.ERROR, "run_command: error", e)
 
     def start_animation(self, n):
-        self.start_animation_in_movie(self.main_layout, self.modal_layout,
+        self.start_animation_in_movie(self.main_layout, self.spinner_layout,
                                             self.movie_label, self.movie)
 
     def stop_animation(self, n):
-        self.stop_animation_in_movie(self.main_layout, self.modal_layout, 
+        self.stop_animation_in_movie(self.main_layout, self.spinner_layout, 
                                            self.movie_label, self.movie)
 
     

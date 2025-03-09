@@ -6,7 +6,7 @@ from datetime import datetime
 
 import PyQt6
 import keyboard
-from PyQt6.QtWidgets import QWidget, QPlainTextEdit, QSpacerItem, QComboBox, QPushButton, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget, QSizePolicy, QFileDialog, QApplication
+from PyQt6.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QSpacerItem, QComboBox, QPushButton, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget, QSizePolicy, QFileDialog, QApplication
 from PyQt6.QtGui import QIcon, QMovie
 from PyQt6 import QtCore
 from qtpy import QtWidgets, QtCore
@@ -44,16 +44,14 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.txt_box_result = QPlainTextEdit()
         self.txt_box_description = QPlainTextEdit()
 
-
-        self.sub_main_vertical_box_layout = None
         self.main_layout = None
         
         self.btn_cancel_exec = QPushButton('Cancel')
         self.spinner_layout = None
-        self.window_alt = QtWidgets.QMainWindow()
+        self.modal_window = QMainWindow()
         self.movie = QMovie('resources\\loader.gif')
-        self.central_widget = QtWidgets.QWidget(self.window_alt)
-        self.movie_label = QtWidgets.QLabel(self)
+        self.central_widget = QWidget(self.modal_window)
+        self.movie_label = QLabel(self)
 
         self.setup_spinner()
         self.init_display()

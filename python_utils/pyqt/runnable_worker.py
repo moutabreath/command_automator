@@ -36,16 +36,16 @@ class RunnableWorker(QRunnable):
                 logging.log(logging.ERORR, f"error {str(self.err)} {type(self.err)}" )
         except TimeoutError as ex:
             self.err = str(ex)
-            logging.log(logging.ERROR, self.err, ex)
+            logging.log(logging.ERROR, self.err,  exc_info = True)
 
         except Exception as ex1:
             self.err = str(ex1)
-            logging.log(logging.ERROR, self.err, ex1)
+            logging.log(logging.ERROR, self.err, exc_info = True)
         try:
             self.signals.completed.emit(self.n)
             logging.log(logging.DEBUG, "emit 'completed'")
         except Exception as ex2:
-            logging.log(logging.ERROR, self.err, ex2)
+            logging.log(logging.ERROR, self.err,  exc_info = True)
 
 
     def cancel_execution(self):
