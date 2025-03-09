@@ -25,3 +25,5 @@ tabs/llm/llm_agents/__pycache__/*
 tabs/llm/file_stylers/__pycache__/*
 */__pycache__/*
 tabs/llm/config/chat_bot_keys.txt
+tabs/llm/screenshot_saver.py
+tabs/llm/ui_threads/__pycache__/*

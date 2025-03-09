@@ -10,7 +10,8 @@ class TextEditor(QTextEdit):
         self.setAcceptRichText(False)  # For plain text editing
         self.textChanged.connect(self.onTextChanged)
         self.setFixedHeight(30)
-
+        self.setStyleSheet("color: white;")
+        
     def onTextChanged(self):
         if self.toPlainText():
             self.setPlaceholderText("")
