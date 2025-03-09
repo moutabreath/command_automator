@@ -159,21 +159,14 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
 
     def load_configuration(self):
-        try:
-            f = open('configs\\commands-executor-config.json')
-        except IOError:
-            return
-
-        data = json.load(f)
+        with open('configs\\commands-executor-config.json', 'r') as f:
+            data = json.load(f)
+    
         pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
         if 'additional_text' in data and data['additional_text'] != "":
             self.txt_box_free_text.document().setPlainText(data["additional_text"])
         if 'flags' in data and data['flags'] != "":
             self.txt_box_flags.setText(data['flags'])
-        try:
-            f.close()
-        except IOError:
-            return
 
 
     def save_configuration(self):
