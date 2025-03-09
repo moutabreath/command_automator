@@ -46,10 +46,10 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
 
         self.sub_main_vertical_box_layout = None
-        self.code_tab_layout = None
+        self.main_layout = None
         
-        self.btn_cancel_exec = PyQt6.QtWidgets.QPushButton('Cancel')
-        self.spinner_and_cancel_v_layout = None
+        self.btn_cancel_exec = QPushButton('Cancel')
+        self.spinner_layout = None
         self.window_alt = QtWidgets.QMainWindow()
         self.movie = QMovie('resources\\loader.gif')
         self.central_widget = QtWidgets.QWidget(self.window_alt)
@@ -75,14 +75,11 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         pyqt_utils.make_dark_mode(self)
         self.setup_save_configuration_events()
 
-        # Create a tab widget
         tab_widget = QTabWidget()
 
-        # Create the tab for the code snippet
-        code_tab = QWidget()
+        script_exec_tab = QWidget()
 
-        # Create a vertical box layout for the code snippet tab
-        self.code_tab_layout = QVBoxLayout()
+        self.main_layout = QVBoxLayout()
 
         spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding)
         work_trees_layout = self.create_work_trees_elements(spacer_item)
@@ -94,14 +91,14 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         button_execute_script.clicked.connect(self.execute_script)
         horizontal_box_scripts_and_button = pyqt_utils.create_horizontal_box(self.action_list, button_execute_script,
                                                                              spacer_item)
-        self.code_tab_layout = pyqt_utils.add_blank_line(self.code_tab_layout, work_trees_layout,
+        self.main_layout = pyqt_utils.add_blank_line(self.main_layout, work_trees_layout,
                                                          horizontal_box_scripts_and_button)
         seperator = pyqt_utils.create_horizontal_separator()
-        self.code_tab_layout.addWidget(seperator)
+        self.main_layout.addWidget(seperator)
         label_description = QLabel("Script Description")
         self.txt_box_description = QPlainTextEdit()
-        self.code_tab_layout.addWidget(label_description)
-        self.code_tab_layout.addWidget(self.txt_box_description)
+        self.main_layout.addWidget(label_description)
+        self.main_layout.addWidget(self.txt_box_description)
         label_free_text = QLabel('Command Text (Ony If Applicable)')
         label_result_text = QLabel('Command Result')
         label_flags = QLabel('Additional Arguments/Flags')
@@ -115,21 +112,21 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         free_text_and_result.addWidget(separator)
         free_text_and_result.addLayout(self.box_layout_result)
 
-        self.spinner_and_cancel_v_layout = QVBoxLayout()
+        self.spinner_layout = QVBoxLayout()
         self.btn_cancel_exec.clicked.connect(self.cancel_script_exec)
-        self.spinner_and_cancel_v_layout.addWidget(self.movie_label)
+        self.spinner_layout.addWidget(self.movie_label)
         cancel_btn_layout = QHBoxLayout()
         cancel_btn_layout.addWidget(self.btn_cancel_exec)
         cancel_btn_layout.addItem(spacer_item)
-        self.code_tab_layout.addWidget(separator)
-        self.code_tab_layout.addLayout(free_text_and_result)
-        self.spinner_and_cancel_v_layout.addLayout(cancel_btn_layout)
+        self.main_layout.addWidget(separator)
+        self.main_layout.addLayout(free_text_and_result)
+        self.spinner_layout.addLayout(cancel_btn_layout)
 
         # Set the layout for the code snippet tab
-        code_tab.setLayout(self.code_tab_layout)
+        script_exec_tab.setLayout(self.main_layout)
 
         # Add the code snippet tab to the tab widget
-        tab_widget.addTab(code_tab, "App and Scripts Runner")
+        tab_widget.addTab(script_exec_tab, "App and Scripts Runner")
         tab_widget.addTab(LLMPromptTab(), "LLM")
 
         # Add the tab widget to the main window
@@ -233,11 +230,11 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.thread_runner.run_command(args, self.stop_animation, self.start_animation, new_venv)
 
     def start_animation(self, n):
-        pyqt_utils.start_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec,
+        pyqt_utils.start_animation_in_movie(self.main_layout, self.spinner_layout, self.btn_cancel_exec,
                                             self.movie_label, self.movie)
 
     def stop_animation(self, n):
-        pyqt_utils.stop_animation_in_movie(self.code_tab_layout, self.spinner_and_cancel_v_layout, self.btn_cancel_exec, 
+        pyqt_utils.stop_animation_in_movie(self.main_layout, self.spinner_layout, self.btn_cancel_exec, 
                                            self.movie_label, self.movie)
         result,err = self.thread_runner.get_run_result()
         string_result = self.logic_handler.get_string_from_thread_result(result, err)
