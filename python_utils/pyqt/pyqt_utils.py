@@ -71,38 +71,83 @@ def stop_animation_in_movie(code_tab_layout: QtWidgets.QHBoxLayout, spinner_and_
     movie_label.hide()
     code_tab_layout.removeItem(spinner_and_cancel_v_layout)
 
-
 def make_dark_mode(pyqtWidget):
-    # Set dark mode style
     pyqtWidget.setStyleSheet("""
-    QWidget { 
-        color: #333; 
-        background-color: #222; 
-    }
+        QWidget { 
+            color: #333; 
+            background-color: #222; 
+        }
 
+        QTabBar::tab {
+            color: #fff; 
+            background-color: #222; 
+            border: 0.5px solid #9EA3F5;
+            border-bottom-color: #9EA3F5;
+            border-top-color: #9EA3F5;
+            border-top-left-radius: 0.5px;
+            border-top-right-radius: 0.5px;
+            min-width: 8ex;
+            padding: 2px;
+        }
 
-    QTabBar::tab {
-        color: #fff; 
-        background-color: #222; 
-        border: 0.5px solid green;
-        border-bottom-color: solid green; /* same as the pane color */
-        border-top-color: solid green; /* same as the pane color */
-        border-top-left-radius: 0.5px;
-        border-top-right-radius: 0.5px;
-        min-width: 8ex;
-        padding: 2px;
-    }
+        QTabBar::tab:selected {
+            color: #222;
+            background-color: #9EA3F5;
+        }
 
-    /* Apply dark mode to the selected tab title */
-    QTabBar::tab:selected {
-        color: #222;
-        background-color: green;
-    }
-    QLabel { color: #fff; border: 1px; border-radius: 5px; padding: 5px; } 
-    QCheckBox { color: #fff; border: 1px; border-radius: 5px; padding: 5px; } 
-    QPushButton { color: #fff; background-color: green; border-radius: 5px; padding: 5px;} 
-    QComboBox {color: #fff; background-color: #222; border: 2px solid green} 
-    QComboBox:items{ color: #fff; border: 2px solid green }
-    QListView{ color:  #fff; }
-    QLineEdit {color: #fff; border: 2px solid green } 
-    QPlainTextEdit {color: #fff; border: 2px solid green}  """)
+        QLabel { 
+            color: #fff; 
+            padding: 5px; 
+        } 
+
+        QCheckBox { 
+            color: #fff; 
+            border: 1px solid #9EA3F5; 
+            border-radius: 5px; 
+            padding: 5px; 
+        } 
+
+        QPushButton { 
+            color: #fff; 
+            background-color: #9EA3F5; 
+            border-radius: 5px; 
+            padding: 5px;
+        } 
+
+        QComboBox {
+            color: #fff; 
+            background-color: #222; 
+            border: 2px solid #9EA3F5;
+            padding: 5px;
+            border-radius: 3px;
+        } 
+
+        QListView { 
+            color: #fff;
+            border: 2px solid #9EA3F5;
+        }
+
+        QLineEdit {
+            color: #fff; 
+            background-color: #222;
+            border: 2px solid #9EA3F5;
+            border-radius: 3px;
+            padding: 5px;
+        } 
+
+        QPlainTextEdit {
+            color: #fff; 
+            background-color: #222;
+            border: 2px solid #9EA3F5;
+            border-radius: 3px;
+            padding: 5px;
+        } 
+
+        QTextEdit {
+            color: #fff; 
+            background-color: #222;
+            border: 2px solid #9EA3F5;
+            border-radius: 3px;
+            padding: 5px;
+        }
+    """)

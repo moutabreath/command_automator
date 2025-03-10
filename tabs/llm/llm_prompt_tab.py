@@ -37,6 +37,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.main_layout = QVBoxLayout()
 
         self.txtBoxResponse = QTextEdit()
+        self.txtBoxResponse.setStyleSheet("color: white;")
         self.btn_query_llm = QPushButton('Send Query')
         self.txtBoxQuery = TextEditor('Message LLM')
 
@@ -153,7 +154,12 @@ class LLMPromptTab(QtWidgets.QWidget):
             self.gemini_ui_worker.input = [self.applicant_name_value, resume_path, job_desc_path]
             self.thread_pool.start(self.gemini_ui_worker)
         except IOError as e:
-            logging.log(logging.ERROR, "run_command: error", e)
+            logging.exception("run_command: error", e)
+            self.stop_animation(1)
+        except Exception as e:
+            logging.exception("run_command: error", e)
+            self.stop_animation(1)
+
 
     def start_animation(self, n):
         self.start_animation_in_movie(self.main_layout, self.spinner_layout,
@@ -174,9 +180,50 @@ class LLMPromptTab(QtWidgets.QWidget):
     def stop_animation_in_movie(self, main_layout: QtWidgets.QHBoxLayout, spinner_layout: QVBoxLayout,
                            movie_label: QLabel, movie: QMovie):
         movie.stop()
-        movie_label.hide()
+        movie_label.hide()        
         main_layout.removeItem(spinner_layout)
+        if self.gemini_ui_worker.agent_response == "":
+              self.txtBoxResponse.setText("Something went wrong")
+              return
+        self.update_response()
             
+    def format_response_for_display(self,response_text):
+        # Split the text into lines
+        lines = response_text.split('\n')
+        formatted_lines = []
+        
+        for line in lines:
+            line = line.strip()
+            if line.startswith('**'):
+                # Handle bold lines (remove ** and wrap in bold tags)
+                text = line[2:].strip()  # Remove ** from start
+                if text.endswith('**'):
+                    text = text[:-2]  # Remove ** from end if present
+                formatted_lines.append(f"<b>{text}</b>")
+            elif line.startswith('*'):
+                # Handle list items (remove * and add bullet point)
+                text = line[1:].strip()
+                formatted_lines.append(f"• {text}")
+            else:
+                # Regular text
+                formatted_lines.append(line)
+        
+        # Join with HTML line breaks
+        return "<br>".join(formatted_lines)
+
+    # In your code where you update the text box:
+    def update_response(self):
+        response_text = self.gemini_ui_worker.agent_response
+        formatted_html = self.format_response_for_display(response_text)
+        self.txtBoxResponse.setHtml(formatted_html)
+
+    # If you need to preserve existing text:
+    def append_response(self):
+        response_text = self.gemini_ui_worker.agent_response
+        formatted_html = self.format_response_for_display(response_text)
+        current_html = self.txtBoxResponse.toHtml()
+        self.txtBoxResponse.setHtml(current_html + formatted_html)
+
     # save and load previous texts
     def setup_save_configuration_events(self):
         self.txt_bx_main_file_input.textChanged.connect(self.save_configuration)
