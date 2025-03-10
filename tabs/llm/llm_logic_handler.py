@@ -61,7 +61,7 @@ class LLMLogicHanlder():
             if match:
                 full_string = match.group()
                 logging.log(logging.DEBUG, f"found full string {full_string}")    
-                docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}', applicant_name, text)
+                docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}.docx', applicant_name, text)
         except Exception:
             logging.error("Error saving resume", exc_info=True)
 
