@@ -1,8 +1,5 @@
-I am going to give you two prompts.
-The first is this, guidelines and a detailed resume.
-The second will be one or more job descriptions separated by ***
-For each job description, I need you to revise my resume to emphasize skills and experiences relevant to the job description.
-
+Here is my resume,
+I need you to revise my resume to emphasize skills and experiences relevant to the job description.
 Guidelines:
 
 1.  Rewrite existing resume bullet points to align with the skills and qualifications mentioned in the job description below.
@@ -11,8 +8,6 @@ Guidelines:
 4. Adjust the wording of my resume to use similar wording and terminology to the job description provided.
 5. The output should be a re-written version of my resume using the same section headers (e.g., 'Experience', 'Skills', 'Education') as the original resume.
 
-Do not provide a summary of the job description.
-Do not create entirely new bullet points; focus on modifying existing ones.
-Do not include any introductory or concluding remarks; only output the revised resume.
-
-Here is my resume:
+Do not include any introductory or concluding remarks; only output the revised resume. 
+Extract the company name from the job description 
+At the begining of my resume, write ***applicant_name***_Company_Name where _Company_Name is the company name you extracted

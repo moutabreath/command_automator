@@ -10,8 +10,9 @@ from tabs.llm.llm_agents.gpt_agent import GptAgent
 class LLMLogicHanlder():
 
     CURRENT_PATH = '/tabs/llm'
-    RESUME_FILES_PATH_PREFIX = f'{os.getcwd()}/{CURRENT_PATH}/resources/resume'
-    OUTPUT_RESUME_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/tailored_resume'
+    LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'
+    RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
+    OUTPUT_RESUME_PATH_PREFIX = f'{LLM_RESOURCES}/tailored_resume'
     CONFIG_PATH_PREFIX = f'{os.getcwd()}/{CURRENT_PATH}/config'
 
     def __init__(self):
@@ -37,40 +38,32 @@ class LLMLogicHanlder():
         guide_lines = self.get_guide_lines(applicant_name_value)
         logging.debug(f"guide_lines: {guide_lines}")
         resume = self.read_file(resume_path)        
-        prompt = f"{guide_lines} \n\n my resume:\n "
+        prompt = f"{guide_lines} \n\n"
         prompt += resume
-        success, resume_response = self.gemini_agent.chat_with_gemini(prompt)
-        if (not(success)):
-            logging.log("Error sending resume", resume_response)
-            return "Something went wrong"
-        prompt = "Here are the job descriptions\n"
+        prompt += "\n\n\n"
         job_desc__content = self.read_file(job_desc_path)
         if (job_desc__content == ""):
-            logging.log("Error reading job descriptions")
-            return "Something went wrong"        
+            logging.error("Error reading job descriptions")
+            return ""        
         prompt += job_desc__content
         success, jobs_desc_response = self.gemini_agent.chat_with_gemini(prompt)
         if (not(success)):
-            logging.log("Error sending job descriptions", jobs_desc_response)
-            return "Something went wrong"
-        self.get_tesullt_to_save(applicant_name_value, jobs_desc_response)
+            logging.error("Error sending job descriptions", jobs_desc_response)
+            return ""
+        self.get_result_to_save(applicant_name_value, jobs_desc_response)
         return jobs_desc_response
 
     
-    def get_tesullt_to_save(self, applicant_name, text):
+    def get_result_to_save(self, applicant_name, text):
         pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
         match = pattern.search(text)
-        if match:
-            self.save_to_file(applicant_name, match, text)
-        else:
-            text = self.gemini_agent.chat_with_gemini("I want you to give me the resume as per the "
-            "previous guidelines, not the job description")
-            self.save_to_file(applicant_name,  pattern.search(text), text)
-
-    def save_to_file(self, applicant_name, match, text):
-        full_string = match.group()
-        logging.log(logging.DEBUG, f"found full string {full_string}")    
-        docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}', applicant_name, text)
+        try:
+            if match:
+                full_string = match.group()
+                logging.log(logging.DEBUG, f"found full string {full_string}")    
+                docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}', applicant_name, text)
+        except Exception:
+            logging.error("Error saving resume", exc_info=True)
 
     def analyze_from_links(self, links_text):
         links = self.get_links(links_text)

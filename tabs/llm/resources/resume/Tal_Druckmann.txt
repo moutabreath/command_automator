@@ -36,17 +36,18 @@ One of my projects here was to set up Elasticsearch (ELK stack).
 Server Side Software Engineer * Amdocs 
 2015 - 2016 
 Amdocs creates softwares for telecommunication centers.
-Worked on the Ordering Management System using maven and java.
+ - Worked on the Ordering Management System using maven and java.
 
 Full Stack Engineer * Sinapis Technologies Ltd 
 2014 - 2015
 Sinapis is a project company.
-During my time here, I delivered a project that otherwise would have failed.The work included developing projects using varied technologies including PHP, Backbone.js, and Java Spring.
+- During my time here, I delivered a project that otherwise would have failed.The work included developing projects using varied technologies including PHP, Backbone.js, and Java Spring.
 
 Server Side Software Engineer * Personite 
 2013
-This startup's product was an app that scans the web and shows information that might be interesting to read for its users. For that I had to learn C# from scratch.
-I have improved the object oriented design and written some complex sql scripts.
+This startup's product was an app that scans the web and shows information that might be interesting to read for its users. 
+ - I had to learn C# from scratch.
+ - I have improved the object oriented design and written some complex sql scripts.
 
 Personal Project:
 Github: https://github.com/moutabreath/CatanGameManager
