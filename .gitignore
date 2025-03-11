@@ -28,3 +28,4 @@ tabs/llm/config/chat_bot_keys.txt
 tabs/llm/screenshot_saver.py
 tabs/llm/ui_threads/__pycache__/*
 tabs/llm/resources/tailored_resume/*
+deploy/*

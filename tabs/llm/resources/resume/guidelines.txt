@@ -1,12 +1,13 @@
 Here is my resume,
 I need you to revise my resume to emphasize skills and experiences relevant to the job description.
-Guidelines:
 
-1.  Rewrite existing resume bullet points to align with the skills and qualifications mentioned in the job description below.
-2.  Prioritize and highlight bullet points that demonstrate experience directly related to Software Development.
-3.  Incorporate keywords from the job description naturally within the revised bullet points.
+Guidelines:
+1. Rewrite existing resume bullet points to align with the skills and qualifications mentioned in the job description below.
+2. Prioritize and highlight bullet points that demonstrate experience directly related to Software Development.
+3. Incorporate keywords from the job description naturally within the revised bullet points.
 4. Adjust the wording of my resume to use similar wording and terminology to the job description provided.
-5. The output should be a re-written version of my resume using the same section headers (e.g., 'Experience', 'Skills', 'Education') as the original resume.
+5. The output should be a re-written version of my resume using the same section headers (e.g., 'About me', 'Experience',', 'Education') as the original resume.
+6. Wherever possible, add metrics.
 
 Do not include any introductory or concluding remarks; only output the revised resume. 
 Extract the company name from the job description 

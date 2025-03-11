@@ -1,3 +1,4 @@
+import glob
 import logging
 import os
 from typing import List
@@ -26,14 +27,16 @@ class LLMLogicHanlder():
         self.gpt_agent = GptAgent(llm_agents_keys[GptAgent.API_KEY_NAME])      
 
     def get_keys(self):
-        with open(f'{self.CONFIG_PATH_PREFIX}/chat_bot_keys.txt', 'r') as file:
+        files = glob.glob(os.getcwd() + '/**/chat_bot_keys.txt', recursive=True)
+        with open(files[0], 'r') as file:
             agent_keys = {}
             for line in file:
                 key_line_parts = line.split("=")
                 agent_keys[key_line_parts[0]] = key_line_parts[1]
             return agent_keys
-
-
+         # Return the first match
+        return None
+        
     def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str):
         guide_lines = self.get_guide_lines(applicant_name_value)
         logging.debug(f"guide_lines: {guide_lines}")
