@@ -4,7 +4,7 @@ import os
 
 import keyboard
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QWidget, QSizePolicy, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
+from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
 from PyQt6.QtGui import QMovie
 
@@ -21,6 +21,7 @@ class LLMPromptTab(QtWidgets.QWidget):
     APPLICANT_NAME_TAG = 'applicant_name'
     applicant_name_value = ''
     SEND_QUERY_KEYBOARD_SHORTCUT = 'enter'
+    OUTPUT_RESUME_DIR_PATH = "output_resume_path"
   
     def __init__(self):
         super().__init__()
@@ -44,10 +45,14 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txtBoxQuery = TextEditor('Message LLM')
 
         self.txt_bx_main_file_input = QLineEdit()
-        self.btn_select_main_file = QPushButton("Select Resume File")
+        self.btn_select_main_file = QPushButton("Resume File")
 
-        self.txt_bx_secondary_files_input = QLineEdit()
-        self.btn_select_seconadary_dir = QPushButton("Job files dir")
+        self.txt_bx_secondary_files_input = QLineEdit()        
+        self.btn_select_secondary_dir = QPushButton("Job Description File")
+
+        self.txt_bx_resume_output = QLineEdit()
+        self.btn_select_ouput_location = QPushButton("Resume File Output Dir")
+
         self.btn_send_files_to_llm = QPushButton("Chat using files")
 
         hBoxLayoutResponse = QHBoxLayout()
@@ -70,8 +75,10 @@ class LLMPromptTab(QtWidgets.QWidget):
         bxFiles = QHBoxLayout()
 
         self.btn_select_main_file.clicked.connect(self.get_resume)        
-        self.btn_select_seconadary_dir.clicked.connect(self.get_job_desc_dir)        
+        self.btn_select_secondary_dir.clicked.connect(self.get_job_desc_dir)        
+        self.btn_select_ouput_location.clicked.connect(self.get_output_location)
         self.btn_send_files_to_llm.clicked.connect(self.start_resume_building)        
+        
 
         self.init_files_display(bxFiles)
         self.main_layout.addLayout(bxFiles)
@@ -118,22 +125,24 @@ class LLMPromptTab(QtWidgets.QWidget):
 
     def init_files_display(self, vBoxFiles: QVBoxLayout):
         boxTxtBx = QVBoxLayout()
-
         boxTxtBx.addWidget(self.txt_bx_main_file_input)
         boxTxtBx.addWidget(self.txt_bx_secondary_files_input)
+        boxTxtBx.addWidget(self.txt_bx_resume_output)
 
         vBoxFiles.addLayout(boxTxtBx)
 
         bxButtons = QVBoxLayout()
         bxButtons.addWidget(self.btn_select_main_file)
-        bxButtons.addWidget(self.btn_select_seconadary_dir)
+        bxButtons.addWidget(self.btn_select_secondary_dir)
+        bxButtons.addWidget(self.btn_select_ouput_location)
         
         vBoxFiles.addLayout(bxButtons)
 
 
     def send_to_chat_gpt(self):
         text = self.txtBoxQuery.toPlainText()
-        
+        if (text == None or text == ''):
+            return
         self.worker = GeminiStreamWorker(text, self.lLLMLogicHanlder.gemini_agent)        
         self.worker.chunk_signal.connect(self.update_text)        
         self.worker.start()
@@ -149,21 +158,25 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txt_bx_main_file_input.setText(selected_file_name[0])
 
     def get_job_desc_dir(self):
-        # initial_dir = os.getcwd() + "/tabs/llm/jobs_descriptions"
-        # selected_dir = QFileDialog.getExistingDirectory(self, 'Select Directory', initial_dir)
         selected_file_name = QFileDialog.getOpenFileName(self, 'Open file',
                                                           self.lLLMLogicHanlder.RESUME_FILES_PATH_PREFIX, "txt files (*.txt)")
         self.txt_bx_secondary_files_input.setText(selected_file_name[0])
 
+    def get_output_location(self):
+        selected_dir = QFileDialog.getExistingDirectory(self, 'Select Directory',
+                                                         self.lLLMLogicHanlder.OUTPUT_RESUME_PATH_PREFIX)
+        self.txt_bx_resume_output.setText(selected_dir)
+
     def start_resume_building(self):
         resume_path = self.txt_bx_main_file_input.text()
-        job_desc_path = self.txt_bx_secondary_files_input.text()        
+        job_desc_path = self.txt_bx_secondary_files_input.text()      
+        resume_output_path = self.txt_bx_resume_output.text()  
         try:
             self.gemini_ui_worker = GeminiUIWorker(1)
             self.gemini_ui_worker.llm_logic_handler = self.lLLMLogicHanlder
             self.gemini_ui_worker.signals.completed.connect(self.stop_animation)
             self.gemini_ui_worker.signals.started.connect(self.start_animation)
-            self.gemini_ui_worker.input = [self.applicant_name_value, resume_path, job_desc_path]
+            self.gemini_ui_worker.input = [self.applicant_name_value, resume_path, job_desc_path, resume_output_path]
             self.thread_pool.start(self.gemini_ui_worker)
         except IOError as e:
             logging.exception("run_command: error", e)
@@ -240,6 +253,7 @@ class LLMPromptTab(QtWidgets.QWidget):
     def setup_save_configuration_events(self):
         self.txt_bx_main_file_input.textChanged.connect(self.save_configuration)
         self.txt_bx_secondary_files_input.textChanged.connect(self.save_configuration)
+        self.txt_bx_resume_output.textChanged.connect(self.save_configuration)
   
     def load_configuration(self):
         try:
@@ -256,6 +270,8 @@ class LLMPromptTab(QtWidgets.QWidget):
             self.txt_bx_secondary_files_input.setText(data[self.SECONDARY_FILE_PATH])
         if self.APPLICANT_NAME_TAG  in data and data[self.APPLICANT_NAME_TAG] != "":
             self.applicant_name_value = data[self.APPLICANT_NAME_TAG]
+        if self.OUTPUT_RESUME_DIR_PATH  in data and data[self.OUTPUT_RESUME_DIR_PATH] != "":
+             self.txt_bx_resume_output.setText(data[self.OUTPUT_RESUME_DIR_PATH])
         try:
             f.close()
         except IOError:
@@ -266,7 +282,8 @@ class LLMPromptTab(QtWidgets.QWidget):
         data = {
             self.MAIN_FILE_PATH: self.txt_bx_main_file_input.text(),
             self.SECONDARY_FILE_PATH: self.txt_bx_secondary_files_input.text(),
-            self.SECONDARY_FILE_PATH: self.applicant_name_value
+            self.APPLICANT_NAME_TAG: self.applicant_name_value,
+            self.OUTPUT_RESUME_DIR_PATH: self.txt_bx_resume_output.text()
         }
         with open(self.CONFIG_FILE_PATH, "w") as file:
             json.dump(data, file, indent=4)

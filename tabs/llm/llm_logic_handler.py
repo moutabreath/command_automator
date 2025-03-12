@@ -37,7 +37,7 @@ class LLMLogicHanlder():
          # Return the first match
         return None
         
-    def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str):
+    def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str, output_path: str):
         guide_lines = self.get_guide_lines(applicant_name_value)
         logging.debug(f"guide_lines: {guide_lines}")
         resume = self.read_file(resume_path)        
@@ -53,18 +53,18 @@ class LLMLogicHanlder():
         if (not(success)):
             logging.error("Error sending job descriptions", jobs_desc_response)
             return ""
-        self.get_result_to_save(applicant_name_value, jobs_desc_response)
+        self.get_result_to_save(applicant_name_value, jobs_desc_response, output_path)
         return jobs_desc_response
 
     
-    def get_result_to_save(self, applicant_name, text):
+    def get_result_to_save(self, applicant_name, text, output_path):
         pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
         match = pattern.search(text)
         try:
             if match:
                 full_string = match.group()
                 logging.log(logging.DEBUG, f"found full string {full_string}")    
-                docx_styler.save_resume_as_word(f'{self.OUTPUT_RESUME_PATH_PREFIX}/{full_string}.docx', applicant_name, text)
+                docx_styler.save_resume_as_word(f'{output_path}/{full_string}.docx', applicant_name, text)
         except Exception:
             logging.error("Error saving resume", exc_info=True)
 
@@ -108,10 +108,10 @@ class LLMLogicHanlder():
                     content += line
                     line = file.readline()
         except UnicodeDecodeError as e:
-            logging.log(logging.ERROR,"Error reading resume file: UnicodeDecodeError", e)
+            logging.error("Error reading resume file: UnicodeDecodeError", exc_info=True)
             return ""
         except IOError as e:
-            logging.log(logging.ERROR,"Error reading resume file", e)
+            logging.error("Error reading resume file", exc_info=True)
             return ""
         
         return content

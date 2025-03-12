@@ -33,8 +33,9 @@ class GeminiUIWorker(QRunnable):
             applicant_name = self.input[0]
             resume_path = self.input[1]
             job_desc_path = self.input[2]
-            logging.debug(f'({applicant_name}, {resume_path}, {job_desc_path})')
-            response = self.llm_logic_handler.start_resume_building(applicant_name, resume_path, job_desc_path)
+            output_path = self.input[3]
+            logging.debug(f'({applicant_name}, {resume_path}, {job_desc_path}, {output_path})')
+            response = self.llm_logic_handler.start_resume_building(applicant_name, resume_path, job_desc_path, output_path)
             self.agent_response = response
         except TimeoutError as ex:
             logging.error("Error",  exc_info=True)
