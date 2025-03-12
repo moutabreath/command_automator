@@ -20,7 +20,7 @@ def save_resume_as_word(file_path, applicant_name, resume_text):
         if line.startswith('**'):
             # Remove the ** and add as bold text
             p = doc.add_paragraph()
-            if line.endsWith('**'):
+            if line.endswith('**'):
                 line = line[:-2]
             run = p.add_run(line[2:])  # Remove the first two characters (**)
             run.bold = True

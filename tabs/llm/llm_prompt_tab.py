@@ -2,8 +2,9 @@ import json
 import logging
 import os
 
+import keyboard
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
+from PyQt6.QtWidgets import QMainWindow, QWidget, QSizePolicy, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
 from PyQt6.QtGui import QMovie
 
@@ -19,6 +20,7 @@ class LLMPromptTab(QtWidgets.QWidget):
     SECONDARY_FILE_PATH = 'secondary_file_dir'
     APPLICANT_NAME_TAG = 'applicant_name'
     applicant_name_value = ''
+    SEND_QUERY_KEYBOARD_SHORTCUT = 'enter'
   
     def __init__(self):
         super().__init__()
@@ -47,7 +49,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txt_bx_secondary_files_input = QLineEdit()
         self.btn_select_seconadary_dir = QPushButton("Job files dir")
         self.btn_send_files_to_llm = QPushButton("Chat using files")
-        
+
         hBoxLayoutResponse = QHBoxLayout()
         
         self.txtBoxResponse.setReadOnly(True)
@@ -93,6 +95,10 @@ class LLMPromptTab(QtWidgets.QWidget):
         # Configurations
         self.load_configuration()
         self.setup_save_configuration_events()
+        self.init_keyboard_shortcuts()
+
+    def init_keyboard_shortcuts(self):
+        keyboard.add_hotkey(LLMPromptTab.SEND_QUERY_KEYBOARD_SHORTCUT, self.send_to_chat_gpt)
 
     def setup_spinner(self):
         self.central_widget.setObjectName("main-widget")
@@ -101,6 +107,12 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.movie_label.setMaximumSize(QSize(250, 250))
         self.movie_label.setObjectName("lb1")
         self.movie_label.setMovie(self.movie)
+    
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
+            self.sendMessage()
+        else:
+            super().keyPressEvent(event)
 
  
 

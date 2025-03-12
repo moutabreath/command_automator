@@ -20,7 +20,7 @@ class GeminiAgent:
             )
             return True, response.text
         except Exception as ex:
-            logging.log(logging.ERROR, "error communicating with gemini", ex)
+            logging.error("error communicating with gemini", exc_info=True)
             return False, "error"
     
 
