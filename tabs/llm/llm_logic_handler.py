@@ -44,27 +44,29 @@ class LLMLogicHanlder():
         prompt = f"{guide_lines} \n\n"
         prompt += resume
         prompt += "\n\n\n"
-        job_desc__content = self.read_file(job_desc_path)
-        if (job_desc__content == ""):
+        job_desc_content = self.read_file(job_desc_path)
+        if (job_desc_content == ""):
             logging.error("Error reading job descriptions")
             return ""        
-        prompt += job_desc__content
-        success, jobs_desc_response = self.gemini_agent.chat_with_gemini(prompt)
+        prompt += job_desc_content
+        success, reponse = self.gemini_agent.chat_with_gemini(prompt)
         if (not(success)):
-            logging.error("Error sending job descriptions", jobs_desc_response)
+            logging.error("Error sending job descriptions", reponse)
             return ""
-        self.get_result_to_save(applicant_name_value, jobs_desc_response, output_path)
-        return jobs_desc_response
+        self.get_result_to_save(applicant_name_value, reponse, output_path)
+        success, cover_letter =  self.gemini_agent.chat_with_gemini(f"Here is my resume {resume}. Add cover letter according to the job description: \n {job_desc_content}")
+        docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}_Cover_letter.docx', applicant_name_value, cover_letter)
+        return reponse +"\n\n\n" + cover_letter
 
-    
+    resume_file_name = "Missing"
     def get_result_to_save(self, applicant_name, text, output_path):
         pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
         match = pattern.search(text)
         try:
             if match:
-                full_string = match.group()
-                logging.log(logging.DEBUG, f"found full string {full_string}")    
-                docx_styler.save_resume_as_word(f'{output_path}/{full_string}.docx', applicant_name, text)
+                self.resume_file_name = match.group()
+                logging.log(logging.DEBUG, f"found full string {self.resume_file_name}")    
+                docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}.docx', applicant_name, text)
         except Exception:
             logging.error("Error saving resume", exc_info=True)
 
