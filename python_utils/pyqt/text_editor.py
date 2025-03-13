@@ -9,7 +9,7 @@ class TextEditor(QTextEdit):
     def initUI(self):
         self.setAcceptRichText(False)  # For plain text editing
         self.textChanged.connect(self.onTextChanged)
-        self.setFixedHeight(50)
+        self.setFixedHeight(30)
         self.setStyleSheet("color: white;")
         
     def onTextChanged(self):

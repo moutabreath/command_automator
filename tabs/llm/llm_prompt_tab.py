@@ -213,22 +213,13 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.update_response()
             
     def format_response_for_display(self,response_text):
-        # Split the text into lines
         lines = response_text.split('\n')
         formatted_lines = []
         
         for line in lines:
             line = line.strip()
-            if line.startswith('**'):
-                # Handle bold lines (remove ** and wrap in bold tags)
-                text = line[2:].strip()  # Remove ** from start
-                if text.endswith('**'):
-                    text = text[:-2]  # Remove ** from end if present
-                formatted_lines.append(f"<b>{text}</b>")
-            elif line.startswith('*'):
-                # Handle list items (remove * and add bullet point)
-                text = line[1:].strip()
-                formatted_lines.append(f"• {text}")
+            if "*" in line:
+                formatted_lines.append(f"<b>{line}</b>")
             else:
                 # Regular text
                 formatted_lines.append(line)
