@@ -7,6 +7,7 @@ from qtpy import QtWidgets
 from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
 from PyQt6.QtGui import QMovie
+from PyQt6.QtGui import QShortcut, QKeySequence
 
 from python_utils.pyqt.runnable_worker import Signals
 from python_utils.pyqt.text_editor import TextEditor
@@ -26,23 +27,26 @@ class LLMPromptTab(QtWidgets.QWidget):
     def __init__(self):
         super().__init__()
         # Consts
-        self.lLLMLogicHanlder = LLMLogicHanlder()
-        self.CONFIG_FILE_PATH = f'{os.getcwd()}/{self.lLLMLogicHanlder.CURRENT_PATH}/llm-config.json'
+        self.lLLMLogicHanlder: LLMLogicHanlder = LLMLogicHanlder()
+        self.CONFIG_FILE_PATH: str = f'{os.getcwd()}/{self.lLLMLogicHanlder.CURRENT_PATH}/llm-config.json'
 
         # UI threads
-        self.signals = Signals()
+        self.signals: Signals = Signals()
         self.thread_pool = QThreadPool.globalInstance()
         self.gemini_ui_worker = None
 
-       
+        # self.worker: GeminiStreamWorker = GeminiStreamWorker("", self.lLLMLogicHanlder.gemini_agent)        
+        # self.worker.chunk_signal.connect(self.update_text)
+        # self.worker.finished_signal.connect(self.enable_button)
+        
 
         # UI layout
-        self.main_layout = QVBoxLayout()
+        self.main_layout: QVBoxLayout = QVBoxLayout()
 
-        self.txtBoxResponse = QTextEdit()
+        self.txtBoxResponse: QTextEdit = QTextEdit()
         self.txtBoxResponse.setStyleSheet("color: white;")
-        self.btn_query_llm = QPushButton('Send Query')
-        self.txtBoxQuery = TextEditor('Message LLM')
+        self.btn_query_llm: QPushButton = QPushButton('Send Query')
+        self.txtBoxQuery: TextEditor = TextEditor('Message LLM')
 
         self.txt_bx_main_file_input = QLineEdit()
         self.btn_select_main_file = QPushButton("Resume File")
@@ -105,7 +109,8 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.init_keyboard_shortcuts()
 
     def init_keyboard_shortcuts(self):
-        keyboard.add_hotkey(LLMPromptTab.SEND_QUERY_KEYBOARD_SHORTCUT, self.send_to_chat_gpt)
+        self.shortcut = QShortcut(QKeySequence("Enter"), self)
+        self.shortcut.activated.connect(self.send_to_chat_gpt)
 
     def setup_spinner(self):
         self.central_widget.setObjectName("main-widget")
@@ -115,9 +120,9 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.movie_label.setObjectName("lb1")
         self.movie_label.setMovie(self.movie)
     
-    def keyPressEvent(self, event):
+    def key_pressed_event(self, event):
         if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
-            self.sendMessage()
+            self.send_to_chat_gpt()
         else:
             super().keyPressEvent(event)
 
@@ -143,13 +148,34 @@ class LLMPromptTab(QtWidgets.QWidget):
         text = self.txtBoxQuery.toPlainText()
         if (text == None or text == ''):
             return
-        self.worker = GeminiStreamWorker(text, self.lLLMLogicHanlder.gemini_agent)        
-        self.worker.chunk_signal.connect(self.update_text)        
-        self.worker.start()
+        # self.worker = GeminiStreamWorker()
+        # self.worker.chunk_signal.connect(self.update_text)
+        # self.worker.finished_signal.connect(self.enable_button)
+
+        self.worker = GeminiStreamWorker()
+        self.worker.set_required(text, self.lLLMLogicHanlder.gemini_agent)
+        self.worker.signals.received.connect(self.update_text)
+        self.worker.signals.completed.connect(self.enable_button)
+
+        self.worker.set_required(text, self.lLLMLogicHanlder.gemini_agent)    
+        
+        self.worker.prompt = text
+        self.txtBoxResponse.setAlignment(Qt.AlignmentFlag.AlignRight)
+        self.txtBoxResponse.append(f"\n\n {self.txtBoxQuery.toPlainText()}")
+        self.txtBoxQuery.setText("")
+        self.txtBoxResponse.setAlignment(Qt.AlignmentFlag.AlignLeft)
+        self.txtBoxQuery.setReadOnly(True)
+        self.btn_query_llm.setEnabled(False)
+        self.thread_pool.start(self.worker)
 
     def update_text(self, chunk):
         # Append the new text chunk to the text area
-        self.txtBoxResponse.insertPlainText(chunk)
+        logging.debug(f"update_text: {chunk}")
+        self.txtBoxResponse.append(chunk)
+    
+    def enable_button(self):
+        self.btn_query_llm.setEnabled(True)
+        self.txtBoxQuery.setReadOnly(False)
 
     
     def get_resume(self):
