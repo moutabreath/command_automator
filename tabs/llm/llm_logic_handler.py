@@ -54,7 +54,7 @@ class LLMLogicHanlder():
             logging.error("Error sending job descriptions", reponse)
             return ""
         self.get_result_to_save(applicant_name_value, reponse, output_path)
-        success, cover_letter =  self.gemini_agent.chat_with_gemini(f"Here is my resume {resume}. Add cover letter according to the job description: \n {job_desc_content}")
+        success, cover_letter =  self.gemini_agent.chat_with_gemini(f"Here is my resume {resume}. Add a cover letter, without a reumse according to the job description: \n {job_desc_content}")
         docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}_Cover_letter.docx', applicant_name_value, cover_letter)
         return reponse +"\n\n\n" + cover_letter
 
@@ -104,7 +104,7 @@ class LLMLogicHanlder():
         line = None
         content = ''
         try:
-            with open(file_path, 'r') as file:               
+            with open(file_path, 'r', encoding="utf8") as file:               
                 line = file.readline()                
                 while line:
                     content += line
