@@ -161,7 +161,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         
         self.worker.prompt = text
         self.txtBoxResponse.setAlignment(Qt.AlignmentFlag.AlignRight)
-        self.txtBoxResponse.append(f"\n\n {self.txtBoxQuery.toPlainText()}")
+        self.txtBoxResponse.append(f"{self.txtBoxQuery.toPlainText()}\n\n")
         self.txtBoxQuery.setText("")
         self.txtBoxResponse.setAlignment(Qt.AlignmentFlag.AlignLeft)
         self.txtBoxQuery.setReadOnly(True)

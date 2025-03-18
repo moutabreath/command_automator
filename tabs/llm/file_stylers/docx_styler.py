@@ -11,7 +11,7 @@ from docx.oxml.shared import OxmlElement
 def save_resume_as_word(file_path, applicant_name, resume_text):
     # Create a Word document
     doc = Document()
-    keywords = ["education", "professional experience", "about me", "contact"]    
+    keywords = ["education", "professional experience", "about me", "contact", "personal projects "]    
     
     style = doc.styles['Normal']
     style.paragraph_format.line_spacing_rule = 1
@@ -45,19 +45,21 @@ def save_resume_as_word(file_path, applicant_name, resume_text):
             continue           
 
         if "*" in line:
-            p = doc.add_paragraph()
+            p = doc.add_paragraph()            
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
-     
-            run = p.add_run(line) 
+            line.replace("**", "")
+            run = p.add_run(line)
             run.bold = True
-        elif line.startswith('-'):
+            continue
+        if line.startswith('-'):
             p = doc.add_paragraph(line[1:], style='ListBullet')
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
-
-        else:
-            p = doc.add_paragraph(line)
+            continue
+        p = doc.add_paragraph(line)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
 
     doc.save(file_path)
 
