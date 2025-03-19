@@ -22,7 +22,7 @@ class LogicHandler:
 
     def load_scripts_config(self):
         try:
-            f = open('configs\\scripts_config.json')
+            f = open('config\\scripts_config.json')
         except IOError:
             return
         data = json.load(f)

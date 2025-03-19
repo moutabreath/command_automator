@@ -157,7 +157,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
 
 
     def load_configuration(self):
-        with open('configs\\commands-executor-config.json', 'r') as f:
+        with open('config\\commands-executor-config.json', 'r') as f:
             data = json.load(f)
     
         pyqt_utils.set_selected_value(data, self.action_list, "selected_script")
@@ -173,7 +173,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
             "additional_text": self.txt_box_free_text.toPlainText(),
             "flags": self.txt_box_flags.text()
         }
-        with open("configs\\commands-executor-config.json", "w") as file:
+        with open("config\\commands-executor-config.json", "w") as file:
             json.dump(data, file, indent=4)
 
     def execute_on_keypress(self):
