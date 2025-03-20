@@ -29,3 +29,4 @@ tabs/llm/screenshot_saver.py
 tabs/llm/ui_threads/__pycache__/*
 tabs/llm/resources/tailored_resume/*
 deploy/*
+tabs/llm/resources/resume/Tal_Druckmann.txt

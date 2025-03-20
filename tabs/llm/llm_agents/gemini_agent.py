@@ -15,9 +15,7 @@ class GeminiAgent:
 
     def chat_with_gemini(self, prompt) -> Tuple[bool, str]:
         try:
-            response = self.gemin_client.models.generate_content(
-                model='gemini-2.0-flash-001', contents=prompt
-            )
+            response = self.chat.send_message(prompt)
             return True, response.text
         except Exception as ex:
             logging.error("error communicating with gemini", exc_info=True)
