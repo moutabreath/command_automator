@@ -40,6 +40,7 @@ class LLMLogicHanlder():
     def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str, output_path: str):
         guide_lines = self.get_guide_lines(applicant_name_value)
         logging.debug(f"guide_lines: {guide_lines}")
+        resume_sections = self.get_resume_sections()
         resume = self.read_file(resume_path)        
         prompt = f"{guide_lines} \n\n"
         prompt += resume
@@ -53,22 +54,27 @@ class LLMLogicHanlder():
         if (not(success)):
             logging.error("Error sending job descriptions", reponse)
             return ""
-        self.get_result_to_save(applicant_name_value, reponse, output_path)
-        success, cover_letter =  self.gemini_agent.chat_with_gemini(f"Here is my resume {resume}. Add a cover letter, without a reumse according to the job description: \n {job_desc_content}")
-        docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}_Cover_letter.docx', applicant_name_value, cover_letter)
+        self.get_result_to_save(applicant_name_value, reponse, output_path, resume_sections)
+        success, cover_letter =  self.gemini_agent.chat_with_gemini(f"now add a cover letter, consider i got the description from linkedin")
+        docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}_Cover_Letter.docx', applicant_name_value, cover_letter)
         return reponse +"\n\n\n" + cover_letter
 
     resume_file_name = "Missing"
-    def get_result_to_save(self, applicant_name, text, output_path):
+    def get_result_to_save(self, applicant_name, text, output_path, resume_sections):
         pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
         match = pattern.search(text)
         try:
             if match:
                 self.resume_file_name = match.group()
                 logging.log(logging.DEBUG, f"found full string {self.resume_file_name}")    
-                docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}.docx', applicant_name, text)
+                docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}.docx', applicant_name, text, resume_sections)
         except Exception:
             logging.error("Error saving resume", exc_info=True)
+
+    def get_resume_sections(self):
+         resume_setctions_content = self.read_file(f'{self.RESUME_FILES_PATH_PREFIX}/resume_sections.txt')
+         return resume_setctions_content.split('\n')
+    
 
     def analyze_from_links(self, links_text):
         links = self.get_links(links_text)

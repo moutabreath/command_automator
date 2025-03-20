@@ -8,10 +8,9 @@ from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.oxml.shared import OxmlElement
 
-def save_resume_as_word(file_path, applicant_name, resume_text):
+def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections = []):
     # Create a Word document
     doc = Document()
-    keywords = ["education", "professional experience", "about me", "contact", "personal projects "]    
     
     style = doc.styles['Normal']
     style.paragraph_format.line_spacing_rule = 1
@@ -28,7 +27,7 @@ def save_resume_as_word(file_path, applicant_name, resume_text):
 
     # Add the resume content
     for line in lines:    
-        is_header = add_header(doc, keywords, line)
+        is_header = add_header(doc, resume_sections, line)
         if is_header:
             is_header = False
             continue
@@ -38,9 +37,11 @@ def save_resume_as_word(file_path, applicant_name, resume_text):
             if line.find('linkedin') != -1:
                 link_name = "linkedin"
             if line.find('github') != -1:
-                link_name = 'github'
+                link_name = get_github_project_name(url)
             line = line.replace(url, '')
             p = doc.add_paragraph(line)
+            p.paragraph_format.space_before = Pt(0)
+            p.paragraph_format.space_after = Pt(0)
             add_link(doc, link_name, url)
             continue           
 
@@ -63,6 +64,16 @@ def save_resume_as_word(file_path, applicant_name, resume_text):
 
     doc.save(file_path)
 
+
+def get_github_project_name(url):
+    # Regex pattern to find the last part of the URL after the last '/'
+    pattern = r'[^/]+$'
+    match = re.search(pattern, url)
+    if match:
+        return match.group()
+    else:
+        return None
+
 def extract_link(text):
     # Regex pattern to find URLs
     pattern =  r'http[s]?://(?:[a-zA-Z]|[0-9]|[$-_@.&+]|[!*\\(\\),]|(?:%[0-9a-fA-F][0-9a-fA-F]))+'
@@ -74,6 +85,8 @@ def extract_link(text):
 
 def add_link(doc, link_name, url):
     paragraph = doc.add_paragraph()
+    paragraph.paragraph_format.space_before = Pt(0)
+    paragraph.paragraph_format.space_after = Pt(0)
     # This gets access to the document.xml.rels file and gets a new relation id value
     part = paragraph.part
     r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
