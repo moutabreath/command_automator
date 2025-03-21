@@ -9,8 +9,8 @@ def copy_to_deploy():
     deploy_dir = os.path.join(source_dir, 'deploy')
     
     # Create timestamp folder
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    deploy_dir = os.path.join(deploy_dir, timestamp)
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+    deploy_dir = os.path.join(deploy_dir, f'command_automator_{timestamp}')
     
     # Create deploy directory if it doesn't exist
     os.makedirs(deploy_dir, exist_ok=True)
@@ -18,8 +18,7 @@ def copy_to_deploy():
     try:
         # List of specific files to copy
         files_to_copy = [
-            'command_automator.exe',
-            'chatbot_keys.txt'
+            'command_automator.exe'
         ]
         
         # Copy individual files
@@ -35,8 +34,10 @@ def copy_to_deploy():
         
         # Copy folders with their structure
         folders_to_copy = [
-            'configs',
-            'actionables'
+            'config',
+            'actionables',
+            'resources',
+            'tabs/llm/resources'
         ]
         
         for folder_name in folders_to_copy:
@@ -49,7 +50,15 @@ def copy_to_deploy():
             else:
                 print(f"Warning: {folder_name} folder not found in source directory")
         files = glob.glob(os.getcwd() + '/**/chat_bot_keys.txt', recursive=True)
-        shutil.copyfile(files[0], f'{deploy_dir}/configs/chatbot_keys.txt')
+        if files:
+            source_file = files[0]
+            relative_path = os.path.relpath(source_file, source_dir)
+            dest_file = os.path.join(deploy_dir, relative_path)
+            os.makedirs(os.path.dirname(dest_file), exist_ok=True)
+            shutil.copy2(source_file, dest_file)
+            print(f"Copied chat_bot_keys.txt to {dest_file}")
+        else:
+             print("Warning: chat_bot_keys.txt not found")
         print(f"\nDeployment completed successfully!")
         print(f"Files deployed to: {deploy_dir}")
         
