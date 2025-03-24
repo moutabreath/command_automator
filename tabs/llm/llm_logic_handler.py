@@ -61,7 +61,7 @@ class LLMLogicHanlder():
 
     resume_file_name = "Missing"
     def get_result_to_save(self, applicant_name, text, output_path, resume_sections):
-        pattern = re.compile(f"{applicant_name}.*", re.IGNORECASE)
+        pattern = re.compile(f"{applicant_name}[^ \n]*", re.IGNORECASE)
         match = pattern.search(text)
         try:
             if match:
