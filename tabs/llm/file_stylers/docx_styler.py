@@ -35,14 +35,14 @@ def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections 
         if  url is not None:                    
             link_name = "link"
             if line.find('linkedin') != -1:
-                link_name = "linkedin"
+                link_name = "LinkedIn"
             if line.find('github') != -1:
                 link_name = get_github_project_name(url)
-            line = line.replace(url, '')
+            line = line.replace(url, "")
             p = doc.add_paragraph(line)
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
-            add_link(doc, link_name, url)
+            add_link(link_name, url, p)            
             continue           
 
         if "*" in line:
@@ -83,8 +83,7 @@ def extract_link(text):
     else:
         return None
 
-def add_link(doc, link_name, url):
-    paragraph = doc.add_paragraph()
+def add_link(link_name, url, paragraph):
     paragraph.paragraph_format.space_before = Pt(0)
     paragraph.paragraph_format.space_after = Pt(0)
     # This gets access to the document.xml.rels file and gets a new relation id value
