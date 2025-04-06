@@ -9,20 +9,20 @@ from docx.oxml import OxmlElement
 from docx.oxml.shared import OxmlElement
 
 def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections = []):
+    applicant_name = applicant_name.replace("_", " ")
     # Create a Word document
     doc = Document()
-    
+
     style = doc.styles['Normal']
     style.paragraph_format.line_spacing_rule = 1
-
 
     # Split the resume text into lines
     lines = resume_text.split('\n')
 
     # Add the resume content
     for line in lines:
-        if (line == applicant_name):
-            add_applicant_name(doc, applicant_name)
+        if add_applicant_name(doc, applicant_name, line):
+            continue
         is_header = add_header(doc, resume_sections, line)
         if is_header:
             is_header = False
@@ -51,12 +51,15 @@ def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections 
 
     doc.save(file_path)
 
-def add_applicant_name(doc, applicant_name:str):
-    p = doc.add_paragraph(applicant_name)
-    run = p.add_run()
-    run.bold = True
-    run.font.color.rgb = RGBColor(0, 0, 255)
-    p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+def add_applicant_name(doc, applicant_name:str, line: str):    
+    if applicant_name == line:
+        p = doc.add_paragraph(applicant_name)
+        run = p.add_run(line)
+        run.bold = True
+        run.font.color.rgb = RGBColor(0, 0, 255)
+        p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+        return True
+    return False
 
 
 def add_line_with_link(doc, line, url, p = None):
