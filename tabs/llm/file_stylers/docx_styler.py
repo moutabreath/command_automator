@@ -15,34 +15,21 @@ def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections 
     style = doc.styles['Normal']
     style.paragraph_format.line_spacing_rule = 1
 
-    # Add the main text with bold formatting
-    p = doc.add_paragraph()
-    run = p.add_run(applicant_name)
-    run.bold = True
-    run.font.color.rgb = RGBColor(0, 0, 255)
-    p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
 
     # Split the resume text into lines
     lines = resume_text.split('\n')
 
     # Add the resume content
-    for line in lines:    
+    for line in lines:
+        if (line == applicant_name):
+            add_applicant_name(doc, applicant_name)
         is_header = add_header(doc, resume_sections, line)
         if is_header:
             is_header = False
             continue
         url = extract_link(line)
         if  url is not None:                    
-            link_name = "link"
-            if line.find('linkedin') != -1:
-                link_name = "LinkedIn"
-            if line.find('github') != -1:
-                link_name = get_github_project_name(url)
-            line = line.replace(url, "")
-            p = doc.add_paragraph(line)
-            p.paragraph_format.space_before = Pt(0)
-            p.paragraph_format.space_after = Pt(0)
-            add_link(link_name, url, p)            
+            line = add_line_with_link(doc, line, url)            
             continue           
 
         if "*" in line:
@@ -64,6 +51,28 @@ def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections 
 
     doc.save(file_path)
 
+def add_applicant_name(doc, applicant_name:str):
+    p = doc.add_paragraph(applicant_name)
+    run = p.add_run()
+    run.bold = True
+    run.font.color.rgb = RGBColor(0, 0, 255)
+    p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
+
+
+def add_line_with_link(doc, line, url, p = None):
+    link_name = "link"
+    if 'linkedin' in line:
+        link_name = "LinkedIn"
+    if 'github' in line:
+        link_name = get_github_project_name(url)
+    line = line.replace(url, "")
+    if p is None:
+        p = doc.add_paragraph(line)
+        p.paragraph_format.space_before = Pt(0)
+        p.paragraph_format.space_after = Pt(0)
+    p.add_run(line)
+    add_link(link_name, url, p)
+
 
 def get_github_project_name(url):
     # Regex pattern to find the last part of the URL after the last '/'
@@ -84,8 +93,6 @@ def extract_link(text):
         return None
 
 def add_link(link_name, url, paragraph):
-    paragraph.paragraph_format.space_before = Pt(0)
-    paragraph.paragraph_format.space_after = Pt(0)
     # This gets access to the document.xml.rels file and gets a new relation id value
     part = paragraph.part
     r_id = part.relate_to(url, docx.opc.constants.RELATIONSHIP_TYPE.HYPERLINK, is_external=True)
@@ -95,17 +102,14 @@ def add_link(link_name, url, paragraph):
     hyperlink.set(docx.oxml.shared.qn('r:id'), r_id, )
 
     # Create a new run object (a wrapper over a 'w:r' element)
-    new_run = docx.text.run.Run(
-        docx.oxml.shared.OxmlElement('w:r'), paragraph)
+    new_run = docx.text.run.Run(docx.oxml.shared.OxmlElement('w:r'), paragraph)
     new_run.text = link_name
-
     new_run.font.color.rgb = docx.shared.RGBColor(0, 0, 255)
     new_run.font.underline = True
 
     # Join all the xml elements together
     hyperlink.append(new_run._element)
     paragraph._p.append(hyperlink)
-    return hyperlink
 
 #This is only needed if you're using the builtin style above
 def get_or_create_hyperlink_style(d):
@@ -131,17 +135,26 @@ def get_or_create_hyperlink_style(d):
                                 True)
         hs.base_style 
 
-def add_header(doc, keywords, line):
+def add_header(doc, keywords, line: str):
     text = line.lower() 
     is_header = False       
     for keyword in keywords:
         if keyword in text:
             p = doc.add_paragraph()
-            run = p.add_run(line)
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
-            run.bold = True                
+            
+            
+            index = text.find(keyword)
+            line_keyword = line[index:len(keyword) + 1] # +1 for space character
+            line = line.replace(line_keyword, "", 1).strip()
+            run = p.add_run(line_keyword)
+            run.bold = True 
             run.font.color.rgb = RGBColor(0, 0, 255)
+            
             is_header = True
+            url = extract_link(line)
+            if  url is not None:                    
+                add_line_with_link(doc, line, url, p)
             break
     return is_header
