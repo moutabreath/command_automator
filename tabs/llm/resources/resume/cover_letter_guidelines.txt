@@ -1,1 +1,6 @@
-now add a cover letter, consider i got the description from linkedin
+now add a cover letter, consider i got the description from linkedin:
+follow these guideline:
+ - Address the Hiring Manager
+ - The address of the company is not known
+ - If the job requires something of the sort of desigining large scale systems, emphasize that I have good knowledge of software systems in general, 
+ and nd have undergone a workshop about desigining large scale systems led by a former architect in impreva.
