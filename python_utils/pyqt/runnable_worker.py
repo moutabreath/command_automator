@@ -33,7 +33,7 @@ class RunnableWorker(QRunnable):
             self.process_output, self.err = self.run_internal()
             logging.log(logging.DEBUG, "process output " + str(self.process_output))
             if self.err is not None and len(self.err) > 0:
-                logging.log(logging.ERORR, f"error {str(self.err)} {type(self.err)}" )
+                logging.log(logging.ERROR, f"error {str(self.err)} {type(self.err)}" )
         except TimeoutError as ex:
             self.err = str(ex)
             logging.log(logging.ERROR, self.err,  exc_info = True)
