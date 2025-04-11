@@ -7,12 +7,13 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.oxml import OxmlElement
 from docx.oxml.shared import OxmlElement
+from docx.shared import Inches
 
 def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections = []):
     applicant_name = applicant_name.replace("_", " ")
     # Create a Word document
     doc = Document()
-
+    set_document_margins(doc)
     style = doc.styles['Normal']
     style.paragraph_format.line_spacing_rule = 1
 
@@ -51,9 +52,24 @@ def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections 
 
     doc.save(file_path)
 
+def set_document_margins(doc, top=0.6, bottom=0.4, left=0.75, right=0.75):
+    """
+    Set the margins for the document in inches.
+    :param doc: The Document object.
+    :param top: Top margin in inches.
+    :param bottom: Bottom margin in inches.
+    :param left: Left margin in inches.
+    :param right: Right margin in inches.
+    """
+    section = doc.sections[0]
+    section.top_margin = Inches(top)
+    section.bottom_margin = Inches(bottom)
+    section.left_margin = Inches(left)
+    section.right_margin = Inches(right)
+
 def add_applicant_name(doc, applicant_name:str, line: str):    
     if applicant_name == line:
-        p = doc.add_paragraph(applicant_name)
+        p = doc.add_paragraph()
         run = p.add_run(line)
         run.bold = True
         run.font.color.rgb = RGBColor(0, 0, 255)

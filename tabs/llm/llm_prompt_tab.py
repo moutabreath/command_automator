@@ -238,20 +238,18 @@ class LLMPromptTab(QtWidgets.QWidget):
               return
         self.update_response()
             
-    def format_response_for_display(self,response_text):
+    def format_response_for_display(self, response_text: str):
         lines = response_text.split('\n')
-        formatted_lines = []
+        formatted_lines = ""
         
         for line in lines:
             line = line.strip()
             if "*" in line:
-                formatted_lines.append(f"<b>{line}</b>")
+                formatted_lines+=f"<b>{line}</b><br>"
             else:
-                # Regular text
-                formatted_lines.append(line)
+                formatted_lines+=f'{line}<br>'
         
-        # Join with HTML line breaks
-        return "<br>".join(formatted_lines)
+        return formatted_lines
 
     # In your code where you update the text box:
     def update_response(self):
