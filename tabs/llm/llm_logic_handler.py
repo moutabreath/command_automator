@@ -46,16 +46,17 @@ class LLMLogicHanlder():
         prompt += resume
         prompt += "\n\n\n"
         job_desc_content = self.read_file(job_desc_path)
-        if (job_desc_content == ""):
+        if job_desc_content == "":
             logging.error("Error reading job descriptions")
             return ""        
         prompt += job_desc_content
         success, reponse = self.gemini_agent.chat_with_gemini(prompt)
-        if (not(success)):
+        if not(success):
             logging.error("Error sending job descriptions", reponse)
             return ""
         self.get_result_to_save(applicant_name_value, reponse, output_path, resume_sections)
-        success, cover_letter =  self.gemini_agent.chat_with_gemini(f"now add a cover letter, consider i got the description from linkedin")
+        cover_letter_guide_lines = self.get_cover_letter_guide_lines()
+        success, cover_letter =  self.gemini_agent.chat_with_gemini(cover_letter_guide_lines)
         docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}_Cover_Letter.docx', applicant_name_value, cover_letter)
         return reponse +"\n\n\n" + cover_letter
 
@@ -129,3 +130,8 @@ class LLMLogicHanlder():
         file_text = self.read_file(file_path)
         guide_lines = file_text.replace('***applicant_name***', applicant_name)
         return guide_lines
+    
+    def get_cover_letter_guide_lines(self):
+        file_path = f'{self.RESUME_FILES_PATH_PREFIX}/cover_letter_guidelines.txt'  
+        file_text = self.read_file(file_path)
+        return file_text
