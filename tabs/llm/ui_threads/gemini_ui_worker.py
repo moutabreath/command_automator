@@ -22,6 +22,7 @@ class GeminiUIWorker(QRunnable):
         self.llm_logic_handler: LLMLogicHanlder = None
         self.gemini_agent = None
         self.input = []
+        self.save_results_to_files = True
     
 
     @Slot()
@@ -35,12 +36,12 @@ class GeminiUIWorker(QRunnable):
             job_desc_path = self.input[2]
             output_path = self.input[3]
             logging.debug(f'({applicant_name}, {resume_path}, {job_desc_path}, {output_path})')
-            response = self.llm_logic_handler.start_resume_building(applicant_name, resume_path, job_desc_path, output_path)
+            response = self.llm_logic_handler.chat_using_guidelines(applicant_name, resume_path, job_desc_path, output_path, self.save_results_to_files)
             self.agent_response = response
         except TimeoutError as ex:
-            logging.error("Error",  exc_info=True)
+            logging.error("Error", exc_info=True)
         except Exception as ex1:
-            logging.error("Error",  exc_info=True)
+            logging.error("Error", exc_info=True)
         try:
             self.signals.completed.emit(self.n)
             logging.debug("emit 'completed'")

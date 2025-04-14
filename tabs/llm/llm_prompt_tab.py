@@ -4,7 +4,7 @@ import os
 
 import keyboard
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel
+from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QCheckBox
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
 from PyQt6.QtGui import QMovie
 from PyQt6.QtGui import QShortcut, QKeySequence
@@ -58,6 +58,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.btn_select_ouput_location = QPushButton("Resume File Output Dir")
 
         self.btn_send_files_to_llm = QPushButton("Chat using files")
+        self.chbx_save_to_files = QCheckBox("Save to Files")
 
         hBoxLayoutResponse = QHBoxLayout()
         
@@ -82,12 +83,15 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.btn_select_secondary_dir.clicked.connect(self.get_job_desc_dir)        
         self.btn_select_ouput_location.clicked.connect(self.get_output_location)
         self.btn_send_files_to_llm.clicked.connect(self.start_resume_building)        
-        
 
         self.init_files_display(bxFiles)
-        self.main_layout.addLayout(bxFiles)
-        
+        self.main_layout.addLayout(bxFiles)        
         button_layout = QHBoxLayout()
+
+        boxShouldSave = QHBoxLayout()
+        boxShouldSave.addWidget(self.chbx_save_to_files)
+        button_layout.addLayout(boxShouldSave)
+
         button_layout.addWidget(self.btn_send_files_to_llm)
         button_layout.setAlignment(Qt.AlignmentFlag.AlignHCenter)
         self.main_layout.addLayout(button_layout)
@@ -203,6 +207,7 @@ class LLMPromptTab(QtWidgets.QWidget):
             self.gemini_ui_worker.signals.completed.connect(self.stop_animation)
             self.gemini_ui_worker.signals.started.connect(self.start_animation)
             self.gemini_ui_worker.input = [self.applicant_name_value, resume_path, job_desc_path, resume_output_path]
+            self.gemini_ui_worker.save_results_to_files = self.chbx_save_to_files.isChecked()
             self.thread_pool.start(self.gemini_ui_worker)
         except IOError as e:
             logging.exception("run_command: error", e)

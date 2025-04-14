@@ -9,7 +9,7 @@ from docx.oxml import OxmlElement
 from docx.oxml.shared import OxmlElement
 from docx.shared import Inches
 
-def save_resume_as_word(file_path, applicant_name, resume_text, resume_sections = []):
+def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = []):
     applicant_name = applicant_name.replace("_", " ")
     # Create a Word document
     doc = Document()

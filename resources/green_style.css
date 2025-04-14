@@ -3,7 +3,6 @@ QWidget {
     background-color: #222;
 }
 
-
 QTabBar::tab {
     color: #fff;
     background-color: #222;
@@ -30,9 +29,21 @@ QLabel {
 
 QCheckBox {
     color: #fff;
-    border: 1px;
+    border: 1px solid green;
     border-radius: 5px;
     padding: 5px;
+}
+
+QCheckBox::indicator {
+    width: 13px;
+    height: 13px;
+    border: 1px solid green;
+    border-radius: 3px;
+    background: #222;
+}
+
+QCheckBox::indicator:checked {
+    background: green;
 }
 
 QPushButton {

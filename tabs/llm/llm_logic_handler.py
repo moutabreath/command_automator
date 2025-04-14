@@ -15,6 +15,7 @@ class LLMLogicHanlder():
     RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
     OUTPUT_RESUME_PATH_PREFIX = f'{LLM_RESOURCES}/tailored_resume'
     CONFIG_PATH_PREFIX = f'{os.getcwd()}/{CURRENT_PATH}/config'
+    resume_file_name = "Missing"
 
     def __init__(self):
         self.gemini_agent = None
@@ -37,42 +38,42 @@ class LLMLogicHanlder():
          # Return the first match
         return None
         
-    def start_resume_building(self, applicant_name_value: str, resume_path: str, job_desc_path: str, output_path: str):
-        guide_lines = self.get_guide_lines(applicant_name_value)
+    def chat_using_guidelines(self, applicant_name: str, resume_path: str, job_desc_path: str, output_path: str, should_save_as_file):
+        guide_lines = self.get_main_part_guide_lines(applicant_name)
         logging.debug(f"guide_lines: {guide_lines}")
-        resume_sections = self.get_resume_sections()
-        resume = self.read_file(resume_path)        
-        prompt = f"{guide_lines} \n\n"
-        prompt += resume
-        prompt += "\n\n\n"
+        highlighted_sections = self.get_highlighted_sections()
+        main_part = self.read_file(resume_path)        
+        prompt = f"{guide_lines}\n\n{main_part}\n\n\n"
         job_desc_content = self.read_file(job_desc_path)
-        if job_desc_content == "":
-            logging.error("Error reading job descriptions")
-            return ""        
-        prompt += job_desc_content
+        second_part = "" 
+        if job_desc_content != "":        
+            prompt += job_desc_content
         success, reponse = self.gemini_agent.chat_with_gemini(prompt)
         if not(success):
-            logging.error("Error sending job descriptions", reponse)
+            logging.error("Error sending resume", reponse)
             return ""
-        self.get_result_to_save(applicant_name_value, reponse, output_path, resume_sections)
-        cover_letter_guide_lines = self.get_cover_letter_guide_lines()
-        success, cover_letter =  self.gemini_agent.chat_with_gemini(cover_letter_guide_lines)
-        docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}_Cover_Letter.docx', applicant_name_value, cover_letter)
-        return reponse +"\n\n\n" + cover_letter
+        if (should_save_as_file):
+            self.save_main_results(applicant_name, reponse, output_path, highlighted_sections)
 
-    resume_file_name = "Missing"
-    def get_result_to_save(self, applicant_name, text, output_path, resume_sections):
+        cover_letter_guide_lines = self.get_cover_letter_guide_lines()
+        success, second_part = self.gemini_agent.chat_with_gemini(cover_letter_guide_lines)
+        if (should_save_as_file):
+            docx_styler.save_text_as_word(f'{output_path}/{self.resume_file_name}_Cover_Letter.docx', applicant_name, second_part)
+        return f'{reponse}\n\n\n{second_part}'
+
+
+    def save_main_results(self, applicant_name, text, output_path, resume_sections):
         pattern = re.compile(f"{applicant_name}[^ \n]*", re.IGNORECASE)
         match = pattern.search(text)
         try:
             if match:
                 self.resume_file_name = match.group()
                 logging.log(logging.DEBUG, f"found full string {self.resume_file_name}")    
-                docx_styler.save_resume_as_word(f'{output_path}/{self.resume_file_name}.docx', applicant_name, text, resume_sections)
+                docx_styler.save_text_as_word(f'{output_path}/{self.resume_file_name}.docx', applicant_name, text, resume_sections)
         except Exception:
             logging.error("Error saving resume", exc_info=True)
 
-    def get_resume_sections(self):
+    def get_highlighted_sections(self):
          resume_setctions_content = self.read_file(f'{self.RESUME_FILES_PATH_PREFIX}/resume_sections.txt')
          return resume_setctions_content.split('\n')
     
@@ -125,7 +126,7 @@ class LLMLogicHanlder():
         
         return content
         
-    def get_guide_lines(self, applicant_name):
+    def get_main_part_guide_lines(self, applicant_name):
         file_path = f'{self.RESUME_FILES_PATH_PREFIX}/guidelines.txt'    
         file_text = self.read_file(file_path)
         guide_lines = file_text.replace('***applicant_name***', applicant_name)
