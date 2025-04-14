@@ -23,6 +23,7 @@ class LLMPromptTab(QtWidgets.QWidget):
     applicant_name_value = ''
     SEND_QUERY_KEYBOARD_SHORTCUT = 'enter'
     OUTPUT_RESUME_DIR_PATH = "output_resume_path"
+    SAVE_RESULTS_TO_FILE = "save_results_to_file"
   
     def __init__(self):
         super().__init__()
@@ -274,6 +275,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txt_bx_main_file_input.textChanged.connect(self.save_configuration)
         self.txt_bx_secondary_files_input.textChanged.connect(self.save_configuration)
         self.txt_bx_resume_output.textChanged.connect(self.save_configuration)
+        self.chbx_save_to_files.stateChanged.connect(self.save_configuration)
   
     def load_configuration(self):
         try:
@@ -292,6 +294,8 @@ class LLMPromptTab(QtWidgets.QWidget):
             self.applicant_name_value = data[self.APPLICANT_NAME_TAG]
         if self.OUTPUT_RESUME_DIR_PATH  in data and data[self.OUTPUT_RESUME_DIR_PATH] != "":
              self.txt_bx_resume_output.setText(data[self.OUTPUT_RESUME_DIR_PATH])
+        if self.SAVE_RESULTS_TO_FILE in data and data[self.SAVE_RESULTS_TO_FILE] != "":
+             self.chbx_save_to_files.setChecked(data[self.SAVE_RESULTS_TO_FILE])
         try:
             f.close()
         except IOError:
@@ -303,7 +307,8 @@ class LLMPromptTab(QtWidgets.QWidget):
             self.MAIN_FILE_PATH: self.txt_bx_main_file_input.text(),
             self.SECONDARY_FILE_PATH: self.txt_bx_secondary_files_input.text(),
             self.APPLICANT_NAME_TAG: self.applicant_name_value,
-            self.OUTPUT_RESUME_DIR_PATH: self.txt_bx_resume_output.text()
+            self.OUTPUT_RESUME_DIR_PATH: self.txt_bx_resume_output.text(),
+            self.SAVE_RESULTS_TO_FILE: self.chbx_save_to_files.isChecked()
         }
         with open(self.CONFIG_FILE_PATH, "w") as file:
             json.dump(data, file, indent=4)
