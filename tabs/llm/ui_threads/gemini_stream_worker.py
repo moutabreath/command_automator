@@ -1,6 +1,6 @@
 from PyQt6.QtCore import QRunnable, QObject, pyqtSignal as Signal, pyqtSlot as Slot
 
-from tabs.llm.llm_agents.gemini_agent import GeminiAgent
+from tabs.llm.llm_agents.gemini.gemini_agent import GeminiAgent
 import logging
 
 

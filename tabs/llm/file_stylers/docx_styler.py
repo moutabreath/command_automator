@@ -15,6 +15,7 @@ def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = 
     doc = Document()
     set_document_margins(doc)
     style = doc.styles['Normal']
+    style.font.size = Pt(9)
     style.paragraph_format.line_spacing_rule = 1
 
     # Split the resume text into lines
@@ -29,7 +30,7 @@ def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = 
             is_header = False
             continue
         url = extract_link(line)
-        if  url is not None:                    
+        if url is not None:                    
             line = add_line_with_link(doc, line, url)            
             continue           
 
@@ -40,15 +41,20 @@ def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = 
             line.replace("**", "")
             run = p.add_run(line)
             run.bold = True
+            run.font.size = Pt(9)
             continue
         if line.startswith('-'):
             p = doc.add_paragraph(line[1:], style='ListBullet')
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
+            for run in p.runs:
+                run.font.size = Pt(9)
             continue
         p = doc.add_paragraph(line)
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
+        for run in p.runs:
+            run.font.size = Pt(9)
 
     doc.save(file_path)
 
@@ -72,6 +78,7 @@ def add_applicant_name(doc, applicant_name:str, line: str):
         p = doc.add_paragraph()
         run = p.add_run(line)
         run.bold = True
+        run.font.size = Pt(9)
         run.font.color.rgb = RGBColor(0, 0, 255)
         p.alignment = WD_PARAGRAPH_ALIGNMENT.LEFT
         return True
@@ -123,6 +130,7 @@ def add_link(link_name, url, paragraph):
     # Create a new run object (a wrapper over a 'w:r' element)
     new_run = docx.text.run.Run(docx.oxml.shared.OxmlElement('w:r'), paragraph)
     new_run.text = link_name
+    new_run.font.size = Pt(9)
     new_run.font.color.rgb = docx.shared.RGBColor(0, 0, 255)
     new_run.font.underline = True
 
