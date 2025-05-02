@@ -141,16 +141,6 @@ class LogicHandler:
             str_result = "Execution Done"
         return str_result
 
-    def should_add_one_v(self, script_name):
-        return self.scripts_attributes[script_name]['one_v_required']
-
-    def should_add_mono(self, script_name):
-        return self.scripts_attributes[script_name]['monolith_required']
-
-    def is_for_qa(self, script_name):
-        if 'for_qa' in self.scripts_attributes[script_name]:
-            return self.scripts_attributes[script_name]['for_qa']
-        return False
 
     def should_use_free_text(self, script_name):
         return self.scripts_attributes[script_name]['free_text_required']
@@ -166,27 +156,4 @@ class LogicHandler:
     def is_dir_empty(dir_path):
         return not next(os.scandir(dir_path), None)
 
-    @staticmethod
-    def get_bin_folder_parent_path(version_path: Path):
-        if os.path.isfile(version_path.joinpath("qrelease", "Bin", "starter.exe")):
-            return version_path.joinpath("qrelease")
-        elif os.path.isfile(version_path.joinpath("Bin", "starter.exe")):
-            return version_path
-
-    def get_run_command_text(self, running_version_text, is_provision_10, is_powerup_checked, override_file):
-        running_version = self.get_version_path(running_version_text)
-        running_version = LogicHandler.get_bin_folder_parent_path(running_version)
-        version = "PROVision"
-        if is_provision_10:
-            version = 'PROVision10'
-        powerup = ""
-        if is_powerup_checked:
-            powerup = '-powerup'
-        override = ""
-        if override_file != "":
-            override = f' -J-Dwf.override.filename="{os.path.abspath(override_file)}"'
-        arguments = f'Bin\\Starter.exe -S-platform {version} -login {powerup} -no_second_screen -frame -useHD -newLnF' \
-                    f' -ignore16bits -S-debug {override}'
-
-        run_version_command = f'{running_version}\\{arguments}'
-        return run_version_command
+   
