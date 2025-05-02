@@ -1,48 +1,95 @@
+# ./adk_agent_samples/mcp_agent/agent.py
+import asyncio
 import os
-from google import genai
+from dotenv import load_dotenv
 from google.genai import types
-from mcp import ClientSession, StdioServerParameters
-from mcp.client.stdio import stdio_client
+from google.adk.agents.llm_agent import LlmAgent
+from google.adk.runners import Runner
+from google.adk.sessions import InMemorySessionService
+from google.adk.artifacts.in_memory_artifact_service import InMemoryArtifactService # Optional
+from google.adk.tools.mcp_tool.mcp_toolset import MCPToolset, SseServerParams, StdioServerParameters
 
-server_params = StdioServerParameters(
-    command="mcp-flight-search",
-    args=["--connection_type", "stdio"],
-    env={"SERP_API_KEY": os.getenv("SERP_API_KEY")},
-)
+# Load environment variables from .env file in the parent directory
+# Place this near the top, before using env vars like API keys
+load_dotenv('../.env')
 
-async def run():
-    # Remove debug prints
-    async with stdio_client(server_params) as (read, write):
-        async with ClientSession(read, write) as session:
-            prompt = f"Find Flights from Atlanta to Las Vegas 2025-05-05"
-            await session.initialize()
-            # Remove debug prints
+# --- Step 1: Import Tools from MCP Server ---
+async def get_tools_async():
+  """Gets tools from the File System MCP Server."""
+  # Get the current file's directory and construct the path to actionables
+  current_dir = os.path.dirname(os.path.abspath(__file__))
+  actionables_path = os.path.normpath(os.path.join(current_dir, "../../../../actionables"))
+  
+  print("Attempting to connect to MCP Filesystem server...")
+  tools, exit_stack = await MCPToolset.from_server(
+      # Use StdioServerParameters for local process communication
+      connection_params=StdioServerParameters(
+          command='npx', # Command to run the server
+          args=["-y",    # Arguments for the command
+                "@modelcontextprotocol/server-filesystem",
+                actionables_path],
+      )
+      # For remote servers, you would use SseServerParams instead:
+      # connection_params=SseServerParams(url="http://remote-server:port/path", headers={...})
+  )
+  print("MCP Toolset created successfully.")
+  # MCP requires maintaining a connection to the local MCP Server.
+  # exit_stack manages the cleanup of this connection.
+  return tools, exit_stack
 
-            mcp_tools = await session.list_tools()
-            # Remove debug prints
-            tools = [
-                types.Tool(
-                    function_declarations=[
-                        {
-                            "name": tool.name,
-                            "description": tool.description,
-                            "parameters": {
-                                k: v
-                                for k, v in tool.inputSchema.items()
-                                if k not in ["additionalProperties", "$schema"]
-                            },
-                        }
-                    ]
-                )
-                for tool in mcp_tools.tools
-            ]
-            # Remove debug prints
+# --- Step 2: Agent Definition ---
+async def get_agent_async():
+  """Creates an ADK Agent equipped with tools from the MCP Server."""
+  tools, exit_stack = await get_tools_async()
+  print(f"Fetched {len(tools)} tools from MCP server.")
+  root_agent = LlmAgent(
+      model='gemini-2.0-flash', # Adjust model name if needed based on availability
+      name='filesystem_assistant',
+      instruction='Help user interact with the local filesystem using available tools.',
+      tools=tools, # Provide the MCP tools to the ADK agent
+  )
+  return root_agent, exit_stack
 
-            response = genai.client.models.generate_content(
-                model="gemini-2.5-pro-exp-03-25",
-                contents=prompt,
-                config=types.GenerateContentConfig(
-                    temperature=0,
-                    tools=tools,
-                ),
-            )
+# --- Step 3: Main Execution Logic ---
+async def async_main():
+  session_service = InMemorySessionService()
+  # Artifact service might not be needed for this example
+  artifacts_service = InMemoryArtifactService()
+
+  session = session_service.create_session(
+      state={}, app_name='mcp_filesystem_app', user_id='user_fs'
+  )
+
+  # TODO: Change the query to be relevant to YOUR specified folder.
+  # e.g., "list files in the 'documents' subfolder" or "read the file 'notes.txt'"
+  query = "list files in the tests folder"
+  print(f"User Query: '{query}'")
+  content = types.Content(role='user', parts=[types.Part(text=query)])
+
+  root_agent, exit_stack = await get_agent_async()
+
+  runner = Runner(
+      app_name='mcp_filesystem_app',
+      agent=root_agent,
+      artifact_service=artifacts_service, # Optional
+      session_service=session_service,
+  )
+
+  print("Running agent...")
+  events_async = runner.run_async(
+      session_id=session.id, user_id=session.user_id, new_message=content
+  )
+
+  async for event in events_async:
+    print(f"Event received: {event}")
+
+  # Crucial Cleanup: Ensure the MCP server process connection is closed.
+  print("Closing MCP server connection...")
+  await exit_stack.aclose()
+  print("Cleanup complete.")
+
+if __name__ == '__main__':
+  try:
+    asyncio.run(async_main())
+  except Exception as e:
+    print(f"An error occurred: {e}")

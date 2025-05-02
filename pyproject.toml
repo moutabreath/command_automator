@@ -44,13 +44,15 @@ dependencies = [
     "pyqt6<7.0.0,>=6.5.3",
     "pillow<12.0.0,>=11.1.0",
     "openai<2.0.0,>=1.64.0",
-    "google-genai<2.0.0,>=1.3.0",
+    "google-genai>=1.3.0,<2.0.0",
     "reportlab<5.0.0,>=4.3.1",
     "python-docx<2.0.0,>=1.1.2",
     "mcp[cli]>=1.6.0",
     "pyinput>=0.3.2",
     "pyperclip>=1.9.0",
     "pynput>=1.8.1",
+    "google-adk>=0.3.0",
+    "litellm>=1.67.4.post1",
 ]
 name = "commandautomator"
 version = "0.1.0"
