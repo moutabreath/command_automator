@@ -8,6 +8,8 @@ from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushB
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
 from PyQt6.QtGui import QMovie
 from PyQt6.QtGui import QShortcut, QKeySequence
+from PyQt6.QtGui import QPixmap
+from PyQt6.QtWidgets import QLabel, QFileDialog
 
 from python_utils.pyqt.runnable_worker import Signals
 from python_utils.pyqt.text_editor import TextEditor
@@ -47,6 +49,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.txtBoxResponse: QTextEdit = QTextEdit()
         self.txtBoxResponse.setStyleSheet("color: white;")
         self.btn_query_llm: QPushButton = QPushButton('Send Query')
+        self.btn_select_image = QPushButton('+')
         self.txtBoxQuery: TextEditor = TextEditor('Message LLM')
 
         self.txt_bx_main_file_input = QLineEdit()
@@ -67,15 +70,20 @@ class LLMPromptTab(QtWidgets.QWidget):
         hBoxLayoutResponse.addWidget(self.txtBoxResponse)      
         self.main_layout.addLayout(hBoxLayoutResponse)
 
-        hBoxLayoutButtonAndQuery = QHBoxLayout()            
         
+        box_layout_button_and_query = QHBoxLayout()            
+        
+        self.btn_select_image.clicked.connect(self.select_image)
         self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
-        
-        # self.txtBoxQuery.setStyleSheet("color: white;")
-        hBoxLayoutButtonAndQuery.addWidget(self.txtBoxQuery)
-        hBoxLayoutButtonAndQuery.addWidget(self.btn_query_llm)        
-        self.main_layout.addLayout(hBoxLayoutButtonAndQuery)    
+        box_layout_button_and_query.addWidget(self.txtBoxQuery)
+        box_layout_button_and_query.addWidget(self.btn_query_llm)
+        box_layout_button_and_query.addWidget(self.btn_select_image)  # Add the '+' button to the layout
+        self.main_layout.addLayout(box_layout_button_and_query)
     
+        self.image_label = QLabel()
+        self.image_label.setFixedSize(150, 150)  # Set size for the image thumbnail
+        self.image_label.setStyleSheet("background-color: #333; border: 1px solid #555;")
+        self.image_label.setVisible(False)  # Hide initially until an image is selected
 
         # File inputs section        
         bxFiles = QHBoxLayout()
@@ -112,6 +120,31 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.load_configuration()
         self.setup_save_configuration_events()
         self.init_keyboard_shortcuts()
+
+    
+    def select_image(self):
+        file_path, _ = QFileDialog.getOpenFileName(
+            self, 
+            'Select Image', 
+            '', 
+            'Image Files (*.png *.jpg *.jpeg *.bmp *.gif)'
+        )
+        
+        if file_path:
+            # Display the selected image
+            pixmap = QPixmap(file_path)
+            scaled_pixmap = pixmap.scaled(
+                self.image_label.width(), 
+                self.image_label.height(),
+                Qt.AspectRatioMode.KeepAspectRatio,
+                Qt.TransformationMode.SmoothTransformation
+            )
+            self.image_label.setPixmap(scaled_pixmap)
+            self.image_label.setVisible(True)
+            
+            # Store the file path for later use (like sending to LLM)
+            self.selected_image_path = file_path
+
 
     def init_keyboard_shortcuts(self):
         self.shortcut = QShortcut(QKeySequence("Enter"), self)
