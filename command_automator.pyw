@@ -20,7 +20,7 @@ from python_utils.pyqt import pyqt_utils
 from tabs.llm.llm_prompt_tab import LLMPromptTab    
 
 
-class CommandAutomator(PyQt6.QtWidgets.QWidget):
+class CommandAutomator(QtWidgets.QWidget):
 
     txt_box_result: QPlainTextEdit
     RUN_APP_KEY_SHORTCUT = 'alt + r'
@@ -49,7 +49,7 @@ class CommandAutomator(PyQt6.QtWidgets.QWidget):
         self.btn_cancel_exec = QPushButton('Cancel')
         self.spinner_layout = None
         self.modal_window = QMainWindow()
-        self.movie = QMovie('resources\\loader.gif')
+        self.movie = QMovie(f'{pyqt_utils}/loader.gif')
         self.central_widget = QWidget(self.modal_window)
         self.movie_label = QLabel(self)
 
