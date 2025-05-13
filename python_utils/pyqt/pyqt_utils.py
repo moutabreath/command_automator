@@ -2,7 +2,7 @@ import PyQt6
 from PyQt6 import QtCore, QtWidgets
 from PyQt6.QtWidgets import QFrame, QSizePolicy, QHBoxLayout, QVBoxLayout
 from PyQt6.QtGui import QIcon, QMovie
-
+RESOURCES = "resources"
 
 def add_blank_line(vertical_box_layout, layout_above_separator, layout_below_separator) -> QVBoxLayout:
     separator = create_horizontal_separator()

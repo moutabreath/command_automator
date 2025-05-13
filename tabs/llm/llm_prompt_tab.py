@@ -1,16 +1,18 @@
 import json
 import logging
 import os
+import sys
 
 import keyboard
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QCheckBox
+from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QCheckBox,QApplication
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
-from PyQt6.QtGui import QMovie
+from PyQt6.QtGui import QIcon, QMovie
 from PyQt6.QtGui import QShortcut, QKeySequence
 from PyQt6.QtGui import QPixmap
 from PyQt6.QtWidgets import QLabel, QFileDialog
 
+from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.runnable_worker import Signals
 from python_utils.pyqt.text_editor import TextEditor
 from tabs.llm.llm_logic_handler import LLMLogicHanlder
@@ -110,11 +112,11 @@ class LLMPromptTab(QtWidgets.QWidget):
         # modal window
         self.spinner_layout = QVBoxLayout()
         self.modal_window = QMainWindow()
-        self.movie = QMovie('resources\\loader.gif')
+        self.movie = QMovie(f'{pyqt_utils.RESOURCES}/loader.gif')
         self.central_widget = QWidget(self.modal_window)
         self.movie_label = QLabel(self)
         self.spinner_layout.addWidget(self.movie_label)
-
+                
         self.setup_spinner()
         # Configurations
         self.load_configuration()
