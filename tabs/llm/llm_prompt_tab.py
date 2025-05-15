@@ -1,15 +1,10 @@
 import json
 import logging
 import os
-import sys
-
-import keyboard
 from qtpy import QtWidgets
-from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QCheckBox,QApplication
+from PyQt6.QtWidgets import QMainWindow, QWidget, QTextEdit, QFileDialog, QPushButton, QVBoxLayout, QHBoxLayout, QLineEdit, QLabel, QCheckBox, QTabWidget
 from PyQt6.QtCore import Qt, QRect, QSize, QThreadPool
-from PyQt6.QtGui import QIcon, QMovie
-from PyQt6.QtGui import QShortcut, QKeySequence
-from PyQt6.QtGui import QPixmap
+from PyQt6.QtGui import QShortcut, QKeySequence, QMovie, QPixmap
 from PyQt6.QtWidgets import QLabel, QFileDialog
 
 from python_utils.pyqt import pyqt_utils
@@ -20,7 +15,7 @@ from tabs.llm.ui_threads.gemini_stream_worker import GeminiStreamWorker
 from tabs.llm.ui_threads.gemini_ui_worker import GeminiUIWorker
 
 
-class LLMPromptTab(QtWidgets.QWidget):
+class LLMPromptTab(QTabWidget):
     MAIN_FILE_PATH = 'main_file_path' 
     SECONDARY_FILE_PATH = 'secondary_file_dir'
     APPLICANT_NAME_TAG = 'applicant_name'
@@ -76,14 +71,14 @@ class LLMPromptTab(QtWidgets.QWidget):
         box_layout_button_and_query = QHBoxLayout()            
         
         self.btn_select_image.clicked.connect(self.select_image)
-        self.btn_query_llm.clicked.connect(self.send_to_chat_gpt)
+        self.btn_query_llm.clicked.connect(self.call_llm)
         box_layout_button_and_query.addWidget(self.txtBoxQuery)
         box_layout_button_and_query.addWidget(self.btn_query_llm)
         box_layout_button_and_query.addWidget(self.btn_select_image)  # Add the '+' button to the layout
         self.main_layout.addLayout(box_layout_button_and_query)
     
         self.image_label = QLabel()
-        self.image_label.setFixedSize(150, 150)  # Set size for the image thumbnail
+        self.image_label.setBaseSize(150, 150)  # Set size for the image thumbnail
         self.image_label.setStyleSheet("background-color: #333; border: 1px solid #555;")
         self.image_label.setVisible(False)  # Hide initially until an image is selected
 
@@ -110,19 +105,13 @@ class LLMPromptTab(QtWidgets.QWidget):
         self.setLayout(self.main_layout)
 
         # modal window
-        self.spinner_layout = QVBoxLayout()
-        self.modal_window = QMainWindow()
-        self.movie = QMovie(f'{pyqt_utils.RESOURCES}/loader.gif')
-        self.central_widget = QWidget(self.modal_window)
-        self.movie_label = QLabel(self)
-        self.spinner_layout.addWidget(self.movie_label)
-                
         self.setup_spinner()
+
         # Configurations
         self.load_configuration()
         self.setup_save_configuration_events()
         self.init_keyboard_shortcuts()
-
+  
     
     def select_image(self):
         file_path, _ = QFileDialog.getOpenFileName(
@@ -147,26 +136,32 @@ class LLMPromptTab(QtWidgets.QWidget):
             # Store the file path for later use (like sending to LLM)
             self.selected_image_path = file_path
 
-
+   
     def init_keyboard_shortcuts(self):
-        self.shortcut = QShortcut(QKeySequence("Enter"), self)
-        self.shortcut.activated.connect(self.send_to_chat_gpt)
+        # Add shortcuts that only work when window has focus
+        self.shortcut = QShortcut(QKeySequence("Ctrl+Return"), self)
+        self.shortcut.setContext(Qt.ShortcutContext.WindowShortcut)  # Only work when window has focus
+        self.shortcut.activated.connect(self.call_llm)
+        
+        self.shortcut_numpad = QShortcut(QKeySequence("Ctrl+Enter"), self)
+        self.shortcut_numpad.setContext(Qt.ShortcutContext.WidgetShortcut)  # Only work when window has focus
+        self.shortcut_numpad.activated.connect(self.call_llm)
 
+                
     def setup_spinner(self):
+        self.spinner_layout = QVBoxLayout()
+        self.modal_window = QMainWindow()
+        self.movie = QMovie(f'{pyqt_utils.RESOURCES}/loader.gif')
+        self.central_widget = QWidget(self.modal_window)
+        self.movie_label: QLabel = QLabel(self)
+        self.spinner_layout.addWidget(self.movie_label)
         self.central_widget.setObjectName("main-widget")
         self.movie_label.setGeometry(QRect(25, 25, 200, 200))
         self.movie_label.setMinimumSize(QSize(250, 250))
         self.movie_label.setMaximumSize(QSize(250, 250))
         self.movie_label.setObjectName("lb1")
         self.movie_label.setMovie(self.movie)
-    
-    def key_pressed_event(self, event):
-        if event.key() == Qt.Key_Return or event.key() == Qt.Key_Enter:
-            self.send_to_chat_gpt()
-        else:
-            super().keyPressEvent(event)
-
- 
+     
 
     def init_files_display(self, vBoxFiles: QVBoxLayout):
         boxTxtBx = QVBoxLayout()
@@ -184,7 +179,7 @@ class LLMPromptTab(QtWidgets.QWidget):
         vBoxFiles.addLayout(bxButtons)
 
 
-    def send_to_chat_gpt(self):
+    def call_llm(self):
         text = self.txtBoxQuery.toPlainText()
         if (text == None or text == ''):
             return
@@ -193,13 +188,9 @@ class LLMPromptTab(QtWidgets.QWidget):
         # self.worker.finished_signal.connect(self.enable_button)
 
         self.worker = GeminiStreamWorker()
-        self.worker.set_required(text, self.lLLMLogicHanlder.gemini_agent)
+        self.worker.init_inputs(text, self.lLLMLogicHanlder.gemini_agent, self.selected_image_path)
         self.worker.signals.received.connect(self.update_text)
-        self.worker.signals.completed.connect(self.enable_button)
-
-        self.worker.set_required(text, self.lLLMLogicHanlder.gemini_agent)    
-        
-        self.worker.prompt = text
+        self.worker.signals.completed.connect(self.enable_button)        
         self.txtBoxResponse.setAlignment(Qt.AlignmentFlag.AlignRight)
         self.txtBoxResponse.append(f"{self.txtBoxQuery.toPlainText()}\n\n")
         self.txtBoxQuery.setText("")
