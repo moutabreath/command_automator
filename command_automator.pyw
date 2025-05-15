@@ -4,10 +4,8 @@ import logging
 import sys
 from datetime import datetime
 
-import PyQt6
-import keyboard
-from PyQt6.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QSpacerItem, QComboBox, QPushButton, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget, QSizePolicy, QFileDialog, QApplication
-from PyQt6.QtGui import QIcon, QMovie
+from PyQt6.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QSpacerItem, QComboBox, QPushButton, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget, QSizePolicy, QApplication
+from PyQt6.QtGui import QShortcut, QKeySequence, QMovie, QIcon
 from PyQt6 import QtCore
 from qtpy import QtWidgets, QtCore
 from PyQt6.QtCore import Qt
@@ -46,6 +44,20 @@ class CommandAutomator(QtWidgets.QWidget):
 
         self.main_layout = None
         
+        self.setup_spinner()
+        self.init_display()
+        self.init_keyboard_shortcuts()
+       
+        
+        
+    def init_keyboard_shortcuts(self):
+        # Add shortcuts that only work when window has focus
+        self.shortcut = QShortcut(QKeySequence(CommandAutomator.EXECUTE_SCRIPT_KEY_SHORTCUT), self)
+        self.shortcut.setContext(Qt.ShortcutContext.WidgetShortcut)
+        self.shortcut.activated.connect(self.execute_on_keypress)
+        
+
+    def setup_spinner(self):
         self.btn_cancel_exec = QPushButton('Cancel')
         self.spinner_layout = None
         self.modal_window = QMainWindow()
@@ -53,15 +65,6 @@ class CommandAutomator(QtWidgets.QWidget):
         self.central_widget = QWidget(self.modal_window)
         self.movie_label = QLabel(self)
 
-        self.setup_spinner()
-        self.init_display()
-        self.init_keyboard_shortcuts()
-        
-    def init_keyboard_shortcuts(self):
-        keyboard.add_hotkey(CommandAutomator.EXECUTE_SCRIPT_KEY_SHORTCUT, self.execute_on_keypress)  # , args=('Hotkey', 'Detected'))
-      
-
-    def setup_spinner(self):
         self.central_widget.setObjectName("main-widget")
         self.movie_label.setGeometry(QtCore.QRect(25, 25, 200, 200))
         self.movie_label.setMinimumSize(QtCore.QSize(250, 250))
@@ -79,7 +82,7 @@ class CommandAutomator(QtWidgets.QWidget):
 
         self.main_layout = QVBoxLayout()
 
-        spacer_item = QSpacerItem(0, 0, QSizePolicy.Expanding)
+        spacer_item = QSpacerItem(0, 0)
         work_trees_layout = self.create_work_trees_elements(spacer_item)
         items = self.logic_handler.load_scripts()
         self.action_list.addItems(items)
