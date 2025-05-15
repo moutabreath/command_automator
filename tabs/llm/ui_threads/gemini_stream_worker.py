@@ -17,16 +17,21 @@ class GeminiStreamWorker(QRunnable):
     def __init__(self):
         super().__init__()
         self.signals = Signals()
-
-    def set_required(self, prompt, gemini_agent: GeminiAgent):
+        self.gemini_agent = None
+        self.prompt = None
+        self.img_path = None
+    
+    def init_inputs(self, prompt, gemini_agent: GeminiAgent, img_path):
         self.gemini_agent = gemini_agent
         self.prompt = prompt
+        self.img_path = img_path
+    
 
     @Slot()
     def run(self):
         try:
-            logging.debug(f"starting with prompt: {self.prompt}")
-            response = self.gemini_agent.stream_chat_with_gemini(self.prompt)
+            logging.debug(f"starting with prompt: {self.prompt}, image: {self.img_path}")
+            response = self.gemini_agent.stream_chat_with_gemini(self.prompt, self.img_path)
             for chunk in response:
                 # self.chunk_signal.emit(chunk)
                 self.signals.received.emit(chunk)
