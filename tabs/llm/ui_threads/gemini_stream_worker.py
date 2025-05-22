@@ -35,7 +35,7 @@ class GeminiStreamWorker(QRunnable):
             for chunk in response:
                 # self.chunk_signal.emit(chunk)
                 self.signals.received.emit(chunk)
-        except Exception as e:
-            print(f"Error in GeminiStreamWorker: {e}")
+        except Exception as ex:
+            logging.error(f"Error {ex}", exc_info=True)
         finally:
             self.signals.completed.emit()
