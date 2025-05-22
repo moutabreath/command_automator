@@ -1,3 +1,4 @@
+import asyncio
 import ctypes
 import json
 import logging
@@ -7,6 +8,7 @@ from datetime import datetime
 from PyQt6.QtWidgets import QMainWindow, QWidget, QPlainTextEdit, QSpacerItem, QComboBox, QPushButton, QLineEdit, QLabel, QVBoxLayout, QHBoxLayout, QTabWidget, QSizePolicy, QApplication
 from PyQt6.QtGui import QShortcut, QKeySequence, QMovie, QIcon
 from PyQt6 import QtCore
+import aiofiles
 from qtpy import QtWidgets, QtCore
 from PyQt6.QtCore import Qt
 
@@ -17,6 +19,7 @@ from python_utils.pyqt.thread_runner import ThreadRunner
 from python_utils.pyqt import pyqt_utils
 from tabs.llm.llm_prompt_tab import LLMPromptTab    
 
+from qasync import asyncSlot
 
 class CommandAutomator(QtWidgets.QWidget):
 
@@ -152,11 +155,13 @@ class CommandAutomator(QtWidgets.QWidget):
         self.txt_box_free_text.textChanged.connect(self.save_additional_text)
         self.txt_box_flags.textChanged.connect(self.save_additional_text)
         
-    def cancel_script_exec(self):
+    @asyncSlot()
+    async def cancel_script_exec(self):
         self.thread_runner.stop_command()
-
-    def save_additional_text(self):
-        self.save_configuration()
+        
+    @asyncSlot()
+    async def save_additional_text(self):
+        await self.save_configuration()
 
 
     def load_configuration(self):
@@ -170,17 +175,17 @@ class CommandAutomator(QtWidgets.QWidget):
             self.txt_box_flags.setText(data['flags'])
 
 
-    def save_configuration(self):
+    async def save_configuration(self):
         data = {
             "selected_script": self.action_list.currentText(),
             "additional_text": self.txt_box_free_text.toPlainText(),
             "flags": self.txt_box_flags.text()
         }
-        with open("config\\commands-executor-config.json", "w") as file:
-            json.dump(data, file, indent=4)
-
-    def execute_on_keypress(self):
-        self.execute_script()
+        async with aiofiles.open("config/commands-executor-config.json", "w") as file:
+            await file.write(json.dumps(data, indent=4))
+    @asyncSlot()
+    async def execute_on_keypress(self):
+        await self.execute_script()
 
     def create_work_trees_elements(self,spacer_item):
         
@@ -202,14 +207,16 @@ class CommandAutomator(QtWidgets.QWidget):
         work_trees_layout.addWidget(seperator)
         return work_trees_layout
 
-
-    def selectionchange(self, i):
+    @asyncSlot(int)
+    async def selectionchange(self, i):
         script_list_name = self.action_list.currentText()
         script_file = self.logic_handler.get_name_to_scripts()[script_list_name]
         text = self.logic_handler.get_script_description(script_file)
         self.txt_box_description.document().setPlainText(text)
+        await self.save_configuration()
 
-    def execute_script(self):
+    @asyncSlot()
+    async def execute_script(self):
         logging.log(logging.DEBUG, f"script execution started")
         file_name = self.action_list.currentText()
         script_path = self.logic_handler.get_name_to_scripts()[file_name]
@@ -242,7 +249,17 @@ class CommandAutomator(QtWidgets.QWidget):
     #     self.logic_handler.run_windows_command(kill_command)
 
 if __name__ == '__main__':
+    import sys
+    import qasync
+    from PyQt6.QtWidgets import QApplication
+
     app = QApplication(sys.argv)
+    loop = qasync.QEventLoop(app)
+    asyncio.set_event_loop(loop)
+
     ex = CommandAutomator()
     app.gif_window = ex
-    sys.exit(app.exec_())
+    ex.show()
+
+    with loop:
+        loop.run_forever()
