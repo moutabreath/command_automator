@@ -158,7 +158,7 @@ class CommandAutomator(QtWidgets.QWidget):
     @asyncSlot()
     async def cancel_script_exec(self):
         self.thread_runner.stop_command()
-        
+
     @asyncSlot()
     async def save_additional_text(self):
         await self.save_configuration()
@@ -183,6 +183,7 @@ class CommandAutomator(QtWidgets.QWidget):
         }
         async with aiofiles.open("config/commands-executor-config.json", "w") as file:
             await file.write(json.dumps(data, indent=4))
+            
     @asyncSlot()
     async def execute_on_keypress(self):
         await self.execute_script()
