@@ -22,7 +22,7 @@ QTabBar::tab:selected {
 
 QLabel { 
     color: #fff; 
-    padding: 5px; 
+    padding: 5px;
 } 
 
 QCheckBox { 
