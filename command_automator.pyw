@@ -10,7 +10,7 @@ from logic_handler import LogicHandler
 
 # logging.basicConfig(level=logging.DEBUG)
 
-class Api:
+class CommandsAutomatorApi:
     def __init__(self):
         self.logic_handler = LogicHandler()
         self.config_path = "config/commands-executor-config.json"
@@ -76,10 +76,10 @@ class Api:
     
 
 if __name__ == '__main__':
-    api = Api()
+    api = CommandsAutomatorApi()
     window = webview.create_window(
         'Commands Automator',
-        'resources/index.html',
+        'resources/commands_automator.html',
         js_api=api,
         width=1000,
         height=800
