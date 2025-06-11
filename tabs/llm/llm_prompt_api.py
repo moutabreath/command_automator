@@ -1,42 +1,38 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import json
 import logging
 import os
-import threading
 import aiofiles
-import webview
-from logic_handler import LogicHandler
 
-# logging.basicConfig(level=logging.DEBUG)
+from tabs.llm.llm_logic_handler import LLMLogicHanlder
 
-class CommandsAutomatorApi:
-    def __init__(self):
-        self.logic_handler = LogicHandler()
-        self.config_path = "config/commands-executor-config.json"
+class LLMPromptApi:
+    CONFIG_FILE_PATH = os.path.join(os.getcwd(), "tabs/llm/llm-config.json")
+    MAIN_FILE_PATH = 'main_file_path' 
+    SECONDARY_FILE_PATH = 'secondary_file_dir'
+    APPLICANT_NAME_TAG = 'applicant_name'
+    applicant_name_value = ''
+    SEND_QUERY_KEYBOARD_SHORTCUT = 'enter'
+    OUTPUT_RESUME_DIR_PATH = "output_resume_path"
+    SAVE_RESULTS_TO_FILE = "save_results_to_file"
+    lLLMLogicHanlder: LLMLogicHanlder = LLMLogicHanlder()
+
+    async def load_configuration(self):
+        if not os.path.exists(self.CONFIG_FILE_PATH):
+            return {}
+        async with aiofiles.open(self.CONFIG_FILE_PATH, "r") as f:
+            data = await f.read()
+        return json.loads(data)
+
+    async def save_configuration(self, config):
+        async with aiofiles.open(self.CONFIG_FILE_PATH, "w") as f:
+            await f.write(json.dumps(config, indent=4))
+        return True
     
-        self.loop = None
-        self.executor = ThreadPoolExecutor(max_workers=4)
-        self._setup_event_loop()
-    
-    def _setup_event_loop(self):
-        def run_loop():
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-            self.loop.run_forever()
-        
-        thread = threading.Thread(target=run_loop, daemon=True)
-        thread.start()
-
-        while self.loop is None:
-            threading.Event().wait(0.01)
-
-    def load_scripts(self):
-        return self.logic_handler.load_scripts()
-
-    def get_script_description(self, script_name):
-        script_file = self.logic_handler.get_name_to_scripts()[script_name]
-        return self.logic_handler.get_script_description(script_file)
+    def call_llm(self, query):
+    # Implement your LLM logic here, or call your existing handler
+    # For demonstration, just echo the query
+        return "trial"
     
     def load_configuration(self):
         return self.run_async_method(self.load_configuration_async)
@@ -70,18 +66,16 @@ class CommandsAutomatorApi:
             await f.write(json.dumps(config, indent=4))
         
         return True
-
-    def execute_script(self, script_name, additional_text, flags):
-        return self.logic_handler.execute_script(script_name, additional_text, flags)
     
+import webview
 
 if __name__ == '__main__':
-    api = CommandsAutomatorApi()
+    api = LLMPromptApi()
     window = webview.create_window(
-        'Commands Automator',
-        'ui/commands_automator.html',
+        'LLM Prompt',
+        'resources/llm_prompt.html',
         js_api=api,
-        width=1000,
-        height=800
+        width=800,
+        height=600
     )
     webview.start(debug=True)

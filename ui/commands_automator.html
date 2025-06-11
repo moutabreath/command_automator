@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commands Automator</title>5
+    <link rel="stylesheet" href="commands_automator/commands_automator.css">
+    <link rel="stylesheet" href="tabs.css">
+    <script  src="commands_automator/commands_automator.js" defer></script> 
+    <script  src="tabs.js" defer></script> 
+</head>
+<body>
+    <div class="tab-bar">
+        <button class="tab selected" id="tab-automator-btn">Automator</button>
+        <button class="tab" id="tab-llm-btn">LLM Prompt</button>
+    </div>
+    <div id="tab-automator" class="tab-content active">
+        <h1>Commands Automator</h1>
+        <label for="script-select">Select Script:</label>
+        <select id="script-select"></select>
+        <br>
+        <label for="script-description">Script Description:</label>
+        <textarea id="script-description" readonly rows="3" cols="60"></textarea>
+        <br>
+        <label for="additional-text">Command Text (Only If Applicable):</label>
+        <textarea id="additional-text" rows="2" cols="60"></textarea>
+        <br>
+        <label for="flags">Additional Arguments/Flags:</label>
+        <input id="flags" type="text" size="60">
+        <br>
+        <button id="execute-btn">Execute</button>
+        <br>
+        <label for="result">Command Result:</label>
+        <textarea id="result" readonly rows="6" cols="80"></textarea>
+    </div>
+    <div id="tab-llm" class="tab-content">
+        <iframe src="llm/llm.html"></iframe>
+    </div>
+</body>
+</html>
