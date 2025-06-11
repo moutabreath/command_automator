@@ -1,89 +1,95 @@
-QWidget { 
-    color: #333; 
-    background-color: #222; 
+/* style.css for PyWebView/HTML */
+
+body {
+    color: #fff;
+    background-color: #222;
+    font-family: sans-serif;
+    margin: 50px;
+    padding: 0;
 }
 
-QTabBar::tab {
-    color: #fff; 
-    background-color: #222; 
+.tab-bar {
+    display: flex;
+    border-bottom: 0.5px solid #9EA3F5;
+    background: #222;
+}
+
+.tab {
+    color: #fff;
+    background-color: #222;
     border: 0.5px solid #9EA3F5;
-    border-bottom-color: #9EA3F5;
-    border-top-color: #9EA3F5;
+    border-bottom: none;
     border-top-left-radius: 0.5px;
     border-top-right-radius: 0.5px;
     min-width: 8ex;
-    padding: 2px;
+    padding: 2px 10px;
+    cursor: pointer;
 }
 
-QTabBar::tab:selected {
+.tab.selected {
     color: #222;
     background-color: #9EA3F5;
 }
 
-QLabel { 
-    color: #fff; 
+label {
+    color: #fff;
     padding: 5px;
-} 
+    display: block;
+    margin: 5px auto;
+}
 
-QCheckBox { 
-    color: #fff; 
-    border: 1px solid #9EA3F5; 
-    border-radius: 5px; 
-    padding: 5px; 
-} 
-
-QCheckBox::indicator {
-    width: 13px;
-    height: 13px;
-    border: 1px solid #9EA3F5;
+input[type="checkbox"] {
+    accent-color: #9EA3F5;
+    width: 16px;
+    height: 16px;
     border-radius: 3px;
     background: #222;
+    border: 1px solid #9EA3F5;
+    margin: 5px;
 }
 
-QCheckBox::indicator:checked {
-    background: #9EA3F5;
+button, .button {
+    color: #fff;
+    background-color: #9EA3F5;
+    border-radius: 5px;
+    padding: 5px 15px;
+    border: none;
+    cursor: pointer;
+    margin: 5px 0;
 }
 
-QPushButton { 
-    color: #fff; 
-    background-color: #9EA3F5; 
-    border-radius: 5px; 
-    padding: 5px;
-} 
-
-QComboBox {
-    color: #fff; 
-    background-color: #222; 
+select, .combo {
+    color: #fff;
+    background-color: #222;
     border: 2px solid #9EA3F5;
     padding: 5px;
     border-radius: 3px;
-} 
+}
 
-QListView { 
+ul, .list-view {
     color: #fff;
     border: 2px solid #9EA3F5;
+    background: #222;
+    padding: 5px;
+    border-radius: 3px;
+    list-style: none;
 }
 
-QLineEdit {
-    color: #fff; 
+input[type="text"], .line-edit {
+    color: #fff;
     background-color: #222;
     border: 2px solid #9EA3F5;
     border-radius: 3px;
     padding: 5px;
-} 
+}
 
-QPlainTextEdit {
-    color: #fff; 
+textarea, .plain-text-edit, .text-edit {
+    color: #fff;
     background-color: #222;
     border: 2px solid #9EA3F5;
     border-radius: 3px;
     padding: 5px;
-} 
-
-QTextEdit {
-    color: #fff; 
-    background-color: #222;
-    border: 2px solid #9EA3F5;
-    border-radius: 3px;
-    padding: 2px;
+    width: 100%;
+    box-sizing: border-box;
+    resize: vertical;
 }

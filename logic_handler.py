@@ -1,3 +1,4 @@
+import asyncio
 import glob
 import json
 import logging
@@ -17,8 +18,6 @@ class LogicHandler:
         self.scripts_attributes = {}
         Logger.init_logger()
         self.load_scripts_config()
-        self.mono_list = []
-        self.mono_versions = defaultdict()
 
     def load_scripts_config(self):
         try:
@@ -38,7 +37,6 @@ class LogicHandler:
 
     def load_scripts(self):
         executables = []
-
         files = glob.glob(os.getcwd() + '\\actionables/**/*.py', recursive=True)
         files2 = glob.glob(os.getcwd() + '\\actionables/**/*.sh', recursive=True)
         files3 = glob.glob(os.getcwd() + '\\actionables/**/*.cmd', recursive=True)
@@ -53,6 +51,7 @@ class LogicHandler:
             self.names_to_scripts[file_name] = file
             executables.append(file_name)
         executables = sorted(executables, key=lambda x: x.lower())
+
         return executables
 
     def get_script_attribute(self, file, attribute):
@@ -119,8 +118,7 @@ class LogicHandler:
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         subprocess.run(command_to_run)
 
-    @staticmethod
-    def get_string_from_thread_result(result, err):
+    def get_string_from_thread_result(self, result, err):
         str_result = ""
         logging.log(logging.DEBUG, "entered.")
         if isinstance(result, (bytes, bytearray)):
@@ -155,5 +153,25 @@ class LogicHandler:
     @staticmethod
     def is_dir_empty(dir_path):
         return not next(os.scandir(dir_path), None)
+    
+
+    def execute_script(self, script_name, additional_text, flags):
+        script_path = self.get_name_to_scripts().get(script_name, script_name)
+        args = self.get_arguments_for_script(script_path, additional_text, flags)
+        if args is None:
+            return {"error": "Missing argument. Please fill the text box for Additional Text"}
+        new_venv = self.get_updated_venv(args[0])
+        output, err  = self.run_internal(args, new_venv)
+        return self.get_string_from_thread_result(output, err)
+
+    def run_internal(self, args, venv):
+        logging.log(logging.DEBUG, "entered")
+        self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=venv)
+        logging.log(logging.DEBUG, "popen done")
+        output, err = self.proc.communicate()
+        logging.log(logging.DEBUG, "proc communicate done")
+        return output, err
+        
+    
 
    

@@ -1,0 +1,29 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Commands Automator</title>
+    <link rel="stylesheet" href="style.css">
+    <script  src="command_automator.js" defer></script>
+    </script>
+</head>
+<body>
+    <h1>Commands Automator</h1>
+    <label for="script-select">Select Script:</label>
+    <select id="script-select"></select>
+    <br>
+    <label for="script-description">Script Description:</label>
+    <textarea id="script-description" readonly rows="3" cols="60"></textarea>
+    <br>
+    <label for="additional-text">Command Text (Only If Applicable):</label>
+    <textarea id="additional-text" rows="2" cols="60"></textarea>
+    <br>
+    <label for="flags">Additional Arguments/Flags:</label>
+    <input id="flags" type="text" size="60">
+    <br>
+    <button id="execute-btn">Execute</button>
+    <br>
+    <label for="result">Command Result:</label>
+    <textarea id="result" readonly rows="6" cols="80"></textarea>
+</body>
+</html>

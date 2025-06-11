@@ -53,6 +53,7 @@ dependencies = [
     "pynput>=1.8.1",
     "google-adk>=0.3.0",
     "litellm>=1.67.4.post1",
+    "pywebview>=5.4",
 ]
 name = "commandautomator"
 version = "0.1.0"
