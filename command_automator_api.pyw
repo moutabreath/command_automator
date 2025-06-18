@@ -1,10 +1,7 @@
 import asyncio
 from concurrent.futures import ThreadPoolExecutor
-import json
 import logging
-import os
 import threading
-import aiofiles
 import webview
 
 from services.commands_automator_service import CommandsAutomatorService
@@ -86,6 +83,10 @@ class CommandsAutomatorApi:
     def save_llm_configuration(self, config):
         return self.run_async_method(self.llm_config.save_configuration_async, config)
 
+
+    def select_folder(self):
+        # Opens a native folder dialog and returns the selected folder path as a list
+        return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
 
 if __name__ == '__main__':
     api = CommandsAutomatorApi()
