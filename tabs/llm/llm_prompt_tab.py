@@ -10,7 +10,7 @@ from PyQt6.QtWidgets import QLabel, QFileDialog
 from python_utils.pyqt import pyqt_utils
 from python_utils.pyqt.runnable_worker import Signals
 from python_utils.pyqt.text_editor import TextEditor
-from tabs.llm.llm_logic_handler import LLMLogicHanlder
+from services.llm_service import LLMService
 from tabs.llm.ui_threads.gemini_stream_worker import GeminiStreamWorker
 from tabs.llm.ui_threads.gemini_ui_worker import GeminiUIWorker
 
@@ -27,7 +27,7 @@ class LLMPromptTab(QTabWidget):
     def __init__(self):
         super().__init__()
         # Consts
-        self.lLLMLogicHanlder: LLMLogicHanlder = LLMLogicHanlder()
+        self.lLLMLogicHanlder: LLMService = LLMService()
         self.CONFIG_FILE_PATH: str = f'{os.getcwd()}/{self.lLLMLogicHanlder.CURRENT_PATH}/llm-config.json'
 
         # UI threads

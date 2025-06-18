@@ -4,7 +4,7 @@ import logging
 import os
 import aiofiles
 
-from tabs.llm.llm_logic_handler import LLMLogicHanlder
+from services.llm_service import LLMService
 
 class LLMPromptApi:
     CONFIG_FILE_PATH = os.path.join(os.getcwd(), "tabs/llm/llm-config.json")
@@ -15,7 +15,7 @@ class LLMPromptApi:
     SEND_QUERY_KEYBOARD_SHORTCUT = 'enter'
     OUTPUT_RESUME_DIR_PATH = "output_resume_path"
     SAVE_RESULTS_TO_FILE = "save_results_to_file"
-    lLLMLogicHanlder: LLMLogicHanlder = LLMLogicHanlder()
+    lLLMLogicHanlder: LLMService = LLMService()
 
     async def load_configuration(self):
         if not os.path.exists(self.CONFIG_FILE_PATH):

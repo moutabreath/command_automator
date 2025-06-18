@@ -8,7 +8,7 @@ from tabs.llm.file_stylers import docx_styler
 from tabs.llm.llm_agents.gemini.gemini_agent import GeminiAgent
 from tabs.llm.llm_agents.gpt.gpt_agent import GptAgent
 
-class LLMLogicHanlder():
+class LLMService():
 
     CURRENT_PATH = '/tabs/llm'
     LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'

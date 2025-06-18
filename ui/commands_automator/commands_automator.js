@@ -2,13 +2,9 @@ let config = {};
 
 async function loadScripts() {
     try {
-        console.log('Loading scripts...');
         const scripts = await window.pywebview.api.load_scripts();
-        console.log('Scripts loaded:', scripts);
-
         const select = document.getElementById('script-select');
         select.innerHTML = '';
-
         if (scripts && scripts.length > 0) {
             scripts.forEach(name => {
                 const option = document.createElement('option');
@@ -34,7 +30,6 @@ async function updateDescription() {
     try {
         const select = document.getElementById('script-select');
         if (select.value) {
-            console.log('Getting description for:', select.value);
             const desc = await window.pywebview.api.get_script_description(select.value);
             document.getElementById('script-description').value = desc;
         } else {
@@ -48,10 +43,7 @@ async function updateDescription() {
 
 async function loadConfig() {
     try {
-        console.log('Loading configuration...');
-        config = await window.pywebview.api.load_configuration();
-        console.log('Config loaded:', config);
-
+        config = await window.pywebview.api.load_commands_configuration();
         document.getElementById('script-select').value = config.selected_script || '';
         document.getElementById('additional-text').value = config.additional_text || '';
         document.getElementById('flags').value = config.flags || '';
@@ -67,10 +59,7 @@ async function saveConfig() {
         config.selected_script = document.getElementById('script-select').value;
         config.additional_text = document.getElementById('additional-text').value;
         config.flags = document.getElementById('flags').value;
-
-        console.log('Saving config:', config);
-        const result = await window.pywebview.api.save_configuration(config);
-        console.log('Config saved:', result);
+        const result = await window.pywebview.api.save_commands_configuration(config);
     } catch (error) {
         console.error('Error saving config:', error);
     }
@@ -91,10 +80,8 @@ async function executeScript() {
         }
 
         resultBox.value = "Executing...";
-        console.log('Executing script:', { script, additional, flags });
 
         const response = await window.pywebview.api.execute_script(script, additional, flags);
-        console.log('Execution response:', response);
         resultBox.value = response;
     } catch (error) {
         console.error('Error executing script:', error);
@@ -103,7 +90,7 @@ async function executeScript() {
 }
 
 // Wait for pywebview to be ready
-async function initializeApp() {
+async function initCommandsAutomator() {
     console.log('Initializing app...');
 
     // Check if pywebview API is available
@@ -130,13 +117,15 @@ async function initializeApp() {
     document.getElementById('execute-btn').addEventListener('click', executeScript);
 }
 
+async function initApp(){
+    await initCommandsAutomator()
+    await initLLM()
+}
 
 
-
-// Try multiple initialization methods
 document.addEventListener('pywebviewready', async function () {
     console.log('pywebviewready event fired');
-    await initializeApp();
+    await initCommandsAutomator();
 });
 
 document.addEventListener('DOMContentLoaded', function () {
@@ -145,29 +134,16 @@ document.addEventListener('DOMContentLoaded', function () {
     // If pywebview is already ready, initialize immediately
     if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
         console.log('PyWebView already ready, initializing...');
-        initializeApp();
+        initApp();
     } else {
         // Otherwise wait a bit and try again
         setTimeout(() => {
             if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
                 console.log('PyWebView ready after timeout, initializing...');
-                initializeApp();
+                initApp();
             } else {
                 console.error('PyWebView API still not available after timeout');
             }
         }, 1000);
-    }
-});
-
-// Fallback initialization
-window.addEventListener('load', function () {
-    console.log('Window load event fired');
-
-    if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
-        // Only initialize if not already done
-        if (!document.getElementById('script-select').options.length) {
-            console.log('Fallback initialization...');
-            initializeApp();
-        }
     }
 });

@@ -1,20 +1,23 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
-    <title>Commands Automator</title>5
+    <title>Commands Automator</title>
     <link rel="stylesheet" href="commands_automator/commands_automator.css">
     <link rel="stylesheet" href="tabs.css">
-    <script  src="commands_automator/commands_automator.js" defer></script> 
-    <script  src="tabs.js" defer></script> 
+    <link rel="stylesheet" href="llm/llm.css">
+    <script src="commands_automator/commands_automator.js" defer></script>
+    <script src="llm/llm.js" defer></script>
+    <script src="tabs.js" defer></script>
 </head>
+
 <body>
     <div class="tab-bar">
-        <button class="tab selected" id="tab-automator-btn">Automator</button>
+        <button class="tab selected" id="tab-automator-btn">Commands Automator</button>
         <button class="tab" id="tab-llm-btn">LLM Prompt</button>
     </div>
     <div id="tab-automator" class="tab-content active">
-        <h1>Commands Automator</h1>
         <label for="script-select">Select Script:</label>
         <select id="script-select"></select>
         <br>
@@ -33,7 +36,22 @@
         <textarea id="result" readonly rows="6" cols="80"></textarea>
     </div>
     <div id="tab-llm" class="tab-content">
-        <iframe src="llm/llm.html"></iframe>
+        <!-- <iframe src="llm/llm.html"></iframe> -->
+        <textarea id="response-box" readonly></textarea>
+        <div class="row">
+            <texarea id="query-box" rows="2" cols="60" placeholder="Message LLM"></texarea>
+            <button id="send-btn">Send</button>
+        </div>
+        <div class="row" style="display: flex; align-items: center; gap: 10px; width: 50%;">
+            <label style="margin: 0; display: flex; align-items: center;">
+                <input type="checkbox" id="save-to-files" style="margin-right: 5px;">
+                Save LLM Result To File
+            </label>
+            <label for="output-file-path" style="margin: 0 5px 0 15px;">Output File Path</label>
+            <input type="text" id="output-file-path" style="flex: 1;">
+        </div>
+
     </div>
 </body>
+
 </html>
