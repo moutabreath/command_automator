@@ -1,6 +1,6 @@
 // resources/llm_prompt.js
 
-async function loadConfig() {
+async function loadLLMConfig() {
     try {
         config = await window.pywebview.api.load_llm_configuration();
         document.getElementById('output-file-path').value = config.outpuFilePath || '';
@@ -11,7 +11,7 @@ async function loadConfig() {
     }
 }
 
-async function saveConfig() {
+async function saveLLMConfig() {
     try {
         config.outpuFilePath = document.getElementById('output-file-path').value;
         config.saveToFiles = document.getElementById('save-to-files').value;

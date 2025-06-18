@@ -41,7 +41,7 @@ async function updateDescription() {
     }
 }
 
-async function loadConfig() {
+async function loadAutomatorConfig() {
     try {
         config = await window.pywebview.api.load_commands_configuration();
         document.getElementById('script-select').value = config.selected_script || '';
@@ -54,7 +54,7 @@ async function loadConfig() {
     }
 }
 
-async function saveConfig() {
+async function saveAutomatorConfig() {
     try {
         config.selected_script = document.getElementById('script-select').value;
         config.additional_text = document.getElementById('additional-text').value;
@@ -67,8 +67,6 @@ async function saveConfig() {
 
 async function executeScript() {
     try {
-        await saveConfig();
-
         const script = document.getElementById('script-select').value;
         const additional = document.getElementById('additional-text').value;
         const flags = document.getElementById('flags').value;
@@ -99,22 +97,22 @@ async function initCommandsAutomator() {
     console.log('PyWebView API is available');
 
     await loadScripts();
-    await loadConfig();
+    await loadAutomatorConfig();
     await initCommandsAutomatorEventHandlers();
 
 }
 
 async function initCommandsAutomatorEventHandlers() {
     document.getElementById('script-select').addEventListener('change', async () => {
-        updateDescription();
-        await saveConfig();
+        await updateDescription();
+        await saveAutomatorConfig();
     });
 
     document.getElementById('additional-text').addEventListener('input', async () => {
-        await saveConfig();
+        await saveAutomatorConfig();
     });
     document.getElementById('flags').addEventListener('input', async () => {
-        await saveConfig();
+        await saveAutomatorConfig();
     });
     document.getElementById('execute-btn').addEventListener('click', async () => {
         await executeScript();
