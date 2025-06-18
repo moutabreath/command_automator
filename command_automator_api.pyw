@@ -13,14 +13,12 @@ from services.llm_service import LLMService
 
 class CommandsAutomatorApi:
 
-    lLLMLogicHanlder: LLMService = LLMService()
-
-
+    llm_sevice: LLMService = LLMService()
     
     def __init__(self):
         self.commands_automator_service = CommandsAutomatorService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
-        self.llm_config = ConfigurationService('llm-config.json')
+        self.llm_config = ConfigurationService('config/llm-config.json')
         self.loop = None
         self.executor = ThreadPoolExecutor(max_workers=4)
         self.setup_event_loop()
@@ -72,10 +70,8 @@ class CommandsAutomatorApi:
     
 
 
-    def call_llm(self, query):
-    # Implement your LLM logic here, or call your existing handler
-    # For demonstration, just echo the query
-        return "trial"
+    def call_llm(self, prompt):
+        return self.llm_sevice.chat_with_bot(prompt)
     
     def load_llm_configuration(self):
         return self.run_async_method(self.llm_config.load_configuration_async)
@@ -87,6 +83,7 @@ class CommandsAutomatorApi:
     def select_folder(self):
         # Opens a native folder dialog and returns the selected folder path as a list
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
+    
 
 if __name__ == '__main__':
     api = CommandsAutomatorApi()

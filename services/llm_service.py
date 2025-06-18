@@ -1,7 +1,7 @@
 import glob
 import logging
 import os
-from typing import List
+from typing import List, Tuple
 import re
 
 from tabs.llm.file_stylers import docx_styler
@@ -136,3 +136,11 @@ class LLMService():
         file_path = f'{self.RESUME_FILES_PATH_PREFIX}/cover_letter_guidelines.txt'  
         file_text = self.read_file(file_path)
         return file_text
+    
+    def chat_with_bot(self, prompt, file_path = None) -> Tuple[bool, str]:
+        result = self.gemini_agent.chat_with_gemini(prompt, file_path)
+        if result[0]:
+            return result[1]
+        logging.error(result[0])
+        return 'Something went wrong'
+        
