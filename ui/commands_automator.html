@@ -37,19 +37,23 @@
     </div>
     <div id="tab-llm" class="tab-content">
         <!-- <iframe src="llm/llm.html"></iframe> -->
-        <textarea id="response-box" readonly></textarea>
-        <div class="row">
-            <texarea id="query-box" rows="2" cols="60" placeholder="Message LLM"></texarea>
+        <div class="llm-row">
+            <textarea id="response-box" rows="10" cols="60"></textarea>
+        </div>
+        <div class="llm-row">
+            <textarea id="query-box" rows="10" cols="60" placeholder="Message LLM"></textarea>
             <button id="send-btn">Send</button>
         </div>
-        <div class="row" style="display: flex; align-items: center; gap: 10px; width: 50%;">
-            <label style="margin: 0; display: flex; align-items: center;">
-                <input type="checkbox" id="save-to-files" style="margin-right: 5px;">
+        <div class="llm-row">
+            <label>
+                <input type="checkbox" id="save-to-files">
                 Save LLM Result To File
             </label>
-            <label for="output-file-path" style="margin: 0 5px 0 15px;">Output File Path</label>
-            <input type="text" id="output-file-path" style="flex: 1;">
+            <label for="output-file-path" style="margin-left:15px;">Output File Path</label>
+            <input type="text" id="output-file-path">
         </div>
+        <!-- Only if you want the query box styled as part of this row: -->
+
 
     </div>
 </body>
