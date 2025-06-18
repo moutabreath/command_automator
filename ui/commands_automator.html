@@ -18,21 +18,21 @@
         <button class="tab" id="tab-llm-btn">LLM Prompt</button>
     </div>
     <div id="tab-automator" class="tab-content active">
-        <label for="script-select">Select Script:</label>
+        <label for="script-select">Select Script</label>
         <select id="script-select"></select>
         <br>
-        <label for="script-description">Script Description:</label>
+        <label for="script-description">Script Description</label>
         <textarea id="script-description" readonly rows="3" cols="60"></textarea>
         <br>
-        <label for="additional-text">Command Text (Only If Applicable):</label>
+        <label for="additional-text">Command Text (Only If Applicable)</label>
         <textarea id="additional-text" rows="2" cols="60"></textarea>
         <br>
-        <label for="flags">Additional Arguments/Flags:</label>
+        <label for="flags">Additional Arguments/Flags</label>
         <input id="flags" type="text" size="60">
         <br>
         <button id="execute-btn">Execute</button>
         <br>
-        <label for="result">Command Result:</label>
+        <label for="result">Command Result</label>
         <textarea id="result" readonly rows="6" cols="80"></textarea>
     </div>
     <div id="tab-llm" class="tab-content">
@@ -41,7 +41,7 @@
             <textarea id="response-box" rows="10" cols="60"></textarea>
         </div>
         <div class="llm-row">
-            <textarea id="query-box" rows="10" cols="60" placeholder="Message LLM"></textarea>
+            <textarea id="query-box" rows="5" cols="60" placeholder="Message LLM"></textarea>
             <button id="send-btn">Send</button>
         </div>
         <div class="llm-row">
@@ -51,8 +51,9 @@
             </label>
             <label for="output-file-path" style="margin-left:15px;">Output File Path</label>
             <input type="text" id="output-file-path">
+            <button id="select-folder-btn">Browse...</button>
+            <input type="file" id="folder-input" webkitdirectory style="display:none;">
         </div>
-        <!-- Only if you want the query box styled as part of this row: -->
 
 
     </div>

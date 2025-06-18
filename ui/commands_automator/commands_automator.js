@@ -89,11 +89,7 @@ async function executeScript() {
     }
 }
 
-// Wait for pywebview to be ready
 async function initCommandsAutomator() {
-    console.log('Initializing app...');
-
-    // Check if pywebview API is available
     if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
         console.error('PyWebView API not available');
         document.getElementById('result').value = 'Error: PyWebView API not available';
@@ -102,22 +98,30 @@ async function initCommandsAutomator() {
 
     console.log('PyWebView API is available');
 
-    // Load initial data
     await loadScripts();
     await loadConfig();
+    await initCommandsAutomatorEventHandlers();
 
-    // Set up event listeners
+}
+
+async function initCommandsAutomatorEventHandlers() {
     document.getElementById('script-select').addEventListener('change', async () => {
         updateDescription();
         await saveConfig();
     });
 
-    document.getElementById('additional-text').addEventListener('input', saveConfig);
-    document.getElementById('flags').addEventListener('input', saveConfig);
-    document.getElementById('execute-btn').addEventListener('click', executeScript);
+    document.getElementById('additional-text').addEventListener('input', async () => {
+        await saveConfig();
+    });
+    document.getElementById('flags').addEventListener('input', async () => {
+        await saveConfig();
+    });
+    document.getElementById('execute-btn').addEventListener('click', async () => {
+        await executeScript();
+    });
 }
 
-async function initApp(){
+async function initApp() {
     await initCommandsAutomator()
     await initLLM()
 }
@@ -129,17 +133,12 @@ document.addEventListener('pywebviewready', async function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOMContentLoaded event fired');
-
-    // If pywebview is already ready, initialize immediately
     if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
         console.log('PyWebView already ready, initializing...');
         initApp();
     } else {
-        // Otherwise wait a bit and try again
         setTimeout(() => {
             if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
-                console.log('PyWebView ready after timeout, initializing...');
                 initApp();
             } else {
                 console.error('PyWebView API still not available after timeout');
