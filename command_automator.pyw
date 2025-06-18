@@ -9,7 +9,7 @@ import webview
 
 from services.commands_automator_service import CommandsAutomatorService
 from services.configuration_service import ConfigurationService
-from tabs.llm.llm_logic_handler import LLMService
+from services.llm_service import LLMService
 
 
 # logging.basicConfig(level=logging.DEBUG)
