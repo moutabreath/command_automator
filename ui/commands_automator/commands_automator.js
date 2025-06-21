@@ -131,6 +131,7 @@ document.addEventListener('pywebviewready', async function () {
 });
 
 document.addEventListener('DOMContentLoaded', function () {
+    init_basic_llm_dom_elements();
     if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
         console.log('PyWebView already ready, initializing...');
         initApp();

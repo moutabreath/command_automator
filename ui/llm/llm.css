@@ -1,85 +1,81 @@
-.llm-row {
-    display: flex;
-    align-items: flex-start;
-    width: 100%;
-    background: #222;
-    margin-bottom: 10px;
-}
+ .llm-response-container {
+     margin: 20px;
+     font-family: Arial, sans-serif;
+ }
 
-/* First row - response box takes full width */
-.llm-row:first-child {
-    flex-direction: column;
-}
+ #response-box {
+     width: 100%;
+     margin-bottom: 10px;
+     padding: 10px;
+     border: 1px solid #ccc;
+     border-radius: 4px;
+     resize: vertical;
+ }
 
-.llm-row:first-child #response-box {
-    width: 100%;
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-    padding: 10px;
-    font-family: monospace;
-    resize: vertical;
-}
+ .query-box-wrapper {
+     border: 1px solid #ccc;
+     border-radius: 4px;
+     padding: 10px;
+     background-color: #222;
+ }
 
-/* Second row - query box with button inside */
-.llm-row:nth-child(2) {
-    position: relative;
-    width: 100%;
-}
+ .query-input-section {
+     margin-bottom: 10px;
+ }
 
-.llm-row:nth-child(2) #query-box {
-    width: 100%;
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-    padding: 10px 60px 45px 10px; /* Extra padding bottom and right for button */
-    font-family: monospace;
-    resize: vertical;
-}
+ #query-box {
+     width: 100%;
+     min-height: 24px;
+     padding: 8px;
+     border: none;
+     outline: none;
+     resize: none;
+     background: transparent;
+     font-family: inherit;
+     font-size: inherit;
+     overflow: hidden;
+ }
 
-.llm-row:nth-child(2) #send-btn {
-    position: absolute;
-    bottom: 8px;
-    right: 50%;
-    transform: translateX(50%);
-    background: #555;
-    color: #fff;
-    border: 1px solid #777;
-    padding: 8px 16px;
-    cursor: pointer;
-    border-radius: 4px;
-    font-size: 0.9em;
-}
+ .query-buttons-section {
+     display: flex;
+     justify-content: flex-end;
+ }
 
-.llm-row:nth-child(2) #send-btn:hover {
-    background: #666;
-    border-color: #888;
-}
+ #send-btn {
+     padding: 8px 16px;
+     background-color: #9EA3F5;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+ }
 
-/* Third row - checkbox and file path */
-.llm-row:nth-child(3) {
-    gap: 15px;
-    align-items: center;
-}
+ #send-btn:hover {
+     background-color: #0056b3;
+ }
 
-.llm-row label {
-    margin: 0;
-    display: flex;
-    align-items: center;
-    color: #fff;
-    font-size: 1em;
-    white-space: nowrap;
-}
+ .llm-row {
+     margin: 20px;
+     display: flex;
+     align-items: center;
+     gap: 10px;
+ }
 
-.llm-row #query-box::placeholder {
-    color: #aaa;
-    opacity: 1;
-}
+ #output-file-path {
+     padding: 4px 8px;
+     border: 1px solid #ccc;
+     border-radius: 4px;
+ }
 
-#output-file-path {
-    background: #333;
-    color: #fff;
-    border: 1px solid #555;
-    padding: 5px;
-    flex: 1;
-}
+ #select-folder-btn {
+     padding: 4px 12px;
+     background-color: #6c757d;
+     color: white;
+     border: none;
+     border-radius: 4px;
+     cursor: pointer;
+ }
+
+ #select-folder-btn:hover {
+     background-color: #545b62;
+ }

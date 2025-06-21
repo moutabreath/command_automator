@@ -1,5 +1,3 @@
-// resources/llm_prompt.js
-
 async function loadLLMConfig() {
     try {
         config = await window.pywebview.api.load_llm_configuration();
@@ -12,6 +10,7 @@ async function loadLLMConfig() {
 }
 
 async function saveLLMConfig() {
+    let config = {};
     try {
         config.outpuFilePath = document.getElementById('output-file-path').value;
         config.saveToFiles = document.getElementById('save-to-files').value;
@@ -20,6 +19,13 @@ async function saveLLMConfig() {
         console.error('Error saving config:', error);
     }
 }
+
+function init_basic_llm_dom_elements(){
+    const queryBox = document.getElementById('query-box');
+    queryBox.addEventListener('input', autoResize);
+    autoResize();
+}
+
 async function initLLM() {
     console.log('Initializing LLM...');
 
@@ -29,7 +35,7 @@ async function initLLM() {
         return;
     }
 
-    // await loadConfig();
+    await loadLLMConfig();
     await initLLMEventListeners();
 }
 
@@ -54,6 +60,11 @@ async function initFolderUploadEvent() {
     if (result && result.length > 0) {
         document.getElementById('output-file-path').value = result[0];
     }
+}
+function autoResize() {
+    const queryBox = document.getElementById('query-box');
+    queryBox.style.height = 'auto';
+    queryBox.style.height = Math.max(24, queryBox.scrollHeight) + 'px';
 }
 
 async function callLLM() {
