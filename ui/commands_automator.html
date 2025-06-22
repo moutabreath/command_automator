@@ -37,10 +37,12 @@
     </div>
     <div id="tab-llm" class="tab-content">
         <div class="llm-response-container">
-            <textarea id="response-box" rows="10" cols="60" readonly></textarea>
+            <div id="response-box" class="response-box"></div>
             <div class="query-box-wrapper">
                 <textarea id="query-box" rows="2" placeholder="Message LLM"></textarea>
-                <button id="send-btn">Send</button>
+                <button id="send-btn" title="Send">
+                    <img src="resources/arrow.png" alt="Send"/>
+                </button>
             </div>
         </div>
         <div class="llm-row">

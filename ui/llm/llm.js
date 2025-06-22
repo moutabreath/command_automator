@@ -20,7 +20,7 @@ async function saveLLMConfig() {
     }
 }
 
-function init_basic_llm_dom_elements(){
+function init_basic_llm_dom_elements() {
     const queryBox = document.getElementById('query-box');
     queryBox.addEventListener('input', autoResize);
     autoResize();
@@ -84,7 +84,22 @@ async function callLLM() {
 
     // Append query and response to the response box
     const responseBox = document.getElementById('response-box');
-    responseBox.value += `You: ${query}\nLLM: ${response}\n\n`;
+
+    // Create query element
+    const queryElem = document.createElement('div');
+    queryElem.className = 'llm-query';
+    queryElem.textContent = query;
+
+    // Create response element
+    const responseElem = document.createElement('div');
+    responseElem.className = 'llm-response';
+    responseElem.textContent = response;
+
+    // Append to response box
+    responseBox.appendChild(queryElem);
+    responseBox.appendChild(responseElem);
+
+    // Scroll to bottom
     responseBox.scrollTop = responseBox.scrollHeight;
 
     // Reset UI

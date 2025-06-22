@@ -69,7 +69,7 @@
 
  #select-folder-btn {
      padding: 4px 12px;
-     background-color: #6c757d;
+     background-color: #9EA3F5;
      color: white;
      border: none;
      border-radius: 4px;
@@ -77,5 +77,59 @@
  }
 
  #select-folder-btn:hover {
-     background-color: #545b62;
+     background-color: #9EA3F5;
  }
+#send-btn {
+    padding: 6px 10px;
+    background-color: #222;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px;
+    height: 36px;
+}
+
+#send-btn img {
+    height: 20px;
+    width: 20px;
+    display: block;
+}
+.response-box {
+    width: 100%;
+    min-height: 200px;
+    max-height: 400px;
+    margin-bottom: 10px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 4px;
+    background: #222;
+    overflow-y: auto;
+    font-family: monospace;
+    color: #fff;
+}
+
+.llm-query {
+    background: #9EA3F5;
+    color: #222;
+    border-radius: 8px;
+    padding: 8px 12px;
+    margin: 8px 0 4px 0;
+    display: inline-block;
+    max-width: 80%;
+    font-weight: bold;
+    box-shadow: 0 2px 6px rgba(0,0,0,0.08);
+}
+
+.llm-response {
+    background: transparent;
+    color: #fff;
+    padding: 6px 0 12px 0;
+    margin-bottom: 10px;
+    display: block;
+    max-width: 90%;
+    white-space: pre-wrap;
+}
