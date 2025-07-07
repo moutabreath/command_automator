@@ -14,24 +14,26 @@ async def get_resume_files() -> ResumeData:
     """
     Fetch resume file, applicant name, job description and guidelines
 
-    """
-    resume_data: ResumeData = ResumeData()
+    """    
 
     resume_content, applicant_name = await resume_loader_service.get_resume()
-    resume_data.resume = resume_content
 
     guide_lines = await resume_loader_service.get_main_part_guide_lines()
     guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
-    resume_data.general_guidelines = guide_lines
 
     highlighted_sections = await resume_loader_service.get_highlighted_sections()
-    resume_data.resume_highlighted_sections = highlighted_sections
 
-    job_desc_content = await resume_loader_service.get_job_description()
-    resume_data.job_desc = job_desc_content
+    job_description_content = await resume_loader_service.get_job_description()
 
     cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
-    resume_data.cover_letter_guidelines = cover_letter_guide_lines
+
+    resume_data: ResumeData = ResumeData(
+                                         applicant_name = applicant_name,
+                                         general_guidelines=guide_lines,
+                                         resume=resume_content, 
+                                         resume_highlighted_sections=highlighted_sections,
+                                         job_description=job_description_content,
+                                         cover_letter_guidelines=cover_letter_guide_lines)
 
     return resume_data
 

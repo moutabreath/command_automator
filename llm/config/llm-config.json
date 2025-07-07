@@ -1,0 +1,7 @@
+{
+    "main_file_path": "C:/Work/Projects/command_automator_full/tabs/llm/resources/resume/Tal_Druckmann.txt",
+    "secondary_file_dir": "C:/Work/Projects/command_automator_full/tabs/llm/resources/resume/job_descs.txt",
+    "applicant_name": "Tal_Druckmann",
+    "output_resume_path": "C:/Users/tdruc/OneDrive/Documents/Resume",
+    "save_results_to_file": true
+}

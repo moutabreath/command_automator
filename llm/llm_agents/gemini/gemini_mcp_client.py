@@ -129,7 +129,7 @@ Be selective and conservative with tool usage. Be concise. Only output valid JSO
 Query: {query}
 """
     
-    async def process_query(self, query: str, applicant_name, output_file_path = "", should_save_results_to_file = False) -> str:
+    async def process_query(self, query: str, output_file_path = "", should_save_results_to_file = False) -> str:
         """
         Process a user query using a combination of Gemini and MCP server.
         
@@ -168,7 +168,7 @@ Query: {query}
                         response = await session.call_tool(selected_tool, tool_args)
                         if response == None:
                             return None
-                        tool_result = response.content
+                        tool_result = response.content[0].text
                         logging.debug(f"Tool response received ({len(tool_result)} characters)")
                         
                         if self.api_key:
@@ -179,23 +179,25 @@ Query: {query}
                                     return None
                                 prompt = self.format_prompts_for_resume(resume_data_dict)
                                 self.chat._config["response_mime_type"] = "text/plain"
-                                gemini_response = self.chat.send_message({"role": "user", "content": prompt})
-                                gemini_text = gemini_response._get_text()
+                                gemini_response = self.chat.send_message(prompt)
+                                resume_text = gemini_response._get_text()
                                 if should_save_results_to_file:
                                    resume_highlighted_sections = self.convert_none_to_empy_string(resume_data_dict.get('resume_highlighted_sections', ''))
-                                   self.resume_saver_service.save_resume(gemini_text, output_file_path, applicant_name, resume_highlighted_sections)
-                                covert_letter = resume_data_dict.get('cover_letter_guidelines', '')
-                                if (covert_letter != None):
-                                    gemini_response = self.chat.send_message({"role": "user", "content": covert_letter})
-                                    gemini_text = gemini_response._get_text()
+                                   applicant_name = resume_data_dict.get('applicant_name', '')
+                                   self.resume_saver_service.save_resume(resume_text, output_file_path, applicant_name, resume_highlighted_sections)
+                                cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
+                                if (cover_letter_guidelines != None):
+                                    gemini_response = self.chat.send_message(cover_letter_guidelines)
+                                    cover_letter_text = gemini_response._get_text()
                                 if (should_save_results_to_file):
-                                     self.resume_saver_service.save_cover_letter(gemini_text, output_file_path,applicant_name)
+                                     self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name)
+                                return resume_text +"\n\n" + cover_letter_text
                         else:
                             return tool_result
                     else:
                         if self.api_key:
                             try:
-                                gemini_response = self.chat.send_message([{"role": "user", "content": query}])
+                                gemini_response = self.chat.send_message(query)
                                 gemini_text = gemini_response._get_text()
                                 return gemini_text
                             except Exception as e:
@@ -213,10 +215,11 @@ Query: {query}
     def format_prompts_for_resume(self, resume_data_dict):       
         general_guidleines = resume_data_dict.get('general_guidelines', '')
         resume = resume_data_dict.get('resume', '')        
-        jobs_desc = self.convert_none_to_empy_string(resume_data_dict.get('job_desc', ''))
+        jobs_desc = self.convert_none_to_empy_string(resume_data_dict.get('job_description', ''))
      
         prompt = f"{general_guidleines}\n\n{resume}\n\n\n"
-        prompt += jobs_desc     
+        prompt += jobs_desc
+        return prompt 
 
     def convert_none_to_empy_string(self, text):
         if text == None:

@@ -1,9 +1,9 @@
-from typing import TypedDict
+from pydantic import BaseModel
 
-
-class ResumeData(TypedDict):
+class ResumeData(BaseModel):
+    applicant_name: str
     general_guidelines: str
     resume: str
-    resume_highlighted_sections: str
-    job_desc: str
+    resume_highlighted_sections: list[str]
+    job_description: str
     cover_letter_guidelines: str    
