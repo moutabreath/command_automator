@@ -4,13 +4,10 @@ import json
 import logging
 import os
 import subprocess
-from collections import defaultdict
-from pathlib import Path
 
 import chardet
 
-from python_utils.logger import Logger
-
+from logger import Logger
 
 class CommandsAutomatorService:
     def __init__(self):
