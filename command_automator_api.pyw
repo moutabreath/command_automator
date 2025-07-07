@@ -8,7 +8,7 @@ import webview
 from services.commands_automator_service import CommandsAutomatorService
 from services.configuration_service import ConfigurationService
 from services.llm_service import LLMService
-from tabs.llm.mcp_servers.resume_mcp import run_mcp
+from llm.mcp_servers.resume_mcp import run_mcp
 
 # logging.basicConfig(level=logging.DEBUG)
 

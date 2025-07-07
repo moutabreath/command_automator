@@ -7,7 +7,7 @@ from mcp import ClientSession
 from google.genai import types
 from google.genai.types import GenerateContentResponse
 
-from tabs.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService 
+from llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService 
 
 
 class SmartMCPClient:

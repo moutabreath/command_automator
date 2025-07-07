@@ -1,5 +1,4 @@
-from tabs.llm.llm_agents.gemini.gemini_mcp_client import SmartMCPClient
-from tabs.llm.llm_agents.gpt.gpt_agent import GptAgent
+from llm.llm_agents.gemini.gemini_mcp_client import SmartMCPClient
 
 class LLMService():
 
