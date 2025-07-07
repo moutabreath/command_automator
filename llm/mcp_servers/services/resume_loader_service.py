@@ -3,54 +3,12 @@ import os
 import re
 import aiofiles
 
-from tabs.llm.file_stylers import docx_styler
-
-
 class ResumeLoaderService:
     CURRENT_PATH = '/tabs/llm'
     LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'
     RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
     ADDITIONAl_FILE_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/addtional_files'
     resume_file_name = "Missing"
-
-
-
-    def chat_using_guidelines(self, applicant_name: str, resume_path: str, job_desc_path: str, output_path: str, should_save_as_file):
-        guide_lines = self.get_main_part_guide_lines(applicant_name)
-        guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
-        logging.debug(f"guide_lines: {guide_lines}")
-        highlighted_sections = self.get_highlighted_sections()
-        main_part = self.read_file(resume_path)        
-        prompt = f"{guide_lines}\n\n{main_part}\n\n\n"
-        job_desc_content = self.read_file(job_desc_path)
-        second_part = "" 
-        if job_desc_content != "":        
-            prompt += job_desc_content
-        success, reponse = self.gemini_agent.chat_with_gemini(prompt)
-        if not(success):
-            logging.error("Error sending resume", reponse)
-            return ""
-        if (should_save_as_file):
-            self.save_main_results(applicant_name, reponse, output_path, highlighted_sections)
-
-        cover_letter_guide_lines = self.get_cover_letter_guide_lines()
-        success, second_part = self.gemini_agent.chat_with_gemini(cover_letter_guide_lines)
-        if (should_save_as_file):
-            docx_styler.save_text_as_word(f'{output_path}/{self.resume_file_name}_Cover_Letter.docx', applicant_name, second_part)
-        return f'{reponse}\n\n\n{second_part}'
-
-
-    def save_main_results(self, applicant_name, text, output_path, resume_sections):
-        pattern = re.compile(f"{applicant_name}[^ \n]*", re.IGNORECASE)
-        match = pattern.search(text)
-        try:
-            if match:
-                self.resume_file_name = match.group()
-                logging.log(logging.DEBUG, f"found full string {self.resume_file_name}")    
-                docx_styler.save_text_as_word(f'{output_path}/{self.resume_file_name}.docx', applicant_name, text, resume_sections)
-        except Exception:
-            logging.error("Error saving resume", exc_info=True)
-
     
     async def get_main_part_guide_lines(self):
         file_path = f'{self.ADDITIONAl_FILE_PATH_PREFIX}/guidelines.txt'    
