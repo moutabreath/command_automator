@@ -1,6 +1,6 @@
 from mcp.server.fastmcp import FastMCP
 
-from services.resume_loader_service import ResumeLoaderService
+from tabs.llm.mcp_servers.services.resume_loader_service import ResumeLoaderService
 from tabs.llm.mcp_servers.resume_data import ResumeData
 
 # Initialize FastMCP
