@@ -18,7 +18,7 @@ class SmartMCPClient:
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         self.gemin_client: genai.Client = genai.Client(api_key=self.api_key)        
-        self.chat = self.gemin_client.chats.create(
+        self.resume_chat = self.gemin_client.chats.create(
                     model="gemini-2.0-flash",
                     history= []
         )
@@ -29,7 +29,7 @@ class SmartMCPClient:
             "max_output_tokens": 8192,  # Limit response length
             "response_mime_type": "application/json",  # Output as plain text
         }
-        self.chat._config = config
+        self.resume_chat._config = config    
         self.resume_saver_service: ResumeSaverService  = ResumeSaverService()
 
     async def decide_tool_usage(self, query, available_tools):
@@ -63,8 +63,8 @@ class SmartMCPClient:
             
         try:         
             messages = await self.init_messages(query, available_tools)
-            self.chat._config["response_mime_type"] = "application/json"
-            generated_response: GenerateContentResponse = self.chat.send_message(messages)
+            self.resume_chat._config["response_mime_type"] = "application/json"
+            generated_response: GenerateContentResponse = self.resume_chat.send_message(messages)
             decision = json.loads(generated_response.model_dump_json())
             tools_text = decision.get('candidates')[0].get('content').get('parts')[0].get('text')
             tools_json = json.loads(tools_text)
@@ -182,7 +182,7 @@ Query: {query}
                     else:
                         if self.api_key:
                             try:
-                                gemini_response = self.chat.send_message(query)
+                                gemini_response = self.resume_chat.send_message(query)
                                 gemini_text = gemini_response._get_text()
                                 return gemini_text
                             except Exception as e:
@@ -220,14 +220,14 @@ Query: {query}
         cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
         cover_letter_text = ''
         if (cover_letter_guidelines != None):
-            gemini_response = self.chat.send_message(cover_letter_guidelines)
+            gemini_response = self.resume_chat.send_message(cover_letter_guidelines)
             cover_letter_text = gemini_response._get_text()
         return cover_letter_text
 
     def get_refined_resume(self, resume_data_dict):
         prompt = self.format_prompts_for_resume(resume_data_dict)
-        self.chat._config["response_mime_type"] = "text/plain"
-        gemini_response = self.chat.send_message(prompt)
+        self.resume_chat._config["response_mime_type"] = "text/plain"
+        gemini_response = self.resume_chat.send_message(prompt)
         resume_text = gemini_response._get_text()
         return resume_text
         
@@ -236,7 +236,7 @@ Query: {query}
         resume = resume_data_dict.get('resume', '')        
         jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
      
-        prompt = f"{general_guidleines}\n\n{resume}\n\n\n"
+        prompt = f"Now help me with this. Ouptupt text for this part.\n\n{general_guidleines}\n\n{resume}\n\n\n"
         prompt += jobs_desc
         return prompt 
 

@@ -14,7 +14,7 @@ class ResumeSaverService:
 
         
 
-    def get_resume_file_name(self, applicant_name, text):
+    def get_resume_file_name(self, text, applicant_name):
         pattern = re.compile(f"{applicant_name}[^ \n]*", re.IGNORECASE)
         match = pattern.search(text)
         try:
