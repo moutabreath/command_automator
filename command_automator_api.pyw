@@ -19,7 +19,7 @@ class CommandsAutomatorApi:
     def __init__(self):
         self.commands_automator_service = CommandsAutomatorService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
-        self.llm_config = ConfigurationService('config/llm-config.json')
+        self.llm_config = ConfigurationService('llm/config/llm-config.json')
         self.loop = None
         self.executor = ThreadPoolExecutor(max_workers=4)
         self.setup_event_loop()
@@ -70,8 +70,8 @@ class CommandsAutomatorApi:
         return self.commands_automator_service.execute_script(script_name, additional_text, flags)    
 
 
-    def call_llm(self, prompt):
-        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt)
+    def call_llm(self, prompt: str, image_path: str, should_save_files: bool, output_file_path: str):
+        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, image_path, should_save_files, output_file_path)
     
     def load_llm_configuration(self):
         return self.run_async_method(self.llm_config.load_configuration_async)

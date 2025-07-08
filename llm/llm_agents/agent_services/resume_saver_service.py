@@ -5,12 +5,11 @@ from llm.llm_agents.agent_services.file_stylers import docx_styler
 
 
 class ResumeSaverService:
-    def save_resume(self, text, output_file_path, applicant_name, resume_highlighted_sections):        
-        resume_file_name = self.get_resume_file_name(applicant_name, text, output_file_path, resume_highlighted_sections)
+
+    def save_resume(self, text, output_file_path, applicant_name, resume_file_name, resume_highlighted_sections):                
         docx_styler.save_text_as_word(f'{output_file_path}/{resume_file_name}.docx', applicant_name, text, resume_highlighted_sections)
 
-    def save_cover_letter(self, text, output_file_path, applicant_name):
-        resume_file_name = self.get_resume_file_name(applicant_name)
+    def save_cover_letter(self, text, output_file_path, applicant_name, resume_file_name):
         docx_styler.save_text_as_word(f'{output_file_path}/{resume_file_name}_Cover_Letter.docx', applicant_name, text)
 
         

@@ -129,7 +129,7 @@ Be selective and conservative with tool usage. Be concise. Only output valid JSO
 Query: {query}
 """
     
-    async def process_query(self, query: str, output_file_path = "", should_save_results_to_file = False) -> str:
+    async def process_query(self, query: str, image_path: str, should_save_results_to_file: bool, output_file_path: str) -> str:
         """
         Process a user query using a combination of Gemini and MCP server.
         
@@ -139,6 +139,8 @@ Query: {query}
             The response as a string
         """
         try:
+            if (image_path != None and image_path != '' and image_path != ' '):
+                self.upload_to_gemini(image_path)
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
             async with streamablehttp_client(self.mcp_server_url) as (read_stream, write_stream, _):
                 logging.debug("Established streamable_http connection")
@@ -146,18 +148,10 @@ Query: {query}
                 async with ClientSession(read_stream, write_stream) as session:
                     logging.debug("Created MCP client session")
                     
-                    # Initialize the session
                     await session.initialize()
                     logging.debug("Successfully initialized MCP session")
                     
-                    # Get available tools
-                    try:
-                        tools_response = await session.list_tools()
-                        available_tools = [tool.name for tool in tools_response.tools]
-                        logging.debug(f"Available tools: {available_tools}")
-                    except Exception as e:
-                        logging.debug(f"Could not list tools: {e}")
-                        available_tools = []
+                    available_tools = await self.get_available_tools(session)
                     
                     # Use Gemini to decide if a tool should be used
                     selected_tool, tool_args = await self.decide_tool_usage(query, available_tools)
@@ -177,20 +171,11 @@ Query: {query}
                                 except ValueError:
                                     logging.error("error with json structure of tool")
                                     return None
-                                prompt = self.format_prompts_for_resume(resume_data_dict)
-                                self.chat._config["response_mime_type"] = "text/plain"
-                                gemini_response = self.chat.send_message(prompt)
-                                resume_text = gemini_response._get_text()
-                                if should_save_results_to_file:
-                                   resume_highlighted_sections = self.convert_none_to_empy_string(resume_data_dict.get('resume_highlighted_sections', ''))
-                                   applicant_name = resume_data_dict.get('applicant_name', '')
-                                   self.resume_saver_service.save_resume(resume_text, output_file_path, applicant_name, resume_highlighted_sections)
-                                cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
-                                if (cover_letter_guidelines != None):
-                                    gemini_response = self.chat.send_message(cover_letter_guidelines)
-                                    cover_letter_text = gemini_response._get_text()
-                                if (should_save_results_to_file):
-                                     self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name)
+                                
+                                resume_text = self.get_refined_resume(resume_data_dict)                                
+                                cover_letter_text = self.get_cover_letter(resume_data_dict)
+
+                                self.save_files_if_needed(should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text)
                                 return resume_text +"\n\n" + cover_letter_text
                         else:
                             return tool_result
@@ -211,27 +196,61 @@ Query: {query}
             traceback.print_exc()
             logging.error("error communicating with gemini", e)
             return None
+
+    def save_files_if_needed(self, should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text):
+        if should_save_results_to_file:
+           resume_highlighted_sections = self.convert_none_to_empty_string(resume_data_dict.get('resume_highlighted_sections', ''))
+           applicant_name = resume_data_dict.get('applicant_name', '')
+           resume_file_name = self.resume_saver_service.get_resume_file_name(resume_text, applicant_name)
+           self.resume_saver_service.save_resume(resume_text, output_file_path, applicant_name, resume_file_name, resume_highlighted_sections)
+           if (cover_letter_text != ''):
+               self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name, resume_file_name)
+
+    async def get_available_tools(self, session):
+        try:
+            tools_response = await session.list_tools()
+            available_tools = [tool.name for tool in tools_response.tools]
+            logging.debug(f"Available tools: {available_tools}")
+        except Exception as e:
+            logging.debug(f"Could not list tools: {e}")
+            available_tools = []
+        return available_tools
+
+    def get_cover_letter(self, resume_data_dict):
+        cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
+        cover_letter_text = ''
+        if (cover_letter_guidelines != None):
+            gemini_response = self.chat.send_message(cover_letter_guidelines)
+            cover_letter_text = gemini_response._get_text()
+        return cover_letter_text
+
+    def get_refined_resume(self, resume_data_dict):
+        prompt = self.format_prompts_for_resume(resume_data_dict)
+        self.chat._config["response_mime_type"] = "text/plain"
+        gemini_response = self.chat.send_message(prompt)
+        resume_text = gemini_response._get_text()
+        return resume_text
         
     def format_prompts_for_resume(self, resume_data_dict):       
         general_guidleines = resume_data_dict.get('general_guidelines', '')
         resume = resume_data_dict.get('resume', '')        
-        jobs_desc = self.convert_none_to_empy_string(resume_data_dict.get('job_description', ''))
+        jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
      
         prompt = f"{general_guidleines}\n\n{resume}\n\n\n"
         prompt += jobs_desc
         return prompt 
 
-    def convert_none_to_empy_string(self, text):
+    def convert_none_to_empty_string(self, text):
         if text == None:
             return ""
         return text
 
 
 
-    def get_files_to_attach(self, image_file_paths):
+    def get_files_to_attach(self, image_file_path):
         logging.debug("got file to upload")
         self.delete_files()
-        file = self.upload_to_gemini(image_file_paths)
+        file = self.upload_to_gemini(image_file_path)
         file_data : types.FileData = types.FileData(file_uri=file.uri, mime_type="image/png")
         return types.Part(file_data=file_data)
     

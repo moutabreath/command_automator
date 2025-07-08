@@ -2,7 +2,7 @@ async function loadLLMConfig() {
     try {
         config = await window.pywebview.api.load_llm_configuration();
         document.getElementById('output-file-path').value = config.outpuFilePath || '';
-        document.getElementById('save-to-files').value = config.saveToFiles || '';
+        document.getElementById('save-to-files').checked = config.saveToFiles || '';
     } catch (error) {
         console.error('Error loading config:', error);
         config = { selected_script: '', additional_text: '', flags: '' };
@@ -12,9 +12,12 @@ async function loadLLMConfig() {
 async function saveLLMConfig() {
     let config = {};
     try {
-        config.outpuFilePath = document.getElementById('output-file-path').value;
-        config.saveToFiles = document.getElementById('save-to-files').value;
-        const result = await window.pywebview.api.save_llm_configuration(config);
+        const folderValue = document.getElementById('output-file-path').value;
+        const isSaveToFilesChecked = document.getElementById('save-to-files').checked;
+
+        config.outpuFilePath = folderValue;
+        config.saveToFiles = isSaveToFilesChecked;
+        await window.pywebview.api.save_llm_configuration(config);
     } catch (error) {
         console.error('Error saving config:', error);
     }
@@ -53,6 +56,13 @@ async function initLLMEventListeners() {
     document.getElementById('select-folder-btn').addEventListener('click', async () => {
         await initFolderUploadEvent();
     });
+    document.getElementById('output-file-path').addEventListener('input', async function (e) {
+        console.log('Folder input changed:', e.target.value);
+        await saveLLMConfig();
+    });
+    document.getElementById('save-to-files').addEventListener('change', async () => {
+        await saveLLMConfig();
+    });
 }
 
 async function initFolderUploadEvent() {
@@ -69,15 +79,15 @@ function autoResize() {
 
 async function callLLM() {
     const query = document.getElementById('query-box').value.trim();
+    const imageFilePath = ""
+    const saveToFiles = document.getElementById('save-to-files').checked;
+    const folderInput = document.getElementById('output-file-path').value
     if (!query) return;
-
-    // Optionally, disable UI while waiting
     document.getElementById('send-btn').disabled = true;
     document.getElementById('query-box').disabled = true;
-
     let response = '';
     try {
-        response = await window.pywebview.api.call_llm(query);
+        response = await window.pywebview.api.call_llm(query, imageFilePath, saveToFiles, folderInput);
     } catch (e) {
         response = 'Error: ' + e;
     }
@@ -106,7 +116,8 @@ async function callLLM() {
     document.getElementById('query-box').value = '';
     document.getElementById('send-btn').disabled = false;
     document.getElementById('query-box').disabled = false;
+    document.getElementById('send-btn').disabled = false;
+    document.getElementById('query-box').disabled = false;
+
     document.getElementById('query-box').focus();
 }
-
-
