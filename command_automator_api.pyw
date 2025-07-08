@@ -57,13 +57,14 @@ class CommandsAutomatorApi:
                     async_method(*args, **kwargs), 
                     self.loop
                 )
-                return future.result(timeout=30)  # 30 second timeout
+                result =  future.result(timeout=30) 
+                return result
             else:
                 # If no loop or loop not running, create new one
                 return asyncio.run(async_method(*args, **kwargs))
         except Exception as e:
             logging.error(f"Error running async method: {e}")
-            return {"error": str(e)}
+            return "error"
    
 
     def execute_script(self, script_name, additional_text, flags):
