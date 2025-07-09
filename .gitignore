@@ -26,3 +26,5 @@ tabs/llm/llm_agents/gemini/.env
 
 email_sender.py
 client_secret.json
+command_automator_api.exe
+command_automator_api.spec
