@@ -85,12 +85,7 @@ async function callLLM() {
     if (!query) return;
     document.getElementById('send-btn').disabled = true;
     document.getElementById('query-box').disabled = true;
-    let response = '';
-    try {
-        response = await window.pywebview.api.call_llm(query, imageFilePath, saveToFiles, folderInput);
-    } catch (e) {
-        response = 'Error: ' + e;
-    }
+
 
     // Append query and response to the response box
     const responseBox = document.getElementById('response-box');
@@ -100,13 +95,20 @@ async function callLLM() {
     queryElem.className = 'llm-query';
     queryElem.textContent = query;
 
+    // Append to response box
+    responseBox.appendChild(queryElem);
+
+    let response = '';
+    try {
+        response = await window.pywebview.api.call_llm(query, imageFilePath, saveToFiles, folderInput);
+    } catch (e) {
+        response = 'Error: ' + e;
+    }
+
     // Create response element
     const responseElem = document.createElement('div');
     responseElem.className = 'llm-response';
     responseElem.textContent = response;
-
-    // Append to response box
-    responseBox.appendChild(queryElem);
     responseBox.appendChild(responseElem);
 
     // Scroll to bottom
