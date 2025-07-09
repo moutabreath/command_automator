@@ -182,7 +182,8 @@ Query: {query}
                     else:
                         if self.api_key:
                             try:
-                                gemini_response = self.resume_chat.send_message(query)
+                                self.resume_chat._config["response_mime_type"] = "text/plain"
+                                gemini_response = self.resume_chat.send_message("Now answer the query with text "+ query)
                                 gemini_text = gemini_response._get_text()
                                 return gemini_text
                             except Exception as e:
