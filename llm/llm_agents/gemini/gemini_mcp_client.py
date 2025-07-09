@@ -236,7 +236,8 @@ Query: {query}
         resume = resume_data_dict.get('resume', '')        
         jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
      
-        prompt = f"Now help me with this. Ouptupt text for this part.\n\n{general_guidleines}\n\n{resume}\n\n\n"
+        prompt = f"""You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
+                    {general_guidleines}\n\n{resume}\n\n\n"""
         prompt += jobs_desc
         return prompt 
 
