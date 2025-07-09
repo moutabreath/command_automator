@@ -1,13 +1,14 @@
+import logging
+import multiprocessing
 from mcp.server.fastmcp import FastMCP
 
 from llm.mcp_servers.resume_data import ResumeData
 from llm.mcp_servers.services.resume_loader_service import ResumeLoaderService
 
-
 # Initialize FastMCP
 mcp = FastMCP("resume_fetcher")
 
-resume_loader_service: ResumeLoaderService = ResumeLoaderService()
+resume_loader_service: ResumeLoaderService = None
 
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
@@ -15,7 +16,7 @@ async def get_resume_files() -> ResumeData:
     Fetch resume file, applicant name, job description and guidelines
 
     """    
-
+    global resume_loader_service
     resume_content, applicant_name = await resume_loader_service.get_resume()
 
     guide_lines = await resume_loader_service.get_main_part_guide_lines()
@@ -38,12 +39,32 @@ async def get_resume_files() -> ResumeData:
     return resume_data
 
 # Run the server with streamable-http transport
-def run_mcp():
-    # Set server configuration through the settings property
-    mcp.settings.mount_path = "/mcp"
-    mcp.settings.port = 8765
-    mcp.settings.host = "127.0.0.1"
+class MCPRunner:
+ 
+    def init_mcp(self):
+        self.mcp_process = multiprocessing.Process(target=self.run_mcp)
+        self.mcp_process.start()
+        
+    def __del__(self):
+        """Cleanup method to terminate the MCP process when the agent is destroyed"""
+        if hasattr(self, 'mcp_process') and self.mcp_process.is_alive():
+            self.mcp_process.terminate()
+            self.mcp_process.join()
+
+
+    def run_mcp(self):
+        global resume_loader_service
+        resume_loader_service = ResumeLoaderService()
     
-    # Run the server with streamable-http transport
-    print(f"Starting MCP server at http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")
-    mcp.run(transport="streamable-http")
+        # Set server configuration through the settings property
+        mcp.settings.mount_path = "/mcp"
+        mcp.settings.port = 8765
+        mcp.settings.host = "127.0.0.1"
+        
+        # Run the server with streamable-http transport
+        logging.debug(f"Starting MCP server at http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")
+        mcp.run(transport="streamable-http")
+
+if __name__ == '__main__':
+    mcp_runner = MCPRunner()
+    mcp_runner.init_mcp()

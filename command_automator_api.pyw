@@ -5,18 +5,15 @@ import multiprocessing
 import threading
 import webview
 
+from llm.mcp_servers.resume_mcp import MCPRunner
 from services.commands_automator_service import CommandsAutomatorService
 from services.configuration_service import ConfigurationService
 from services.llm_service import LLMService
-from llm.mcp_servers.resume_mcp import run_mcp
 
-# logging.basicConfig(level=logging.DEBUG)
 
 class CommandsAutomatorApi:
-
-    llm_sevice: LLMService = LLMService()
-    
     def __init__(self):
+        self.llm_sevice: LLMService = LLMService()
         self.commands_automator_service = CommandsAutomatorService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
         self.llm_config = ConfigurationService('llm/config/llm-config.json')
@@ -84,22 +81,14 @@ class CommandsAutomatorApi:
     def select_folder(self):
         # Opens a native folder dialog and returns the selected folder path as a list
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
-    
-    def init_mcp(self):
-        self.mcp_process = multiprocessing.Process(target=run_mcp)
-        self.mcp_process.start()
-        
-    def __del__(self):
-        """Cleanup method to terminate the MCP process when the agent is destroyed"""
-        if hasattr(self, 'mcp_process') and self.mcp_process.is_alive():
-            self.mcp_process.terminate()
-            self.mcp_process.join()
+   
 
 
 
-if __name__ == '__main__':   
+def main():
+    mcp_runner = MCPRunner()
+    mcp_runner.init_mcp()
     api = CommandsAutomatorApi()
-    api.init_mcp()
     window = webview.create_window(
         'Commands Automator',
         'ui/commands_automator.html',
@@ -107,4 +96,8 @@ if __name__ == '__main__':
         width=1000,
         height=800
     )
-    webview.start()
+    webview.start(icon='ui/resources/Commands_Automator.ico')
+
+if __name__ == '__main__':
+    multiprocessing.freeze_support()
+    main()
