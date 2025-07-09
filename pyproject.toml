@@ -37,11 +37,8 @@ authors = [
 license = {text = "MIT"}
 requires-python = "<3.13,<4.0,>=3.10"
 dependencies = [
-    "keyboard<1.0.0,>=0.13.5",
-    "qtpy<3.0.0,>=2.3.1",
     "chardet<6.0.0,>=5.1.0",
     "pyinstaller<6.0.0,>=5.13.0",
-    "pyqt6<7.0.0,>=6.5.3",
     "pillow<12.0.0,>=11.1.0",
     "openai<2.0.0,>=1.64.0",
     "google-genai>=1.5.0,<2.0.0",
@@ -57,6 +54,6 @@ dependencies = [
 ]
 name = "commandautomator"
 version = "0.1.0"
-description = "Enable to run scripts that automate common tasks"
+description = "Enable running scripts that automate common tasks"
 readme = "README.md"
 package-mode = false
