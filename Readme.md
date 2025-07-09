@@ -24,8 +24,7 @@ run poetry install
 
 To make an exe out of it:
 
- -  pyinstaller command_automator_api.pyw -i ui/resources/Commands_Automator.ico -F
-
+ -  pyinstaller command_automator_api.pyw -i ui/resources/Commands_Automator.ico -F --add-data "ui;ui"
 
 Put the exe file at the root of the
 project.
@@ -33,10 +32,12 @@ project.
 LLM:
 
 Prefconfigure LLM usage:
-add your gemini api key at tabs\llm\config\chat_bot_keys.txt
+    set GOOGLE_API_KEY=your_api_key_here
+
 
 To use it like copilot, write you text in the query text field, and hit the arrow button.
 For automatic resume and cover letter creation, replace:
  - the resume file : llm\resources\resume\Tal_Druckmann.txt
- - the job description: llm\resources\resume\job_Descs.txt
+ - the job description: llm\resources\resume\addtional_files\job_description.txt
  - choose an output folder for the resume and cover letter.
+Ask the chat in a natural language to modify your resume according to the job descripton
