@@ -14,7 +14,7 @@ It supports:
 To Add a new one:
 
 Put the script under matching folder under
-'actionables' folder.
+'user_sctipts' folder.
 
 Add its description under
 config/scripts_config.json

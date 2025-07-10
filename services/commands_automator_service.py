@@ -1,4 +1,4 @@
-import asyncio
+import sys
 import glob
 import json
 import logging
@@ -15,6 +15,14 @@ class CommandsAutomatorService:
         self.scripts_attributes = {}
         Logger.init_logger()
         self.load_scripts_config()
+
+
+
+    def resource_path(self, relative_path):
+        """Get absolute path to resource, works for dev and for PyInstaller"""
+        if hasattr(sys, '_MEIPASS'):
+            return os.path.join(sys._MEIPASS, relative_path)
+        return os.path.join(os.getcwd(), relative_path)
 
     def load_scripts_config(self):
         try:
@@ -34,10 +42,14 @@ class CommandsAutomatorService:
 
     def load_scripts(self):
         executables = []
-        files = glob.glob(os.getcwd() + '\\actionables/**/*.py', recursive=True)
-        files2 = glob.glob(os.getcwd() + '\\actionables/**/*.sh', recursive=True)
-        files3 = glob.glob(os.getcwd() + '\\actionables/**/*.cmd', recursive=True)
-        files4 = glob.glob(os.getcwd() + '\\actionables/**/*.exe', recursive=True)
+        current_dir = os.getcwd()
+        logging.debug(current_dir)
+        scripts_dir = self.resource_path('user_scripts')
+        logging.debug(scripts_dir)
+        files = glob.glob(f'{scripts_dir}/**/*.py', recursive=True)
+        files2 = glob.glob(f'{scripts_dir}/**/*.sh', recursive=True)
+        files3 = glob.glob(f'{scripts_dir}/**/*.cmd', recursive=True)
+        files4 = glob.glob(f'{scripts_dir}/**/*.exe', recursive=True)
         files.extend(files2)
         files.extend(files3)
         files.extend(files4)
