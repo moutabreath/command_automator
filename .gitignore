@@ -28,3 +28,4 @@ email_sender.py
 client_secret.json
 command_automator_api.exe
 command_automator_api.spec
+dist/*
