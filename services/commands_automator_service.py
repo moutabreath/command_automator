@@ -17,17 +17,11 @@ class CommandsAutomatorService:
         self.load_scripts_config()
 
 
-
-    def resource_path(self, relative_path):
-        """Get absolute path to resource, works for dev and for PyInstaller"""
-        if hasattr(sys, '_MEIPASS'):
-            return os.path.join(sys._MEIPASS, relative_path)
-        return os.path.join(os.getcwd(), relative_path)
-
     def load_scripts_config(self):
         try:
             f = open('config\\scripts_config.json')
         except IOError:
+            logging.error(f"error loading scripts.config" + str(IOError), exc_info=True)
             return
         data = json.load(f)
         scripts_config = data['scripts']
@@ -44,7 +38,7 @@ class CommandsAutomatorService:
         executables = []
         current_dir = os.getcwd()
         logging.debug(current_dir)
-        scripts_dir = self.resource_path('user_scripts')
+        scripts_dir = self.pyinstaller_resource_service.resource_path('user_scripts')
         logging.debug(scripts_dir)
         files = glob.glob(f'{scripts_dir}/**/*.py', recursive=True)
         files2 = glob.glob(f'{scripts_dir}/**/*.sh', recursive=True)
