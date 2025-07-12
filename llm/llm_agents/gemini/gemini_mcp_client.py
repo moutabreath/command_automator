@@ -1,6 +1,7 @@
 import logging
 import os
 import json
+import aiohttp
 from google import genai
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
@@ -78,7 +79,7 @@ class SmartMCPClient:
                 print("Gemini decided not to use any tools")
                 return None, None                
         except Exception as e:
-            logging.error(f"Error using Gemini for tool decision: {e}")
+            logging.error(f"Error using Gemini for tool decision", exc_info=True)
             # Fall back to direct tool usage if error occurs
             if 'get_resume_files' in available_tools:
                 return 'get_resume_files', {'query': query}
@@ -129,6 +130,17 @@ Be selective and conservative with tool usage. Be concise. Only output valid JSO
 Query: {query}
 """
     
+
+    async def is_mcp_server_ready(self, timeout=2):
+        try:
+            async with aiohttp.ClientSession() as session:
+                async with session.get(self.mcp_server_url, timeout=timeout) as resp:
+                    # You can check for a specific status code if needed
+                    return resp.status == 406 # (= NOt Accepatable) Server is probably reacheable.
+        except Exception as e:
+            logging.error(f"MCP server not ready", exc_info=True)
+            return False
+    
     async def process_query(self, query: str, image_path: str, should_save_results_to_file: bool, output_file_path: str) -> str:
         """
         Process a user query using a combination of Gemini and MCP server.
@@ -141,6 +153,8 @@ Query: {query}
         try:
             if (image_path != None and image_path != '' and image_path != ' '):
                 self.upload_to_gemini(image_path)
+            if not await self.is_mcp_server_ready():
+                return self.call_gemini_api_directly(query)
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
             async with streamablehttp_client(self.mcp_server_url) as (read_stream, write_stream, _):
                 logging.debug("Established streamable_http connection")
@@ -158,45 +172,49 @@ Query: {query}
                     
                     # If Gemini decided to use a tool, call it
                     if selected_tool:
-                        logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
-                        response = await session.call_tool(selected_tool, tool_args)
-                        if response == None:
-                            return None
-                        tool_result = response.content[0].text
-                        logging.debug(f"Tool response received ({len(tool_result)} characters)")
-                        
-                        if self.api_key:
-                                try:
-                                    resume_data_dict = json.loads(tool_result)
-                                except ValueError:
-                                    logging.error("error with json structure of tool")
-                                    return None
-                                
-                                resume_text = self.get_refined_resume(resume_data_dict)                                
-                                cover_letter_text = self.get_cover_letter(resume_data_dict)
-
-                                self.save_files_if_needed(should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text)
-                                return resume_text +"\n\n" + cover_letter_text
-                        else:
-                            return tool_result
+                        return await self.use_tool(selected_tool, tool_args, session, should_save_results_to_file, output_file_path)
                     else:
-                        if self.api_key:
-                            try:
-                                self.resume_chat._config["response_mime_type"] = "text/plain"
-                                gemini_response = self.resume_chat.send_message("Now answer the query with text "+ query)
-                                gemini_text = gemini_response._get_text()
-                                return gemini_text
-                            except Exception as e:
-                                logging.debug(f"Error using Gemini: {e}")
-                                return "Sorry, I couldn't process your request with Gemini or MCP tools."
-                        else:
-                            return "No suitable tool found and Gemini API key not provided."
+                        return self.call_gemini_api_directly(query)
                     
         except Exception as e:
-            import traceback
-            traceback.print_exc()
-            logging.error("error communicating with gemini", e)
+            logging.error("error communicating with gemini", exec_info = True)
             return None
+        
+    async def use_tool(self, selected_tool, tool_args, session, should_save_results_to_file, output_file_path):
+        logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
+        response = await session.call_tool(selected_tool, tool_args)
+        if response == None:
+            return ""
+        tool_result = response.content[0].text
+        logging.debug(f"Tool response received ({len(tool_result)} characters)")
+        
+        if self.api_key:
+                try:
+                    resume_data_dict = json.loads(tool_result)
+                except ValueError:
+                    logging.error("error with json structure of tool")
+                    return ""
+                
+                resume_text = self.get_refined_resume(resume_data_dict)                                
+                cover_letter_text = self.get_cover_letter(resume_data_dict)
+
+                self.save_files_if_needed(should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text)
+                return resume_text +"\n\n" + cover_letter_text
+        else:
+            return tool_result
+        
+    def call_gemini_api_directly(self, query):
+        if self.api_key:
+            try:
+                self.resume_chat._config["response_mime_type"] = "text/plain"
+                gemini_response = self.resume_chat.send_message("Now answer the query with text "+ query)
+                gemini_text = gemini_response._get_text()
+                return gemini_text
+            except Exception as e:
+                logging.error(f"Error using Gemini", exc_info=True)
+                return "Sorry, I couldn't process your request with Gemini or MCP tools."
+        else:
+            return "No suitable tool found and Gemini API key not provided."
 
     def save_files_if_needed(self, should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text):
         if should_save_results_to_file:

@@ -17,21 +17,6 @@ class CommandsAutomatorApi:
         self.commands_automator_service = CommandsAutomatorService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
         self.llm_config = ConfigurationService('llm/config/llm-config.json')
-        self.loop = None
-        self.executor = ThreadPoolExecutor(max_workers=4)
-        self.setup_event_loop()
-    
-    def setup_event_loop(self):
-        def run_loop():
-            self.loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(self.loop)
-            self.loop.run_forever()
-        
-        thread = threading.Thread(target=run_loop, daemon=True)
-        thread.start()
-
-        while self.loop is None:
-            threading.Event().wait(0.01)
 
     def load_scripts(self):
         return self.commands_automator_service.load_scripts()
@@ -48,19 +33,9 @@ class CommandsAutomatorApi:
 
     def run_async_method(self, async_method, *args, **kwargs):
         try:
-            if self.loop and self.loop.is_running():
-                # If loop is running in another thread, use asyncio.run_coroutine_threadsafe
-                future = asyncio.run_coroutine_threadsafe(
-                    async_method(*args, **kwargs), 
-                    self.loop
-                )
-                result =  future.result(timeout=30) 
-                return result
-            else:
-                # If no loop or loop not running, create new one
-                return asyncio.run(async_method(*args, **kwargs))
+            return asyncio.run(async_method(*args, **kwargs))
         except Exception as e:
-            logging.error(f"Error running async method: {e}")
+            logging.error(f"Error running async method", exc_info=True)
             return "error"
    
 
