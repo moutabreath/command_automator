@@ -45,12 +45,11 @@ dependencies = [
     "reportlab<5.0.0,>=4.3.1",
     "python-docx<2.0.0,>=1.1.2",
     "mcp[cli]>=1.9.0",
-    "pyinput>=0.3.2",
-    "pyperclip>=1.9.0",
     "pynput>=1.8.1",
     "google-adk>=0.3.0",
     "litellm>=1.67.4.post1",
     "pywebview>=5.4",
+    "aiofiles>=24.1.0",
 ]
 name = "commandautomator"
 version = "0.1.0"
