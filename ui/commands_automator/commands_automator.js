@@ -44,12 +44,15 @@ async function updateDescription() {
 async function loadAutomatorConfig() {
     try {
         config = await window.pywebview.api.load_commands_configuration();
+        if (config === "" || config === " "){
+            return;
+        }
         document.getElementById('script-select').value = config.selected_script || '';
         document.getElementById('additional-text').value = config.additional_text || '';
         document.getElementById('flags').value = config.flags || '';
         await updateDescription();
     } catch (error) {
-        console.error('Error loading config:', error);
+        console.log('Error loading config:', error);
         config = { selected_script: '', additional_text: '', flags: '' };
     }
 }
@@ -61,7 +64,7 @@ async function saveAutomatorConfig() {
         config.flags = document.getElementById('flags').value;
         const result = await window.pywebview.api.save_commands_configuration(config);
     } catch (error) {
-        console.error('Error saving config:', error);
+        console.log('Error saving config:', error);
     }
 }
 
@@ -120,8 +123,8 @@ async function initCommandsAutomatorEventHandlers() {
 }
 
 async function initApp() {
-    await initCommandsAutomator()
-    await initLLM()
+    await initCommandsAutomator();
+    await initLLM();
 }
 
 

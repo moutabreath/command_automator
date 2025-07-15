@@ -97,7 +97,7 @@ async function callLLM() {
 
     // Append to response box
     responseBox.appendChild(queryElem);
-
+    document.getElementById('query-box').value = '';
     let response = '';
     try {
         response = await window.pywebview.api.call_llm(query, imageFilePath, saveToFiles, folderInput);
@@ -108,6 +108,7 @@ async function callLLM() {
     // Create response element
     const responseElem = document.createElement('div');
     responseElem.className = 'llm-response';
+    responseElem.style.userSelect = 'text';
     responseElem.textContent = response;
     responseBox.appendChild(responseElem);
 
@@ -115,7 +116,7 @@ async function callLLM() {
     responseBox.scrollTop = responseBox.scrollHeight;
 
     // Reset UI
-    document.getElementById('query-box').value = '';
+ 
     document.getElementById('send-btn').disabled = false;
     document.getElementById('query-box').disabled = false;
     document.getElementById('send-btn').disabled = false;

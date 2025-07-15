@@ -7,13 +7,11 @@ import subprocess
 
 import chardet
 
-from logger import Logger
 
 class CommandsAutomatorService:
     def __init__(self):
         self.names_to_scripts = {}
         self.scripts_attributes = {}
-        Logger.init_logger()
         self.load_scripts_config()
 
 

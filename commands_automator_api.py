@@ -1,9 +1,9 @@
 import asyncio
-from concurrent.futures import ThreadPoolExecutor
 import logging
-import multiprocessing
-import threading
 import webview
+import logging.handlers
+import os
+import sys
 
 from llm.mcp_servers.resume_mcp import MCPRunner
 from services.commands_automator_service import CommandsAutomatorService
@@ -13,8 +13,8 @@ from services.llm_service import LLMService
 
 class CommandsAutomatorApi:
     def __init__(self):
-        self.llm_sevice: LLMService = LLMService()
         self.commands_automator_service = CommandsAutomatorService()
+        self.llm_sevice: LLMService = LLMService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
         self.llm_config = ConfigurationService('llm/config/llm-config.json')
 
@@ -51,13 +51,20 @@ class CommandsAutomatorApi:
 
     def save_llm_configuration(self, config):
         return self.run_async_method(self.llm_config.save_configuration_async, config)
-
+	
 
     def select_folder(self):
         # Opens a native folder dialog and returns the selected folder path as a list
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
-   
 
+    def init_logger(self):
+        handler = logging.handlers.WatchedFileHandler(
+        os.environ.get("LOGFILE", "commands_automator.log"))
+        formatter =logging.Formatter("%(asctime)s:%(name)s:%(levelname)s {%(module)s %(funcName)s}:%(message)s")
+        handler.setFormatter(formatter)
+        root = logging.getLogger()
+        root.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
+        root.addHandler(handler)
 
 
 def main():
@@ -74,5 +81,8 @@ def main():
     webview.start(icon='ui/resources/Commands_Automator.ico')
 
 if __name__ == '__main__':
-    multiprocessing.freeze_support()
+    # Multiprocessing freeze support for onefile builds on Windows
+    if sys.platform == "win32":
+        import multiprocessing
+        multiprocessing.freeze_support()
     main()
