@@ -4,7 +4,7 @@ async function loadLLMConfig() {
         document.getElementById('output-file-path').value = config.outpuFilePath || '';
         document.getElementById('save-to-files').checked = config.saveToFiles || '';
     } catch (error) {
-        console.error('Error loading config:', error);
+        console.log('Error loading config:', error);
         config = { selected_script: '', additional_text: '', flags: '' };
     }
 }
@@ -19,7 +19,7 @@ async function saveLLMConfig() {
         config.saveToFiles = isSaveToFilesChecked;
         await window.pywebview.api.save_llm_configuration(config);
     } catch (error) {
-        console.error('Error saving config:', error);
+        console.log('Error saving config:', error);
     }
 }
 

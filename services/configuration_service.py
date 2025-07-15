@@ -1,4 +1,5 @@
 import json
+import logging
 import aiofiles
 
 
@@ -7,12 +8,19 @@ class ConfigurationService:
         self.config_path = config_path
 
     async def load_configuration_async(self):
-        async with aiofiles.open(self.config_path, "r") as f:
-            data = await f.read()
-        return json.loads(data)
+        try:
+            async with aiofiles.open(self.config_path, "r") as f:
+                data = await f.read()
+            return json.loads(data)
+        except Exception as e:
+            logging.error(f"Error loading config file", exc_info=True)
+            return ""
 
     async def save_configuration_async(self, config):
-        async with aiofiles.open(self.config_path, "w") as f:
-            await f.write(json.dumps(config, indent=4))
-        
-        return True
+        try:
+            async with aiofiles.open(self.config_path, "w") as f:
+                await f.write(json.dumps(config, indent=4))
+            return True
+        except Exception as e:
+            logging.error(f"Error saving config file", exc_info=True)
+            return False
