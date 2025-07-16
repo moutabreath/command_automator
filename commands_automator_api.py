@@ -10,7 +10,6 @@ from services.commands_automator_service import CommandsAutomatorService
 from services.configuration_service import ConfigurationService
 from services.llm_service import LLMService
 
-
 class CommandsAutomatorApi:
     def __init__(self):
         self.commands_automator_service = CommandsAutomatorService()
@@ -40,8 +39,7 @@ class CommandsAutomatorApi:
    
 
     def execute_script(self, script_name, additional_text, flags):
-        return self.commands_automator_service.execute_script(script_name, additional_text, flags)    
-
+        return self.commands_automator_service.execute_script(script_name, additional_text, flags)
 
     def call_llm(self, prompt: str, image_path: str, should_save_files: bool, output_file_path: str):
         return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, image_path, should_save_files, output_file_path)
