@@ -7,7 +7,7 @@ call .\.venv\Scripts\activate
 
 @REM python -m PyInstaller --clean --debug=all commands_automator_api.py -i ui/resources/Commands_Automator.ico --onedir --add-data "ui;ui" --noconfirm  > build_log.txt 2>&1
 @REM python -m PyInstaller  --clean commands_automator_api.spec > build_log.txt 2>&1 -y
-pyinstaller commands_automator_api.py -i ui/resources/Commands_Automator.ico -F --add-data "ui;ui" -w
+python -m PyInstaller commands_automator_api.py -i ui/resources/Commands_Automator.ico -F --add-data "ui;ui" -w
 
 call deactivate
 

@@ -78,6 +78,9 @@ function autoResize() {
 }
 
 async function callLLM() {
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = 'flex';
+
     const query = document.getElementById('query-box').value.trim();
     const imageFilePath = ""
     const saveToFiles = document.getElementById('save-to-files').checked;
@@ -103,6 +106,9 @@ async function callLLM() {
         response = await window.pywebview.api.call_llm(query, imageFilePath, saveToFiles, folderInput);
     } catch (e) {
         response = 'Error: ' + e;
+    }
+    finally {
+        spinner.style.display = 'none';
     }
 
     // Create response element

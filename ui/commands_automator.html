@@ -10,9 +10,19 @@
     <script src="commands_automator/commands_automator.js" defer></script>
     <script src="llm/llm.js" defer></script>
     <script src="tabs.js" defer></script>
+    <link rel="stylesheet" href="spinner.css">
+
 </head>
 
 <body>
+
+    <body>
+        <div id="spinner">
+            <div class="spinner-inner"></div>
+        </div>
+        <!-- The rest of your content -->
+    </body>
+
     <div class="tab-bar">
         <button class="tab selected" id="tab-automator-btn">Commands Automator</button>
         <button class="tab" id="tab-llm-btn">LLM Prompt</button>
@@ -41,7 +51,7 @@
             <div class="query-box-wrapper">
                 <textarea id="query-box" rows="2" placeholder="Message LLM"></textarea>
                 <button id="send-btn" title="Send">
-                    <img src="resources/arrow.png" alt="Send"/>
+                    <img src="resources/arrow.png" alt="Send" />
                 </button>
             </div>
         </div>

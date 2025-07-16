@@ -69,6 +69,8 @@ async function saveAutomatorConfig() {
 }
 
 async function executeScript() {
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = 'flex';
     try {
         const script = document.getElementById('script-select').value;
         const additional = document.getElementById('additional-text').value;
@@ -87,6 +89,9 @@ async function executeScript() {
     } catch (error) {
         console.error('Error executing script:', error);
         document.getElementById('result').value = `Execution error: ${error.message}`;
+    }
+    finally {
+        spinner.style.display = 'none';
     }
 }
 
