@@ -56,6 +56,9 @@ async function initLLMEventListeners() {
     document.getElementById('select-folder-btn').addEventListener('click', async () => {
         await initFolderUploadEvent();
     });
+    document.getElementById('select-image-btn').addEventListener('click', async () => {
+        await initImageUploadEvent();
+    });
     document.getElementById('output-file-path').addEventListener('input', async function (e) {
         console.log('Folder input changed:', e.target.value);
         await saveLLMConfig();
@@ -63,12 +66,64 @@ async function initLLMEventListeners() {
     document.getElementById('save-to-files').addEventListener('change', async () => {
         await saveLLMConfig();
     });
+    window.addEventListener('resize', () => {
+        const imagePreviewDiv = document.getElementById('image-preview');
+        if (imagePreviewDiv.style.display !== 'none' && imagePreviewDiv.hasChildNodes()) {
+            const queryBox = document.getElementById('query-box');
+            if(queryBox) {
+                const queryBoxWidth = queryBox.offsetWidth;
+                const thumbnailSize = queryBoxWidth / 4;
+                imagePreviewDiv.style.width = `${thumbnailSize}px`;
+                imagePreviewDiv.style.height = `${thumbnailSize}px`;
+            }
+        }
+    });
 }
 
 async function initFolderUploadEvent() {
     const result = await window.pywebview.api.select_folder();
     if (result && result.length > 0) {
         document.getElementById('output-file-path').value = result[0];
+    }
+}
+
+async function initImageUploadEvent() {
+    const fileInput = document.createElement('input');
+    fileInput.type = 'file';
+    fileInput.accept = 'image/*'; // Accept only image files
+    fileInput.onchange = handleImageUpload;
+    fileInput.click(); // Trigger file selection dialog
+}
+
+function handleImageUpload(event) {
+    const file = event.target.files[0];
+    if (file) {
+        const reader = new FileReader();
+        reader.onload = function (e) {
+            displayImageThumbnail(e.target.result);
+        };
+        reader.readAsDataURL(file);
+    }
+}
+
+function displayImageThumbnail(imageData) {
+    const imagePreviewDiv = document.getElementById('image-preview');
+    imagePreviewDiv.innerHTML = ''; // Clear previous thumbnail
+
+    if (imageData) {
+        imagePreviewDiv.style.display = 'block';
+        const queryBox = document.getElementById('query-box');
+        const queryBoxWidth = queryBox.offsetWidth;
+        const thumbnailSize = queryBoxWidth / 4;
+
+        imagePreviewDiv.style.width = `${thumbnailSize}px`;
+        imagePreviewDiv.style.height = `${thumbnailSize}px`;
+
+        const img = document.createElement('img');
+        img.src = imageData;
+        imagePreviewDiv.appendChild(img);
+    } else {
+        imagePreviewDiv.style.display = 'none';
     }
 }
 function autoResize() {

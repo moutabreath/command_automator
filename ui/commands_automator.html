@@ -49,19 +49,18 @@
                 <button id="send-btn" title="Send">
                     <img src="resources/arrow.png" alt="Send" />
                 </button>
+                <div id="image-preview"></div>
             </div>
         </div>
-        <div class="llm-row">
+        <div class="query-input-section">
             <label>
                 <input type="checkbox" id="save-to-files">
                 Save LLM Result To File
             </label>
-            <label for="output-file-path" style="margin-left:15px;">Output File Path</label>
+            <label for="output-file-path">Output File Path</label>
             <input type="text" id="output-file-path">
             <button id="select-folder-btn">Browse...</button>
             <input type="file" id="folder-input" webkitdirectory style="display:none;">
         </div>
     </div>
 </body>
-
-</html>
