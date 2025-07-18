@@ -70,7 +70,7 @@ async function initLLMEventListeners() {
         const imagePreviewDiv = document.getElementById('image-preview');
         if (imagePreviewDiv.style.display !== 'none' && imagePreviewDiv.hasChildNodes()) {
             const queryBox = document.getElementById('query-box');
-            if(queryBox) {
+            if (queryBox) {
                 const queryBoxWidth = queryBox.offsetWidth;
                 const thumbnailSize = queryBoxWidth / 4;
                 imagePreviewDiv.style.width = `${thumbnailSize}px`;
@@ -157,10 +157,15 @@ async function callLLM() {
     responseBox.appendChild(queryElem);
     document.getElementById('query-box').value = '';
     let response = '';
+
+    const imagePreview = document.getElementById('image-preview');
+    const img = imagePreview.querySelector('img');
+    const imageData = img ? img.src : '';
+
     try {
-        response = await window.pywebview.api.call_llm(query, imageFilePath, saveToFiles, folderInput);
+        response = await window.pywebview.api.call_llm(query, imageData, saveToFiles, folderInput);
     } catch (e) {
-        response = 'Error: ' + e;
+        response = 'Error: ';
     }
     finally {
         spinner.style.display = 'none';
@@ -177,7 +182,7 @@ async function callLLM() {
     responseBox.scrollTop = responseBox.scrollHeight;
 
     // Reset UI
- 
+
     document.getElementById('send-btn').disabled = false;
     document.getElementById('query-box').disabled = false;
     document.getElementById('send-btn').disabled = false;
