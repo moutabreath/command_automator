@@ -15,7 +15,7 @@ At the Israel offices, Applied creates machines for chip validation.
 - Developed a Python-based application for script execution, reducing operation time from one hour to milliseconds for some DevOps processes.
 - Mentored other developers on how cloud and microservices systems work.
 - Adhered to software engineering best practices, including code reviews, SOLID principles, CI/CD pipelines using TDD approach, while working in agile.
-- I had basic experience in git but managed to become a go-to person for Git-related queries and issues within the group.
+- Reilied heavily with cygwin (linux shell)
  
 Software Engineer * Teledyne FLIR 
 2018 - 2022 
@@ -55,7 +55,7 @@ A REST API project that helps monitor the game Settlers of Catan - Cities and Kn
 Built using dot net 8.0 and MongoDB, deployed locally on docker and Kubernetes.
 Also deployed on AWS EKS.
 https://github.com/moutabreath/command_automator
-A multipurpose script runner, an LLM client and an automatic resume and cover letter generator, built using python and PyQt.
+A multipurpose script runner, an LLM client and an automatic resume and cover letter generator, built using python and PyWebView.
 
 Education
 2007 - 2012: BSc In Software Engineering from Ben Gurion University

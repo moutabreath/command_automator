@@ -8,6 +8,7 @@ Guidelines:
 4. Adjust the wording of my resume to use similar wording and terminology to the job description provided.
 5. The output should be a re-written version of my resume using the same section headers (e.g., 'About me', 'Experience',', 'Education') as the original resume.
 6. Wherever possible, add metrics.
+7. Only mention cygwin if the job description specfically mentions linux exprience is needed.
 
 Do not include any introductory or concluding remarks; only output the revised resume. 
 Extract the company name from the job description 

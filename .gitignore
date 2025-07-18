@@ -11,7 +11,8 @@ dist/*
 **/__pycache__/
 deploy/*
 
-command_automator_api.exe
 commands_automator.log
 commands_automator_api.spec
 commands_automator_api.exe
+llm/resources/resume/addtional_files/job_description.txt
+uv.lock
