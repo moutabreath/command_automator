@@ -7,6 +7,8 @@ from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
 from google.genai import types
 from google.genai.types import GenerateContentResponse
+from PIL import Image
+import io
 
 from llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService 
 
@@ -141,7 +143,7 @@ Query: {query}
             logging.error(f"MCP server not ready", exc_info=True)
             return False
     
-    async def process_query(self, query: str, image_path: str, should_save_results_to_file: bool, output_file_path: str) -> str:
+    async def process_query(self, query: str, base64_decoded: str, should_save_results_to_file: bool, output_file_path: str) -> str:
         """
         Process a user query using a combination of Gemini and MCP server.
         
@@ -151,8 +153,8 @@ Query: {query}
             The response as a string
         """
         try:
-            if (image_path != None and image_path != '' and image_path != ' '):
-                self.upload_to_gemini(image_path)
+            # if (base64_decoded != None and base64_decoded != '' and base64_decoded != ' '):
+            #     self.upload_to_gemini(base64_decoded)
             if not await self.is_mcp_server_ready():
                 return self.call_gemini_api_directly(query)
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
@@ -174,10 +176,10 @@ Query: {query}
                     if selected_tool:
                         return await self.use_tool(selected_tool, tool_args, session, should_save_results_to_file, output_file_path)
                     else:
-                        return self.call_gemini_api_directly(query)
+                        return self.call_gemini_api_directly(query, base64_decoded)
                     
         except Exception as e:
-            logging.error("error communicating with gemini", exec_info = True)
+            logging.error("error communicating with gemini", exc_info=True)
             return None
         
     async def use_tool(self, selected_tool, tool_args, session, should_save_results_to_file, output_file_path):
@@ -203,11 +205,13 @@ Query: {query}
         else:
             return tool_result
         
-    def call_gemini_api_directly(self, query):
+    def call_gemini_api_directly(self, query, base64_decoded):
         if self.api_key:
             try:
+                image = Image.open(io.BytesIO(base64_decoded))
                 self.resume_chat._config["response_mime_type"] = "text/plain"
-                gemini_response = self.resume_chat.send_message("Now answer the query with text "+ query)
+                text_prompt = "Now answer the query with text "+ query
+                gemini_response = self.resume_chat.send_message([text_prompt, image])
                 gemini_text = gemini_response._get_text()
                 return gemini_text
             except Exception as e:

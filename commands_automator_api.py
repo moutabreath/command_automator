@@ -1,12 +1,11 @@
 import asyncio
 import logging
+import re
 import webview
 import logging.handlers
 import os
 import sys
 import base64
-import re
-import tempfile
 
 from llm.mcp_servers.resume_mcp import MCPRunner
 from services.commands_automator_service import CommandsAutomatorService
@@ -19,8 +18,6 @@ class CommandsAutomatorApi:
         self.llm_sevice: LLMService = LLMService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
         self.llm_config = ConfigurationService('llm/config/llm-config.json')
-        self.temp_dir = os.path.join(os.getcwd(), "tmp_images")
-        os.makedirs(self.temp_dir, exist_ok=True)
 
     def load_scripts(self):
         return self.commands_automator_service.load_scripts()
@@ -47,23 +44,18 @@ class CommandsAutomatorApi:
         return self.commands_automator_service.execute_script(script_name, additional_text, flags)
 
     def call_llm(self, prompt: str, image_data: str, should_save_files: bool, output_file_path: str):
-        image_path = ""
-        if image_data:
+        decoded_data = None
+        if image_data and image_data != '':
             try:
                 header, encoded = image_data.split(',', 1)
                 match = re.search(r'/(.*?);', header)
                 ext = match.group(1) if match else 'png'
-                
+                ext = f'image/{ext}'
                 decoded_data = base64.b64decode(encoded)
-                
-                # Create a temporary file
-                with tempfile.NamedTemporaryFile(delete=False, suffix=f'.{ext}', dir=self.temp_dir) as tmp_file:
-                    tmp_file.write(decoded_data)
-                    image_path = tmp_file.name
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
                 image_path = ""
-        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, image_path, should_save_files, output_file_path)
+        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, decoded_data, should_save_files, output_file_path)
 
     def load_llm_configuration(self):
         return self.run_async_method(self.llm_config.load_configuration_async)

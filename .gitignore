@@ -16,3 +16,4 @@ commands_automator_api.spec
 commands_automator_api.exe
 llm/resources/resume/addtional_files/job_description.txt
 uv.lock
+llm/config/llm-config.json
