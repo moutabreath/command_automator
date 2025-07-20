@@ -133,11 +133,7 @@ function autoResize() {
 }
 
 async function callLLM() {
-    const spinner = document.getElementById('spinner');
-    spinner.style.display = 'flex';
-
     const query = document.getElementById('query-box').value.trim();
-    const imageFilePath = ""
     const saveToFiles = document.getElementById('save-to-files').checked;
     const folderInput = document.getElementById('output-file-path').value
     if (!query) return;
@@ -161,6 +157,8 @@ async function callLLM() {
     const imagePreview = document.getElementById('image-preview');
     const img = imagePreview.querySelector('img');
     const imageData = img ? img.src : '';
+    const spinner = document.getElementById('spinner');
+    spinner.style.display = 'flex';
 
     try {
         response = await window.pywebview.api.call_llm(query, imageData, saveToFiles, folderInput);
