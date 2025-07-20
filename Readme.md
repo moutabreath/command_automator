@@ -32,7 +32,9 @@ project.
 LLM:
 
 Prefconfigure LLM usage:
-    set GOOGLE_API_KEY=your_api_key_here
+    1. Open the file set_google_api_key.cmd in notepadd
+    2. Replace 'your_api_key_here' with your google_Api_key
+    3. Click on it
 
 
 To use it like copilot, write you text in the query text field, and hit the arrow button.
