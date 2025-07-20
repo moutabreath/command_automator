@@ -89,7 +89,7 @@ def main():
         width=1000,
         height=800
     )
-    webview.start(icon='ui/resources/Commands_Automator.ico', debug = True)
+    webview.start(icon='ui/resources/Commands_Automator.ico')
 
 if __name__ == '__main__':
     # Multiprocessing freeze support for onefile builds on Windows
