@@ -106,12 +106,20 @@ function handleImageUpload(event) {
     }
 }
 
+function removeImageThumbnail() {
+    const imagePreviewDiv = document.getElementById('image-preview');
+    imagePreviewDiv.innerHTML = '';
+    imagePreviewDiv.style.display = 'none';
+}
+
 function displayImageThumbnail(imageData) {
     const imagePreviewDiv = document.getElementById('image-preview');
     imagePreviewDiv.innerHTML = ''; // Clear previous thumbnail
 
     if (imageData) {
         imagePreviewDiv.style.display = 'block';
+        imagePreviewDiv.style.position = 'relative'; // For positioning the close button
+
         const queryBox = document.getElementById('query-box');
         const queryBoxWidth = queryBox.offsetWidth;
         const thumbnailSize = queryBoxWidth / 4;
@@ -122,6 +130,31 @@ function displayImageThumbnail(imageData) {
         const img = document.createElement('img');
         img.src = imageData;
         imagePreviewDiv.appendChild(img);
+
+        const removeBtn = document.createElement('button');
+        removeBtn.innerHTML = '&times;'; // A nicer 'x' character
+        removeBtn.title = 'Remove image';
+
+        // It's best to move these styles to a CSS file for a class like 'remove-image-btn'
+        Object.assign(removeBtn.style, {
+            position: 'absolute',
+            top: '2px',
+            right: '2px',
+            width: '20px',
+            height: '20px',
+            background: 'rgba(0, 0, 0, 0.5)',
+            color: 'white',
+            border: 'none',
+            borderRadius: '50%',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '0'
+        });
+
+        removeBtn.addEventListener('click', removeImageThumbnail);
+        imagePreviewDiv.appendChild(removeBtn);
     } else {
         imagePreviewDiv.style.display = 'none';
     }
