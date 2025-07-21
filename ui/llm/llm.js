@@ -118,7 +118,6 @@ function displayImageThumbnail(imageData) {
 
     if (imageData) {
         imagePreviewDiv.style.display = 'block';
-        imagePreviewDiv.style.position = 'relative'; // For positioning the close button
 
         const queryBox = document.getElementById('query-box');
         const queryBoxWidth = queryBox.offsetWidth;
@@ -134,24 +133,7 @@ function displayImageThumbnail(imageData) {
         const removeBtn = document.createElement('button');
         removeBtn.innerHTML = '&times;'; // A nicer 'x' character
         removeBtn.title = 'Remove image';
-
-        // It's best to move these styles to a CSS file for a class like 'remove-image-btn'
-        Object.assign(removeBtn.style, {
-            position: 'absolute',
-            top: '2px',
-            right: '2px',
-            width: '20px',
-            height: '20px',
-            background: 'rgba(0, 0, 0, 0.5)',
-            color: 'white',
-            border: 'none',
-            borderRadius: '50%',
-            cursor: 'pointer',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            padding: '0'
-        });
+        removeBtn.className = 'remove-image-btn';
 
         removeBtn.addEventListener('click', removeImageThumbnail);
         imagePreviewDiv.appendChild(removeBtn);
