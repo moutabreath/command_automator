@@ -1,4 +1,3 @@
-
 .tab-bar {
     display: flex;
     border-bottom: 1px solid #9EA3F5;
@@ -26,8 +25,8 @@
 }
 
 iframe {
-    width: 100%;
-    height: 600px;
+    min-height: 400px;
+    height: 80vh;
     border: none;
     background: #222;
 }

@@ -15,7 +15,7 @@ At the Israel offices, Applied creates machines for chip validation.
 - Developed a Python-based application for script execution, reducing operation time from one hour to milliseconds for some DevOps processes.
 - Mentored other developers on how cloud and microservices systems work.
 - Adhered to software engineering best practices, including code reviews, SOLID principles, CI/CD pipelines using TDD approach, while working in agile.
-- Reilied heavily with cygwin (linux shell)
+- Relied heavily with cygwin (linux shell)
  
 Software Engineer * Teledyne FLIR 
 2018 - 2022 
@@ -29,7 +29,7 @@ The company's product is an enterprise - grade camera manager that synchronizes 
 Full-stack Software Engineer * RISCO Group 
 2016 - 2018
 This company produces electronic door locks and the software around them.
-- As part of the infrastructure team, built end to end solutions, using C# .NET Core and MongoDB and angualr 4.4, and host them on azure.
+- As part of the infrastructure team, built end to end solutions, using C# .NET Core and MongoDB and angular 4.4, and host them on azure.
 - At times, acted as my own dev-ops and product manager.
 - Set up Elasticsearch (ELK stack).
 - Learned new technologies and integrated them into the solutions I provided. 
@@ -51,11 +51,10 @@ This startup's product was a recommender system.
  
 Personal Projects
 https://github.com/moutabreath/CatanGameManager
-A REST API project that helps monitor the game Settlers of Catan - Cities and Knights.
-Built using dot net 8.0 and MongoDB, deployed locally on docker and Kubernetes.
-Also deployed on AWS EKS.
+Designed a REST API for tracking gameplay in Settlers of Catan: Cities & Knights, using .NET 8 and MongoDB. Deployed via Docker/Kubernetes locally and on AWS EKS.
+
 https://github.com/moutabreath/command_automator
-A multipurpose script runner, an LLM client and an automatic resume and cover letter generator, built using python and PyWebView.
+Built a Python desktop app for script running, LLM-powered resume generation, and MCP client-server integration using PyWebView.
 
 Education
 2007 - 2012: BSc In Software Engineering from Ben Gurion University
