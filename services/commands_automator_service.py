@@ -1,4 +1,3 @@
-import sys
 import glob
 import json
 import logging
@@ -15,18 +14,19 @@ class CommandsAutomatorService:
         self.load_scripts_config()
 
 
-    def load_scripts_config(self):
-        try:
-            f = open('config\\scripts_config.json')
-        except IOError:
-            logging.error(f"error loading scripts.config" + str(IOError), exc_info=True)
-            return
-        data = json.load(f)
-        scripts_config = data['scripts']
-        for script in scripts_config:
-            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_Description']
-            if script_name == "" or tag_name == "" or script_desc == "":
-                continue
+    def load_scripts_config(self):  
+        try:  
+            config_path = os.path.join('config', 'scripts_config.json')  
+            with open(config_path) as f:  
+                data = json.load(f)  
+        except IOError:  
+            logging.error("Error loading scripts_config.json", exc_info=True)  
+            return  
+        scripts_config = data['scripts']  
+        for script in scripts_config:  
+            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_Description']  
+            if script_name == "" or tag_name == "" or script_desc == "":  
+                continue  
             self.scripts_attributes[script_name] = script
 
     def get_name_to_scripts(self):
@@ -76,23 +76,27 @@ class CommandsAutomatorService:
             args.append('bash')
         if script_name.endswith('cmd'):
             args.append('cmd')
-            args.append('/c')            
-        args.append(script_path)   
-        args.append(additional_text)    
+            args.append('/c')
+        args.append(script_path)
+        args.append(additional_text)
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
-                return None            
+                return None
             free_text_args = flags.split(" ")
             split_arr = list(filter(None, ' '.join(free_text_args).split()))
             args.extend(split_arr)
         other_script_name_as_input = self.get_other_script_name_as_input(script_name)
         if other_script_name_as_input is not None:
-            files = glob.glob(os.getcwd() + f'\\cleaners/**/{other_script_name_as_input}', recursive=True)
-            f_drive_cleaner_path = files[0]
-            args.append(f_drive_cleaner_path)
+            cleaners_path = os.path.join(os.getcwd(), 'cleaners')
+            files = glob.glob(f'{cleaners_path}/**/{other_script_name_as_input}', recursive=True)
+            if files:
+                f_drive_cleaner_path = files[0]
+                args.append(f_drive_cleaner_path)
+            else:
+                logging.warning(f"Script '{other_script_name_as_input}' not found in cleaners directory")
         logging.log(logging.DEBUG, "running " + str(args))
         return args
-
+    
     @staticmethod
     def get_updated_venv(arg):
         if not ('python' in arg):
@@ -113,11 +117,6 @@ class CommandsAutomatorService:
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
         subprocess.run(run_version_command, startupinfo=si)
 
-    @staticmethod
-    def run_windows_command(command_to_run):
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        subprocess.run(command_to_run)
 
     def get_string_from_thread_result(self, result, err):
         str_result = ""
@@ -172,7 +171,7 @@ class CommandsAutomatorService:
         output, err = self.proc.communicate()
         logging.log(logging.DEBUG, "proc communicate done")
         return output, err
-        
-    
 
-   
+
+
+
