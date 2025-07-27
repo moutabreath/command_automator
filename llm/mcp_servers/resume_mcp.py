@@ -17,26 +17,31 @@ async def get_resume_files() -> ResumeData:
 
     """    
     global resume_loader_service
-    resume_content, applicant_name = await resume_loader_service.get_resume()
+    try:
+        resume_content, applicant_name = await resume_loader_service.get_resume()
 
-    guide_lines = await resume_loader_service.get_main_part_guide_lines()
-    guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
+        guide_lines = await resume_loader_service.get_main_part_guide_lines()
+        guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
 
-    highlighted_sections = await resume_loader_service.get_highlighted_sections()
+        highlighted_sections = await resume_loader_service.get_highlighted_sections()
 
-    job_description_content = await resume_loader_service.get_job_description()
+        job_description_content = await resume_loader_service.get_job_description()
 
-    cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
+        cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
 
-    resume_data: ResumeData = ResumeData(
-                                         applicant_name = applicant_name,
-                                         general_guidelines=guide_lines,
-                                         resume=resume_content, 
-                                         resume_highlighted_sections=highlighted_sections,
-                                         job_description=job_description_content,
-                                         cover_letter_guidelines=cover_letter_guide_lines)
+        resume_data: ResumeData = ResumeData(
+                                            applicant_name = applicant_name,
+                                            general_guidelines=guide_lines,
+                                            resume=resume_content, 
+                                            resume_highlighted_sections=highlighted_sections,
+                                            job_description=job_description_content,
+                                            cover_letter_guidelines=cover_letter_guide_lines)
 
-    return resume_data
+        return resume_data
+    except Exception as ex:
+        logging.error(f"Error fetching resume: {ex}")
+        return None
+
 
 # Run the server with streamable-http transport
 class MCPRunner:
@@ -45,7 +50,7 @@ class MCPRunner:
         self.mcp_process = multiprocessing.Process(target=self.run_mcp)
         self.mcp_process.start()
         
-    def __del__(self):
+    def stop_mcp(self):
         """Cleanup method to terminate the MCP process when the agent is destroyed"""
         if hasattr(self, 'mcp_process') and self.mcp_process.is_alive():
             self.mcp_process.terminate()
@@ -64,6 +69,12 @@ class MCPRunner:
         # Run the server with streamable-http transport
         logging.debug(f"Starting MCP server at http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")
         mcp.run(transport="streamable-http")
+
+    def __enter__(self):  
+        return self  
+
+    def __exit__(self, exc_type, exc_val, exc_tb):  
+        self.stop_mcp()  
 
 if __name__ == '__main__':
     mcp_runner = MCPRunner()

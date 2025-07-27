@@ -36,7 +36,7 @@ class CommandsAutomatorApi:
         try:
             return asyncio.run(async_method(*args, **kwargs))
         except Exception as e:
-            logging.error(f"Error running async method", exc_info=True)
+            logging.error(f"Error running async method {e}", exc_info=True)
             return "error"
    
 
@@ -54,7 +54,6 @@ class CommandsAutomatorApi:
                 decoded_data = base64.b64decode(encoded)
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
-                image_path = ""
         return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, decoded_data, should_save_files, output_file_path)
 
     def load_llm_configuration(self):

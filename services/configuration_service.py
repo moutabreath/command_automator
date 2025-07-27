@@ -13,8 +13,8 @@ class ConfigurationService:
                 data = await f.read()
             return json.loads(data)
         except Exception as e:
-            logging.error(f"Error loading config file", exc_info=True)
-            return ""
+            logging.error("Error loading config file", exc_info=True)
+            return {}
 
     async def save_configuration_async(self, config):
         try:
@@ -22,5 +22,5 @@ class ConfigurationService:
                 await f.write(json.dumps(config, indent=4))
             return True
         except Exception as e:
-            logging.error(f"Error saving config file", exc_info=True)
-            return False
+            logging.error("Error saving config file", exc_info=True)
+            return {}

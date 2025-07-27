@@ -20,8 +20,8 @@ class SmartMCPClient:
         # MCP server settings
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
         self.api_key = os.environ.get("GOOGLE_API_KEY")
-        self.gemin_client: genai.Client = genai.Client(api_key=self.api_key)        
-        self.resume_chat = self.gemin_client.chats.create(
+        self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)        
+        self.resume_chat = self.gemini_client.chats.create(
                     model="gemini-2.0-flash",
                     history= []
         )
@@ -81,7 +81,7 @@ class SmartMCPClient:
                 print("Gemini decided not to use any tools")
                 return None, None                
         except Exception as e:
-            logging.error(f"Error using Gemini for tool decision", exc_info=True)
+            logging.error(f"Error using Gemini for tool decision {e}", exc_info=True)
             # Fall back to direct tool usage if error occurs
             if 'get_resume_files' in available_tools:
                 return 'get_resume_files', {'query': query}
@@ -106,7 +106,7 @@ Based on the user's query, determine if any of these available tools should be u
 IMPORTANT: Only use a tool if the query is SPECIFICALLY asking about adjust resume to job description
 
 
-For general greetings, chitchat, or questions unrelated to Internet Israel content, 
+For general greetings, chitchat, or questions unrelated to resume content, 
 DO NOT use any tools. Examples where NO tool should be used:
 - "Hello"
 - "How are you?"
@@ -143,45 +143,66 @@ Query: {query}
             logging.error(f"MCP server not ready", exc_info=True)
             return False
     
-    async def process_query(self, query: str, base64_decoded: str, should_save_results_to_file: bool, output_file_path: str) -> str:
+    async def process_query(
+        self,
+        query: str,
+        base64_decoded: str,
+        should_save_results_to_file: bool,
+        output_file_path: str,
+    ) -> str:
         """
         Process a user query using a combination of Gemini and MCP server.
-        
+
         Args:
             query: The user's question or request
+            base64_decoded: Base64 encoded image data (optional)
+            should_save_results_to_file: Whether to save results to files
+            output_file_path: Path to save output files
         Returns:
             The response as a string
         """
         try:
-            # if (base64_decoded != None and base64_decoded != '' and base64_decoded != ' '):
-            #     self.upload_to_gemini(base64_decoded)
+            # TODO: Implement image upload functionality if needed
             if not await self.is_mcp_server_ready():
                 return self.call_gemini_api_directly(query)
+
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
-            async with streamablehttp_client(self.mcp_server_url) as (read_stream, write_stream, _):
+
+            async with streamablehttp_client(self.mcp_server_url) as (
+                read_stream,
+                write_stream,
+                _,
+            ), ClientSession(read_stream, write_stream) as session:
                 logging.debug("Established streamable_http connection")
-                
-                async with ClientSession(read_stream, write_stream) as session:
-                    logging.debug("Created MCP client session")
-                    
-                    await session.initialize()
-                    logging.debug("Successfully initialized MCP session")
-                    
-                    available_tools = await self.get_available_tools(session)
-                    
-                    # Use Gemini to decide if a tool should be used
-                    selected_tool, tool_args = await self.decide_tool_usage(query, available_tools)
-                    
-                    # If Gemini decided to use a tool, call it
-                    if selected_tool:
-                        return await self.use_tool(selected_tool, tool_args, session, should_save_results_to_file, output_file_path)
-                    else:
-                        return self.call_gemini_api_directly(query, base64_decoded)
-                    
+                logging.debug("Created MCP client session")
+
+                await session.initialize()
+                logging.debug("Successfully initialized MCP session")
+
+                available_tools = await self.get_available_tools(session)
+
+                # Use Gemini to decide if a tool should be used
+                selected_tool, tool_args = await self.decide_tool_usage(
+                    query, available_tools
+                )
+
+                # If Gemini decided to use a tool, call it
+                if selected_tool:
+                    return await self.use_tool(
+                        selected_tool,
+                        tool_args,
+                        session,
+                        should_save_results_to_file,
+                        output_file_path,
+                    )
+                else:
+                    return self.call_gemini_api_directly(query, base64_decoded)
+
         except Exception as e:
-            logging.error("error communicating with gemini", exc_info=True)
-            return None
-        
+            logging.error(
+                "Error communicating with Gemini or MCP server", exc_info=True
+            )
+            return "An error occurred while processing your request. Please try again."
     async def use_tool(self, selected_tool, tool_args, session, should_save_results_to_file, output_file_path):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         response = await session.call_tool(selected_tool, tool_args)
@@ -215,7 +236,7 @@ Query: {query}
                 gemini_text = gemini_response._get_text()
                 return gemini_text
             except Exception as e:
-                logging.error(f"Error using Gemini", exc_info=True)
+                logging.error(f"Error using Gemini {e}", exc_info=True)
                 return "Sorry, I couldn't process your request with Gemini or MCP tools."
         else:
             return "No suitable tool found and Gemini API key not provided."
@@ -280,10 +301,10 @@ Query: {query}
     
     def upload_to_gemini(self, path, mime_type=None):
         """Uploads a file to Gemini for use in prompts."""
-        file = self.gemin_client.files.upload(file=path)
+        file = self.gemini_client.files.upload(file=path)
         print(f"Uploaded file '{file.display_name}' as: {file.uri}")
         return file    
 
     def delete_files(self):
-        for f in self.gemin_client.files.list():
-            self.gemin_client.files.delete(name=f.name)
+        for f in self.gemini_client.files.list():
+            self.gemini_client.files.delete(name=f.name)

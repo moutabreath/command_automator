@@ -24,3 +24,4 @@ class ResumeSaverService:
                 return resume_file_name
         except Exception:
             logging.error("Error saving resume", exc_info=True)
+            return ""
