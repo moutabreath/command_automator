@@ -58,19 +58,14 @@ class ResumeLoaderService:
         return file_text
     
     async def read_file(self, file_path):
-        line = None
-        content = ''
         try:
-            async with aiofiles.open(file_path, 'r', encoding="utf8") as file:           
-                line = await file.readline()                
-                while line:
-                    content += line
-                    line = await file.readline()
+            async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
+                content = await file.read()
         except UnicodeDecodeError as e:
-            logging.error(f"Error reading file: {file_path}", exc_info=True)
+            logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
             return None
-        except IOError as e:
-            logging.error(f"Error reading file: {file_path}", exc_info=True)
+        except IOError:
+            logging.error(f"Error reading file: {file_path} as {e}", exc_info=True)
             return None
         return content
         
