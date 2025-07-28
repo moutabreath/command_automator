@@ -171,14 +171,14 @@ async function callLLM() {
     const img = imagePreview.querySelector('img');
     const imageData = img ? img.src : '';
     const spinner = document.getElementById('spinner');
-    spinner.style.display = 'flex';
+    spinner.style.visibility = 'visible';
 
     try {
         response = await window.pywebview.api.call_llm(query, imageData, saveToFiles, folderInput);
     } catch (e) {
         response = `Error: ${e.message || 'Failed to call LLM'}`;
     } finally {
-        spinner.style.display = 'none';
+        spinner.style.visibility = 'hidden';
     }
 
     // Create response element

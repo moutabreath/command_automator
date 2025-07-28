@@ -70,7 +70,7 @@ async function saveAutomatorConfig() {
 
 async function executeScript() {
     const spinner = document.getElementById('spinner');
-    spinner.style.display = 'flex';
+    spinner.style.visibility = 'visible';
     try {
         const script = document.getElementById('script-select').value;
         const additional = document.getElementById('additional-text').value;
@@ -91,7 +91,7 @@ async function executeScript() {
         document.getElementById('result').value = `Execution error: ${error.message}`;
     }
     finally {
-        spinner.style.display = 'none';
+        spinner.style.visibility = 'hidden';
     }
 }
 
