@@ -22,5 +22,5 @@ class ConfigurationService:
                 await f.write(json.dumps(config, indent=4))
             return True
         except Exception as e:
-            logging.error("Error saving config file", exc_info=True)
-            return {}
+            logging.error(f"Error saving config file {e}", exc_info=True)
+            return False
