@@ -1,11 +1,10 @@
 async function loadLLMConfig() {
     try {
-        config = await window.pywebview.api.load_llm_configuration();
-        document.getElementById('output-file-path').value = config.outpuFilePath || '';
-        document.getElementById('save-to-files').checked = config.saveToFiles || '';
+        let llmConfig = await window.pywebview.api.load_llm_configuration();
+        document.getElementById('output-file-path').value = llmConfig.outputFilePath || '';
+        document.getElementById('save-to-files').checked = llmConfig.saveToFiles || false;
     } catch (error) {
         console.log('Error loading config:', error);
-        config = { selected_script: '', additional_text: '', flags: '' };
     }
 }
 
@@ -15,7 +14,7 @@ async function saveLLMConfig() {
         const folderValue = document.getElementById('output-file-path').value;
         const isSaveToFilesChecked = document.getElementById('save-to-files').checked;
 
-        config.outpuFilePath = folderValue;
+        config.outputFilePath = folderValue;
         config.saveToFiles = isSaveToFilesChecked;
         await window.pywebview.api.save_llm_configuration(config);
     } catch (error) {
@@ -150,11 +149,10 @@ function autoResize() {
 async function callLLM() {
     const query = document.getElementById('query-box').value.trim();
     const saveToFiles = document.getElementById('save-to-files').checked;
-    const folderInput = document.getElementById('output-file-path').value
+    const folderInput = document.getElementById('output-file-path').value;
     if (!query) return;
     document.getElementById('send-btn').disabled = true;
     document.getElementById('query-box').disabled = true;
-
 
     // Append query and response to the response box
     const responseBox = document.getElementById('response-box');
@@ -178,9 +176,8 @@ async function callLLM() {
     try {
         response = await window.pywebview.api.call_llm(query, imageData, saveToFiles, folderInput);
     } catch (e) {
-        response = 'Error: ';
-    }
-    finally {
+        response = `Error: ${e.message || 'Failed to call LLM'}`;
+    } finally {
         spinner.style.display = 'none';
     }
 
@@ -195,11 +192,7 @@ async function callLLM() {
     responseBox.scrollTop = responseBox.scrollHeight;
 
     // Reset UI
-
     document.getElementById('send-btn').disabled = false;
     document.getElementById('query-box').disabled = false;
-    document.getElementById('send-btn').disabled = false;
-    document.getElementById('query-box').disabled = false;
-
     document.getElementById('query-box').focus();
 }

@@ -3,6 +3,12 @@ const llmBtn = document.getElementById('tab-llm-btn');
 const automatorTab = document.getElementById('tab-automator');
 const llmTab = document.getElementById('tab-llm');
 
+// Validate all required elements exist
+if (!automatorBtn || !llmBtn || !automatorTab || !llmTab) {
+    console.error('Required tab elements not found');
+    throw new Error('Tab elements missing from DOM');
+}
+
 automatorBtn.onclick = () => {
     automatorBtn.classList.add('selected');
     llmBtn.classList.remove('selected');
