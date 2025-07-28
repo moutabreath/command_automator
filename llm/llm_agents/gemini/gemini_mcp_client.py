@@ -135,12 +135,12 @@ Query: {query}
 
     async def is_mcp_server_ready(self, timeout=2):
         try:
-            async with aiohttp.ClientSession() as session:
-                async with session.get(self.mcp_server_url, timeout=timeout) as resp:
-                    # You can check for a specific status code if needed
-                    return resp.status == 406 # (= NOt Accepatable) Server is probably reacheable.
+            async with aiohttp.ClientSession() as session, \
+                       session.get(self.mcp_server_url, timeout=timeout) as resp:
+                # You can check for a specific status code if needed
+                return resp.status == 406 # (= NOt Accepatable) Server is probably reacheable.
         except Exception as e:
-            logging.error(f"MCP server not ready", exc_info=True)
+            logging.error(f"MCP server not ready {e}", exc_info=True)
             return False
     
     async def process_query(
@@ -162,7 +162,6 @@ Query: {query}
             The response as a string
         """
         try:
-            # TODO: Implement image upload functionality if needed
             if not await self.is_mcp_server_ready():
                 return self.call_gemini_api_directly(query)
 
