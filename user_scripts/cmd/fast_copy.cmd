@@ -1,3 +1,11 @@
+if "%~1"=="" (
+    echo Usage: %0 ^<source^> ^<destination^>
+    exit /b 1
+)
+if "%~2"=="" (
+    echo Usage: %0 ^<source^> ^<destination^>
+    exit /b 1
+)
 set source=%1%
 set destination=%2%
 if not exist "%source%" (
