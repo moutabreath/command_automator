@@ -12,9 +12,9 @@ class ConfigurationService:
             async with aiofiles.open(self.config_path, "r") as f:
                 data = await f.read()
             return json.loads(data)
-        except Exception as e:
-            logging.error("Error loading config file", exc_info=True)
-            return {}
+        except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:  
+            logging.error(f"Error loading config file: {e}", exc_info=True)  
+            return {}  
 
     async def save_configuration_async(self, config):
         try:
