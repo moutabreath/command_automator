@@ -1,13 +1,12 @@
 import logging
 import os
-import re
 import aiofiles
 
 class ResumeLoaderService:
     CURRENT_PATH = '/llm'
     LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'
     RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
-    ADDITIONAl_FILE_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/addtional_files'
+    ADDITIONAl_FILE_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/additional_files'
     resume_file_name = "Missing"
     
     async def get_main_part_guide_lines(self):
@@ -17,9 +16,9 @@ class ResumeLoaderService:
 
     async def get_resume(self):
         resume_path, applicant_name = self.find_resume_file()
-        if resume_path == None:
+        if resume_path is None:
             logging.error(f"No .txt resume file found in {self.RESUME_FILES_PATH_PREFIX}")
-            return None 
+            return None, None
         resume = await self.read_file(resume_path)
         return resume, applicant_name
     
@@ -35,15 +34,15 @@ class ResumeLoaderService:
         
 
     async def get_highlighted_sections(self):
-        resume_setctions_content = await self.read_file(f'{self.ADDITIONAl_FILE_PATH_PREFIX}/resume_sections.txt')
-        if resume_setctions_content == None:
+        resume_sections_content = await self.read_file(f'{self.ADDITIONAl_FILE_PATH_PREFIX}/resume_sections.txt')
+        if resume_sections_content is None:
             logging.error(f"No resume_sections file found in {self.ADDITIONAl_FILE_PATH_PREFIX}")
             return None 
-        return resume_setctions_content.split('\n')
+        return resume_sections_content.split('\n')
     
     async def get_job_description(self):
         job_desc = await self.read_file(f'{self.ADDITIONAl_FILE_PATH_PREFIX}/job_description.txt')
-        if job_desc == None:
+        if job_desc is None:
             logging.error(f"No job description file found in {self.ADDITIONAl_FILE_PATH_PREFIX}")
             return None
         return job_desc
@@ -52,7 +51,7 @@ class ResumeLoaderService:
     async def get_cover_letter_guide_lines(self):
         file_path = f'{self.ADDITIONAl_FILE_PATH_PREFIX}/cover_letter_guidelines.txt'  
         file_text = await self.read_file(file_path)
-        if file_text == None:
+        if file_text is None:
             logging.error(f"No cover letter file found in {self.ADDITIONAl_FILE_PATH_PREFIX}")
             return None
         return file_text
@@ -64,8 +63,8 @@ class ResumeLoaderService:
         except UnicodeDecodeError as e:
             logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
             return None
-        except IOError:
-            logging.error(f"Error reading file: {file_path} as {e}", exc_info=True)
+        except IOError as ioEror:
+            logging.error(f"Error reading file: {file_path} as {ioEror}", exc_info=True)
             return None
         return content
         
