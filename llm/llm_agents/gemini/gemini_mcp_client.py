@@ -198,14 +198,13 @@ Query: {query}
                     return self.call_gemini_api_directly(query, base64_decoded)
 
         except Exception as e:
-            logging.error(
-                "Error communicating with Gemini or MCP server", exc_info=True
-            )
+            logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return "An error occurred while processing your request. Please try again."
     async def use_tool(self, selected_tool, tool_args, session, should_save_results_to_file, output_file_path):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         response = await session.call_tool(selected_tool, tool_args)
-        if response == None:
+        if response is None or response.content is None:
+            logging.error("No response from tool")
             return ""
         tool_result = response.content[0].text
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
@@ -213,8 +212,8 @@ Query: {query}
         if self.api_key:
                 try:
                     resume_data_dict = json.loads(tool_result)
-                except ValueError:
-                    logging.error("error with json structure of tool")
+                except ValueError as ve:
+                    logging.error(f"error with json structure of tool {ve}")
                     return ""
                 
                 resume_text = self.get_refined_resume(resume_data_dict)                                
