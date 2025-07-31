@@ -30,7 +30,7 @@ class ResumeLoaderService:
                     applicant_name = file[0:len(file) - 4]
                     applicant_name = applicant_name.replace('_', ' ').replace('-', ' ')
                     return resume_path, applicant_name
-        return None
+        return None, None
         
 
     async def get_highlighted_sections(self):
