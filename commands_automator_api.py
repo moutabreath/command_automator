@@ -18,6 +18,7 @@ class CommandsAutomatorApi:
         self.llm_sevice: LLMService = LLMService()
         self.commands_automator_config = ConfigurationService("config/commands-executor-config.json")
         self.llm_config = ConfigurationService('llm/config/llm-config.json')
+        self.init_logger()
 
     def load_scripts(self):
         return self.commands_automator_service.load_scripts()
