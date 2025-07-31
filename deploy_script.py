@@ -17,7 +17,8 @@ def copy_to_deploy():
     try:
         # List of specific files to copy
         files_to_copy = [
-            'commands_automator_api.exe'
+            'commands_automator_api.exe',
+            'README.md'
         ]
         
         # Copy individual files
@@ -34,8 +35,9 @@ def copy_to_deploy():
         # Copy folders with their structure
         folders_to_copy = [
             'user_scripts',
-            'resources',
-            'llm/resources'
+            'ui/resources',
+            'llm/resources',
+            'config'
         ]
         
         for folder_name in folders_to_copy:
