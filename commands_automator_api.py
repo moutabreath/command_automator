@@ -1,6 +1,5 @@
 import asyncio
 import logging
-import re
 import webview
 import logging.handlers
 import os
@@ -48,10 +47,7 @@ class CommandsAutomatorApi:
         decoded_data = None
         if image_data and image_data != '':
             try:
-                header, encoded = image_data.split(',', 1)
-                match = re.search(r'/(.*?);', header)
-                ext = match.group(1) if match else 'png'
-                ext = f'image/{ext}'
+                _, encoded = image_data.split(',', 1)
                 decoded_data = base64.b64decode(encoded)
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
@@ -65,7 +61,6 @@ class CommandsAutomatorApi:
 	
 
     def select_folder(self):
-        # Opens a native folder dialog and returns the selected folder path as a list
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
 
     def init_logger(self):
@@ -92,7 +87,6 @@ def main():
     webview.start(icon='ui/resources/Commands_Automator.ico')
 
 if __name__ == '__main__':
-    # Multiprocessing freeze support for onefile builds on Windows
     if sys.platform == "win32":
         import multiprocessing
         multiprocessing.freeze_support()
