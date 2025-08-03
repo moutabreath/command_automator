@@ -7,7 +7,6 @@ class ResumeLoaderService:
     LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'
     RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
     ADDITIONAl_FILE_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/additional_files'
-    resume_file_name = "Missing"
     
     async def get_main_part_guide_lines(self):
         file_path = f'{self.ADDITIONAl_FILE_PATH_PREFIX}/guidelines.txt'    
@@ -23,7 +22,7 @@ class ResumeLoaderService:
         return resume, applicant_name
     
     def find_resume_file(self):
-        for root, dirs, files in os.walk(self.RESUME_FILES_PATH_PREFIX):
+        for root, _, files in os.walk(self.RESUME_FILES_PATH_PREFIX):
             for file in files:
                 if file.lower().endswith('.txt'):
                     resume_path = os.path.join(root, file)
