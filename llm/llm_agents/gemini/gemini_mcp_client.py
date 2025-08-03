@@ -163,7 +163,7 @@ Query: {query}
         """
         try:
             if not await self.is_mcp_server_ready():
-                return self.call_gemini_api_directly(query)
+                return self.call_gemini_api_directly(query, base64_decoded)
 
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
 
