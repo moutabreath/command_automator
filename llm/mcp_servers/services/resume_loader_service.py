@@ -63,7 +63,7 @@ class ResumeLoaderService:
             logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
             return None
         except IOError as ioEror:
-            logging.error(f"Error reading file: {file_path} as {ioEror}", exc_info=True)
+            logging.error(f"Error reading file: {file_path} - {ioEror}", exc_info=True)
             return None
         return content
         
