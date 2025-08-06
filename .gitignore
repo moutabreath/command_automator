@@ -14,6 +14,7 @@ deploy/*
 commands_automator.log
 commands_automator_api.spec
 commands_automator_api.exe
-llm/resources/resume/addtional_files/job_description.txt
 uv.lock
 llm/config/llm-config.json
+llm/resources/resume/additional_files/job_description.txt
+llm/resources/resume/Tal_Druckmann.txt
