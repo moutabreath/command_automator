@@ -20,10 +20,10 @@ class SmartMCPClient:
         # MCP server settings
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
         self.api_key = os.environ.get("GOOGLE_API_KEY")
-        self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)        
+        self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
         self.resume_chat = self.gemini_client.chats.create(
-                    model="gemini-2.0-flash",
-                    history= []
+            model="gemini-2.0-flash",
+            history=[]
         )
         config = {
             "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
@@ -32,8 +32,8 @@ class SmartMCPClient:
             "max_output_tokens": 8192,  # Limit response length
             "response_mime_type": "application/json",  # Output as plain text
         }
-        self.resume_chat._config = config    
-        self.resume_saver_service: ResumeSaverService  = ResumeSaverService()
+        self.resume_chat._config = config
+        self.resume_saver_service: ResumeSaverService = ResumeSaverService()
 
     async def decide_tool_usage(self, query, available_tools):
         """
@@ -64,7 +64,7 @@ class SmartMCPClient:
                 return 'get_resume_files', {'query': query}
             return None, None
             
-        try:         
+        try:
             messages = await self.init_messages(query, available_tools)
             self.resume_chat._config["response_mime_type"] = "application/json"
             generated_response: GenerateContentResponse = self.resume_chat.send_message(messages)
@@ -73,13 +73,13 @@ class SmartMCPClient:
             tools_json = json.loads(tools_text)
             selected_tool = tools_json.get("tool")
             args = tools_json.get("args", {})
-            
+            # self.append_to_history(messages, tools_text)
             if selected_tool and selected_tool in available_tools:
                 print(f"Gemini decided to use tool: {selected_tool}")
                 return selected_tool, args
             else:
                 print("Gemini decided not to use any tools")
-                return None, None                
+                return None, None
         except Exception as e:
             logging.error(f"Error using Gemini for tool decision {e}", exc_info=True)
             # Fall back to direct tool usage if error occurs
@@ -209,18 +209,17 @@ Query: {query}
         tool_result = response.content[0].text
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
         
+        # self.append_to_history(f"Tool call: {selected_tool} with args: {tool_args}", tool_result)
         if self.api_key:
-                try:
-                    resume_data_dict = json.loads(tool_result)
-                except ValueError as ve:
-                    logging.error(f"error with json structure of tool {ve}")
-                    return ""
-                
-                resume_text = self.get_refined_resume(resume_data_dict)                                
-                cover_letter_text = self.get_cover_letter(resume_data_dict)
-
-                self.save_files_if_needed(should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text)
-                return resume_text +"\n\n" + cover_letter_text
+            try:
+                resume_data_dict = json.loads(tool_result)
+            except ValueError as ve:
+                logging.error(f"error with json structure of tool {ve}")
+                return ""
+            resume_text = self.get_refined_resume(resume_data_dict)
+            cover_letter_text = self.get_cover_letter(resume_data_dict)
+            self.save_files_if_needed(should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text)
+            return resume_text + "\n\n" + cover_letter_text
         else:
             return tool_result
         
@@ -228,9 +227,9 @@ Query: {query}
         if self.api_key:
             try:
                 self.resume_chat._config["response_mime_type"] = "text/plain"
-                text_prompt = "Now answer the query with text "+ query
+                text_prompt = f"Now answer the query with text {query}"
                 if base64_decoded:
-                    image = Image.open(io.BytesIO(base64_decoded))                
+                    image = Image.open(io.BytesIO(base64_decoded))
                     gemini_response = self.resume_chat.send_message([text_prompt, image])
                 else:
                     gemini_response = self.resume_chat.send_message(text_prompt)
@@ -264,7 +263,7 @@ Query: {query}
     def get_cover_letter(self, resume_data_dict):
         cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
         cover_letter_text = ''
-        if (cover_letter_guidelines != None):
+        if cover_letter_guidelines is not None:
             gemini_response = self.resume_chat.send_message(cover_letter_guidelines)
             cover_letter_text = gemini_response._get_text()
         return cover_letter_text
