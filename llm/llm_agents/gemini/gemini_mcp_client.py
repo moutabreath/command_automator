@@ -52,7 +52,7 @@ class SmartMCPClient:
         
         # If query is just a simple greeting, don't use a tool
         if query.lower() in common_greetings:
-            print("Query appears to be a simple greeting or too short - not using tools")
+            logging.debug("Query appears to be a simple greeting or too short - not using tools")
             return None, None
             
         if not self.api_key:
@@ -73,12 +73,11 @@ class SmartMCPClient:
             tools_json = json.loads(tools_text)
             selected_tool = tools_json.get("tool")
             args = tools_json.get("args", {})
-            # self.append_to_history(messages, tools_text)
             if selected_tool and selected_tool in available_tools:
-                print(f"Gemini decided to use tool: {selected_tool}")
+                logging.debug(f"Gemini decided to use tool: {selected_tool}")
                 return selected_tool, args
             else:
-                print("Gemini decided not to use any tools")
+                logging.debug("Gemini decided not to use any tools")
                 return None, None
         except Exception as e:
             logging.error(f"Error using Gemini for tool decision {e}", exc_info=True)
@@ -103,7 +102,9 @@ class SmartMCPClient:
 Based on the user's query, determine if any of these available tools should be used:
 {json.dumps(available_descriptions, indent=2)}
 
-IMPORTANT: Only use a tool if the query is SPECIFICALLY asking about adjust resume to job description
+IMPORTANT: Only use a tool if the query is SPECIFICALLY asking about adjust resume to job description.
+If you have already used this tool before, infer if you should use it again. For example if the user query is
+'again', and you have used the tool in the previous query, you may decide to use the tool again.
 
 
 For general greetings, chitchat, or questions unrelated to resume content, 
@@ -209,7 +210,6 @@ Query: {query}
         tool_result = response.content[0].text
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
         
-        # self.append_to_history(f"Tool call: {selected_tool} with args: {tool_args}", tool_result)
         if self.api_key:
             try:
                 resume_data_dict = json.loads(tool_result)
@@ -227,12 +227,11 @@ Query: {query}
         if self.api_key:
             try:
                 self.resume_chat._config["response_mime_type"] = "text/plain"
-                text_prompt = f"Now answer the query with text {query}"
                 if base64_decoded:
                     image = Image.open(io.BytesIO(base64_decoded))
-                    gemini_response = self.resume_chat.send_message([text_prompt, image])
+                    gemini_response = self.resume_chat.send_message([query, image])
                 else:
-                    gemini_response = self.resume_chat.send_message(text_prompt)
+                    gemini_response = self.resume_chat.send_message(query)
                 gemini_text = gemini_response._get_text()
                 return gemini_text
             except Exception as e:
