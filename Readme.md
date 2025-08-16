@@ -14,7 +14,7 @@ It supports:
 To Add a new one:
 
 Put the script under matching folder under
-'user_sctipts' folder.
+'user_scripts' folder.
 
 Add its description under
 config/scripts_config.json
@@ -40,6 +40,6 @@ Prefconfigure LLM usage:
 To use it like copilot, write you text in the query text field, and hit the arrow button.
 For automatic resume and cover letter creation, replace:
  - the resume file : llm\resources\resume\Tal_Druckmann.txt
- - the job description: llm\resources\resume\addtional_files\job_description.txt
+ - the job description: llm\resources\resume\additional_files\job_description.txt
  - choose an output folder for the resume and cover letter.
 Ask the chat in a natural language to modify your resume according to the job descripton
