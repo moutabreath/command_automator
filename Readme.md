@@ -20,7 +20,7 @@ Add its description under
 config/scripts_config.json
 
 To extend the main GUI:
-run poetry install
+run uv sync
 
 To make an exe out of it:
 
