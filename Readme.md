@@ -14,18 +14,17 @@ It supports:
 To Add a new one:
 
 Put the script under matching folder under
-'actionables' folder.
+'user_scripts' folder.
 
 Add its description under
 config/scripts_config.json
 
 To extend the main GUI:
-run poetry install
+run uv sync
 
 To make an exe out of it:
 
- -  pyinstaller command_automator.pyw -i resources/Commands_Automator.ico -F
-
+ -  pyinstaller command_automator_api.pyw -i ui/resources/Commands_Automator.ico -F --add-data "ui;ui"
 
 Put the exe file at the root of the
 project.
@@ -33,12 +32,14 @@ project.
 LLM:
 
 Prefconfigure LLM usage:
-add your gemini api key at tabs\llm\config\chat_bot_keys.txt
+    1. Open the file set_google_api_key.cmd in notepadd
+    2. Replace 'your_api_key_here' with your google_Api_key
+    3. Click on it
 
-To use it like copilot, write you text in the query text field, and hit 'send'.
+
+To use it like copilot, write you text in the query text field, and hit the arrow button.
 For automatic resume and cover letter creation, replace:
- - the reumse file : tabs\llm\resources\resume\Tal_Druckmann.txt
- - the job description: tabs\llm\resources\resume\job_Descs.txt
- - choose an output folder for the reusme and cover letter.
- - To make it save the files under your own name, change:
-     -  under tabs\llm\llm-config.json, change the value at applicant_name to be your name.
+ - the resume file : llm\resources\resume\Tal_Druckmann.txt
+ - the job description: llm\resources\resume\additional_files\job_description.txt
+ - choose an output folder for the resume and cover letter.
+Ask the chat in a natural language to modify your resume according to the job descripton
