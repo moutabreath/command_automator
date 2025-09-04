@@ -1,0 +1,46 @@
+Job Summary
+We’re looking for a Senior Software Engineer to join our AI Catalyst Platform team as a key enabler for rapid AI prototyping and operational efficiency. This role focuses on providing technical and operational support to the AI Catalyst team, which explores upstream AI initiatives and drives innovation across the organization. 
+
+You’ll help accelerate the development of AI prototypes by ensuring seamless platform integration, CI/CD pipelines, and other critical infrastructure to enable high-speed experimentation and iteration.
+
+What you’ll do
+Platform Support and Optimization: Design and maintain scalable, secure, and efficient platforms to support AI Catalyst team initiatives, ensuring smooth integration of AI models and workflows.
+
+Infrastructure Management: Provide expertise in Kubernetes and cloud platforms (GCP, AWS, Azure) for container orchestration, scalable deployments, and real-time operations.
+
+Partner with the AI Catalyst team to identify bottlenecks, remove blockers, and optimize workflows for faster delivery of AI prototypes.
+
+Technical Leadership: Lead the implementation of critical systems (APIs, orchestration, observability, deployment) to ensure speed, reliability, and maintainability.
+
+Cross-Functional Collaboration: Work closely with engineering, product, and design teams to align technical priorities and drive impactful AI initiatives.
+
+Mentorship: Guide and mentor engineers, fostering a culture of technical excellence, collaboration, and rapid execution.
+
+Demonstrate proficiency in Kubernetes for container orchestration and scalable deployments.
+
+Mentor senior engineers and contribute to a culture of technical excellence, velocity, and pragmatic decision-making
+ 
+
+What you’ll bring
+6+ years of software engineering experience
+
+Strong background in Python and background in C, C++, Go or Rust.
+
+Proficiency in RHEL or other Linux distributions.
+
+Communication Skills: Strong ability to communicate technical tradeoffs and bring clarity to ambiguous situations
+
+Passion for AI Innovation: Enthusiasm for enabling AI initiatives that drive real-world impact and accelerate prototyping efforts.
+
+Ability to move fast without compromising quality, thriving in environments where rapid iteration and high ownership are the norm
+
+PoC Experience: Proven ability to work on and deliver successful Proof of Concepts or initiatives, showcasing the ability to rapidly prototype and validate ideas.
+
+Nice to have 
+experience with building and packaging Python projects, package managers (dnf, pip), and build systems (cmake, meson)
+
+experience in working with upstream projects and Open Source communities.
+
+Experience in early-stage product incubation or 0→1 product delivery
+
+Contributions to internal AI platforms, model evaluation frameworks, or observability for AI systems

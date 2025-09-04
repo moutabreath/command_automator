@@ -1,0 +1,48 @@
+Position Intro
+Earnix is the premier provider of mission-critical, cloud-based intelligent decisioning across pricing, rating, underwriting, and product personalization. These fully-integrated solutions provide ultra-fast ROI and are designed to transform how global insurers and banks are run by unlocking value across all facets of the business. Earnix has been innovating for insurers and banks since 2001 with customers in over 35 countries across six continents and offices in the Americas, Europe, Asia Pacific, and Israel.
+
+Description
+As a software developer in the backend team, you will be a part of delivering new features, as well as building the infrastructure for the performance and scale of the product.
+
+
+What you’ll do:
+
+Implement and deliver new features according to products’ requirements 
+
+Implement enhancement features and build the infrastructure to support the scale of the product. 
+
+Participate in design discussions and code reviews 
+
+Develop unit and integration tests 
+
+Assist in solving real-time customer issues 
+
+
+
+Requirements
+You’ll do it using:
+
+Proven experience as a Backend Developer, with a focus on infrastructure, for at least 5+ years in a fast-paced environment. 
+
+Experienced working on performance and scale in Java applications in conjunction with cloud services. 
+
+Strong proficiency in Java. 
+
+Experience with relational databases (advantage: JPA/hibernate/Eclipse Link) 
+
+Deep understanding of cloud platforms (advantage for working with AWS services: EC2, S3, Fargate, Autoscaling with ECS, RDS). 
+
+Experience with containerization and orchestration tools like Docker and Kubernetes. 
+
+Other relevant technologies: Jboss, Postgress & Oracle DB. 
+
+
+﻿You’ll excel by:
+
+Effectively collaborate with cross-functional teams and communicate ideas clearly.
+
+Problem-solving: Strong analytical and critical-thinking skills to identify and solve complex technical problems.
+
+Being a motivated self-learner and to drive innovation and excellence in your work.
+
+A commitment to thinking like an owner, taking initiative, and ensuring the success of our backend infrastructure.

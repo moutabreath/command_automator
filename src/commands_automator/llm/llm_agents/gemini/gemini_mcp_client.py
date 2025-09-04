@@ -10,7 +10,7 @@ from google.genai.types import GenerateContentResponse
 from PIL import Image
 import io
 
-from llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService 
+from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
 
 
 class SmartMCPClient:

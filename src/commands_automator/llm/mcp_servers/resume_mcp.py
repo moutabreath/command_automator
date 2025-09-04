@@ -2,8 +2,8 @@ import logging
 import multiprocessing
 from mcp.server.fastmcp import FastMCP
 
-from llm.mcp_servers.resume_data import ResumeData
-from llm.mcp_servers.services.resume_loader_service import ResumeLoaderService
+from commands_automator.llm.mcp_servers.resume_data import ResumeData
+from commands_automator.llm.mcp_servers.services.resume_loader_service import ResumeLoaderService
 
 # Initialize FastMCP
 mcp = FastMCP("resume_fetcher")

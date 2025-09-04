@@ -16,7 +16,7 @@ class CommandsAutomatorService:
 
     def load_scripts_config(self):  
         try:  
-            config_path = os.path.join('config', 'scripts_config.json')  
+            config_path = os.path.join('src/commands_automator', 'config', 'scripts_config.json')  
             with open(config_path) as f:  
                 data = json.load(f)  
         except IOError:  
@@ -36,7 +36,7 @@ class CommandsAutomatorService:
         executables = []
         current_dir = os.getcwd()
         logging.debug(current_dir)
-        scripts_dir = os.path.join(os.getcwd(), 'user_scripts')
+        scripts_dir = os.path.join(os.getcwd(), 'src/commands_automator','user_scripts')
         logging.debug(scripts_dir)
         files = glob.glob(f'{scripts_dir}/**/*.py', recursive=True)
         files2 = glob.glob(f'{scripts_dir}/**/*.sh', recursive=True)

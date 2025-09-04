@@ -1,4 +1,4 @@
-from llm.llm_agents.gemini.gemini_mcp_client import SmartMCPClient
+from commands_automator.llm.llm_agents.gemini.gemini_mcp_client import SmartMCPClient
 
 class LLMService():
 

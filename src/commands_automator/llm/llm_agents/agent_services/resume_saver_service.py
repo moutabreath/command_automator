@@ -1,7 +1,7 @@
 import logging
 import re
 
-from llm.llm_agents.agent_services.file_stylers import docx_styler
+from commands_automator.llm.llm_agents.agent_services.file_stylers import docx_styler
 
 
 class ResumeSaverService:

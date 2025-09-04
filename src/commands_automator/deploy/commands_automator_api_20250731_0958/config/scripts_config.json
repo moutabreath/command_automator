@@ -1,0 +1,58 @@
+{
+  "scripts": [
+    {
+      "script_name": "convert.sh",
+      "short_description": "Convert Slashes to Windows and UNIX Style",
+      "detailed_Description": "Display input from additional text box as windows and unix style Slashes",
+      "free_text_required": true
+    },
+    {
+      "script_name": "double_the_slash.sh",
+      "short_description": "Change \\ to \\\\",
+      "detailed_Description": "Change \\ to \\\\",
+      "free_text_required": true
+    },
+    {
+      "script_name": "show_free_space_drive_c.cmd",
+      "short_description": "Show free space on drive C:",
+      "detailed_Description": "Show free space on drive C: in GB",
+      "free_text_required": false
+    },
+    {
+      "script_name": "fast_copy.cmd",
+      "short_description": "fast copy",
+      "detailed_Description": "Copy with cmd",
+      "free_text_required": false
+    },
+    {
+      "script_name": "annonymize.py",
+      "short_description": "Annonymize",
+      "detailed_Description": "Given a file and a list of tokens, replace the value after the tokens with 'dummy'",
+      "free_text_required": true
+    },
+    {
+      "script_name": "convert_win_2_unix.py",
+      "short_description": "PY Convert Slashes to Win and UNIX Style",
+      "detailed_Description": "Display input from additional text box as windows and unix style Slashes",
+      "free_text_required": true
+    },
+    {
+      "script_name": "replace_parenthesis.py",
+      "short_description": "Replace parenthesis",
+      "detailed_Description": "Replace '[' with '{' and  ']' with '}'",
+      "free_text_required": false
+    },
+    {
+      "script_name": "remove_parenthesis.py",
+      "short_description": "Remove parenthesis",
+      "detailed_Description": "Remove '{' and  '}' from input",
+      "free_text_required": false
+    },
+    {
+      "script_name": "replace_chars.py",
+      "short_description": "Replace chars in string",
+      "detailed_Description": "Raplce any number of pair of chars.",
+      "free_text_required": true
+    }
+  ]
+}
