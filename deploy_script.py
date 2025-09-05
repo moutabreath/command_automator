@@ -34,10 +34,10 @@ def copy_to_deploy():
         
         # Copy folders with their structure
         folders_to_copy = [
-            'user_scripts',
-            'ui/resources',
-            'llm/resources',
-            'config'
+            'src/commands_automator/user_scripts',
+            'src/commands_automator/ui/resources',
+            'src/commands_automator/llm/resources',
+            'src/commands_automator/config'
         ]
         
         for folder_name in folders_to_copy:
