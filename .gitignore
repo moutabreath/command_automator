@@ -19,3 +19,4 @@ llm/config/llm-config.json
 llm/resources/resume/additional_files/job_description.txt
 llm/resources/resume/Tal_Druckmann.txt
 src/commandautomator.egg-info/
+src/commands_automator/llm/resources/resume/additional_files/job_description.txt

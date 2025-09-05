@@ -6,10 +6,10 @@ import os
 import sys
 import base64
 
-from llm.mcp_servers.resume_mcp import MCPRunner
-from services.commands_automator_service import CommandsAutomatorService
-from services.configuration_service import ConfigurationService
-from services.llm_service import LLMService
+from commands_automator.llm.mcp_servers.resume_mcp import MCPRunner
+from commands_automator.services.commands_automator_service import CommandsAutomatorService
+from commands_automator.services.configuration_service import ConfigurationService
+from commands_automator.services.llm_service import LLMService
 
 class CommandsAutomatorApi:
     def __init__(self):
