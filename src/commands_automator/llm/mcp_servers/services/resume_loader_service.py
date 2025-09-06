@@ -3,7 +3,7 @@ import os
 import aiofiles
 
 class ResumeLoaderService:
-    CURRENT_PATH = '/llm'
+    CURRENT_PATH = 'src/commands_automator/llm'
     LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'
     RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
     ADDITIONAl_FILE_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/additional_files'

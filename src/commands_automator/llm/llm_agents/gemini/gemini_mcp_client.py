@@ -2,6 +2,9 @@ import logging
 import os
 import json
 import aiohttp
+import logging
+import os
+import json
 from google import genai
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
@@ -35,7 +38,7 @@ class SmartMCPClient:
         self.resume_chat._config = config
         self.resume_saver_service: ResumeSaverService = ResumeSaverService()
 
-    async def decide_tool_usage(self, query, available_tools):
+    async def decide_tool_usage(self, query, available_tools, session):
         """
         Use Gemini to decide which tool to use based on the query
         
@@ -65,7 +68,7 @@ class SmartMCPClient:
             return None, None
             
         try:
-            messages = await self.init_messages(query, available_tools)
+            messages = await self.init_messages(query, available_tools, session)
             self.resume_chat._config["response_mime_type"] = "application/json"
             generated_response: GenerateContentResponse = self.resume_chat.send_message(messages)
             decision = json.loads(generated_response.model_dump_json())
@@ -86,14 +89,19 @@ class SmartMCPClient:
                 return 'get_resume_files', {'query': query}
             return None, None
         
-    async def init_messages(self, query, available_tools):
-        tool_descriptions = {
-            'get_resume_files': "create a resume and a cover letter based on the job description and raw resume"
-        }
-        # Prepare descriptions for available tools
-        available_descriptions = {tool: tool_descriptions.get(tool, f"Tool: {tool}") 
-                                    for tool in available_tools}
+    async def init_messages(self, query, available_tools, session):
+    # Get tool schemas from MCP server
+        tools_response = await session.list_tools()
+        tool_descriptions = {}
         
+        for tool in tools_response.tools:
+            if tool.name in available_tools:
+                # Include parameter info in description
+                params = tool.inputSchema.get('properties', {}) if tool.inputSchema else {}
+                param_info = f" (Parameters: {list(params.keys())})" if params else " (No parameters)"
+                tool_descriptions[tool.name] = f"{tool.description}{param_info}"
+        
+        available_descriptions = tool_descriptions
         system_prompt = self.init_system_prompt(available_descriptions, query)
         return system_prompt
     
@@ -122,7 +130,11 @@ If a tool should be used, respond in JSON format:
     "query": "user query or relevant part"
   }}
 }}
-
+If the tool definition has no paramters respond in JSON fomrat:
+{{
+  "tool": "tool_name",
+  "args": {{}}
+}}
 If no tool should be used and you should answer the query directly, respond with:
 {{
   "tool": null,
@@ -173,8 +185,7 @@ Query: {query}
                 write_stream,
                 _,
             ), ClientSession(read_stream, write_stream) as session:
-                logging.debug("Established streamable_http connection")
-                logging.debug("Created MCP client session")
+                logging.debug("Established streamable_http andCreated MCP client session")
 
                 await session.initialize()
                 logging.debug("Successfully initialized MCP session")
@@ -183,7 +194,7 @@ Query: {query}
 
                 # Use Gemini to decide if a tool should be used
                 selected_tool, tool_args = await self.decide_tool_usage(
-                    query, available_tools
+                    query, available_tools, session
                 )
 
                 # If Gemini decided to use a tool, call it
@@ -201,6 +212,7 @@ Query: {query}
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return "An error occurred while processing your request. Please try again."
+        
     async def use_tool(self, selected_tool, tool_args, session, should_save_results_to_file, output_file_path):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         response = await session.call_tool(selected_tool, tool_args)
@@ -209,7 +221,10 @@ Query: {query}
             return ""
         tool_result = response.content[0].text
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
-        
+        logging.debug(f"Raw tool response: {tool_result}")
+        if 'error' in tool_result:
+            logging.error("Problem with the tool response")
+            return ""
         if self.api_key:
             try:
                 resume_data_dict = json.loads(tool_result)

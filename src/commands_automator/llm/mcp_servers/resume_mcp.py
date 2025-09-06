@@ -19,28 +19,51 @@ async def get_resume_files() -> ResumeData:
     global resume_loader_service
     try:
         resume_content, applicant_name = await resume_loader_service.get_resume()
+        if resume_content is None or applicant_name is None:
+            raise ValueError("Resume content or applicant name is missing")
 
         guide_lines = await resume_loader_service.get_main_part_guide_lines()
-        guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
+        if guide_lines is None:
+            guide_lines = ""  # Default empty string if guidelines not found
+        else:
+            guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
 
         highlighted_sections = await resume_loader_service.get_highlighted_sections()
+        if highlighted_sections is None:
+            highlighted_sections = []  # Default empty list if sections not found
 
         job_description_content = await resume_loader_service.get_job_description()
+        if job_description_content is None:
+            job_description_content = ""  # Default empty string if job description not found
 
         cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
+        if cover_letter_guide_lines is None:
+            cover_letter_guide_lines = ""  # Default empty string if cover letter guidelines not found
 
-        resume_data: ResumeData = ResumeData(
-                                            applicant_name = applicant_name,
-                                            general_guidelines=guide_lines,
-                                            resume=resume_content, 
-                                            resume_highlighted_sections=highlighted_sections,
-                                            job_description=job_description_content,
-                                            cover_letter_guidelines=cover_letter_guide_lines)
-
+        # Create dictionary first to validate data
+        data_dict = {
+            "applicant_name": applicant_name or "",
+            "general_guidelines": guide_lines or "",
+            "resume": resume_content or "",
+            "resume_highlighted_sections": highlighted_sections or [],
+            "job_description": job_description_content or "",
+            "cover_letter_guidelines": cover_letter_guide_lines or ""
+        }
+        logging.debug(f"Creating ResumeData with: {data_dict}")
+        
+        resume_data = ResumeData(**data_dict)
+        logging.debug(f"Created ResumeData successfully: {resume_data.model_dump()}")
         return resume_data
     except Exception as ex:
         logging.error(f"Error fetching resume: {ex}")
-        return None
+        return ResumeData(
+            applicant_name="",
+            general_guidelines="",
+            resume="",
+            resume_highlighted_sections=[],
+            job_description="",
+            cover_letter_guidelines=""
+        )
 
 
 # Run the server with streamable-http transport
