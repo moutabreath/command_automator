@@ -51,10 +51,10 @@ Professional Experience
 		•  Improved the object-oriented design and written a lot of integrations.
 		
 Personal Projects 
-	CatanGameManager 
+	https://github.com/moutabreath/CatanGameManager 
 		Designed a REST API for tracking gameplay in Settlers of Catan: Cities & Knights, using .NET 8 and MongoDB. Deployed via 
 		Docker/Kubernetes locally and on AWS EKS. 
-	command_automator 
+	https://github.com/moutabreath/command_automator 
 		Built a Python desktop app for script running, LLM-powered resume generation, and MCP client-server integration using PyWebView. 
 Education 
 2007 - 2012: BSc In Software Engineering from Ben Gurion University
