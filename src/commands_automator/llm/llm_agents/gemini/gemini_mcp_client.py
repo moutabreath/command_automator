@@ -185,7 +185,7 @@ Query: {query}
                 write_stream,
                 _,
             ), ClientSession(read_stream, write_stream) as session:
-                logging.debug("Established streamable_http andCreated MCP client session")
+                logging.debug("Established streamable_http and Created MCP client session")
 
                 await session.initialize()
                 logging.debug("Successfully initialized MCP session")
@@ -221,10 +221,10 @@ Query: {query}
             return ""
         tool_result = response.content[0].text
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
-        logging.debug(f"Raw tool response: {tool_result}")
-        if 'error' in tool_result:
-            logging.error("Problem with the tool response")
-            return ""
+        if selected_tool == 'get_resume_files':
+            return self.refine_resume(tool_result, output_file_path)
+    
+    def refine_resume(self, tool_result, output_file_path):
         if self.api_key:
             try:
                 resume_data_dict = json.loads(tool_result)
@@ -233,10 +233,11 @@ Query: {query}
                 return ""
             resume_text = self.get_refined_resume(resume_data_dict)
             cover_letter_text = self.get_cover_letter(resume_data_dict)
-            self.save_files_if_needed(should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text)
+            self.save_resume_files(output_file_path, resume_data_dict, resume_text, cover_letter_text)
             return resume_text + "\n\n" + cover_letter_text
         else:
             return tool_result
+
         
     def call_gemini_api_directly(self, query, base64_decoded):
         if self.api_key:
@@ -255,14 +256,13 @@ Query: {query}
         else:
             return "No suitable tool found and Gemini API key not provided."
 
-    def save_files_if_needed(self, should_save_results_to_file, output_file_path, resume_data_dict, resume_text, cover_letter_text):
-        if should_save_results_to_file:
-           resume_highlighted_sections = self.convert_none_to_empty_string(resume_data_dict.get('resume_highlighted_sections', ''))
-           applicant_name = resume_data_dict.get('applicant_name', '')
-           resume_file_name = self.resume_saver_service.get_resume_file_name(resume_text, applicant_name)
-           self.resume_saver_service.save_resume(resume_text, output_file_path, applicant_name, resume_file_name, resume_highlighted_sections)
-           if (cover_letter_text != ''):
-               self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name, resume_file_name)
+    def save_resume_files(self, output_file_path, resume_data_dict, resume_text, cover_letter_text):
+        resume_highlighted_sections = self.convert_none_to_empty_string(resume_data_dict.get('resume_highlighted_sections', ''))
+        applicant_name = resume_data_dict.get('applicant_name', '')
+        resume_file_name = self.resume_saver_service.get_resume_file_name(resume_text, applicant_name)
+        self.resume_saver_service.save_resume(resume_text, output_file_path, applicant_name, resume_file_name, resume_highlighted_sections)
+        if (cover_letter_text != ''):
+            self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name, resume_file_name)
 
     async def get_available_tools(self, session):
         try:
