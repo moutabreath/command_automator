@@ -43,7 +43,7 @@ class CommandsAutomatorApi:
     def execute_script(self, script_name, additional_text, flags):
         return self.commands_automator_service.execute_script(script_name, additional_text, flags)
 
-    def call_llm(self, prompt: str, image_data: str, should_save_files: bool, output_file_path: str):
+    def call_llm(self, prompt: str, image_data: str, output_file_path: str):
         decoded_data = None
         if image_data and image_data != '':
             try:
@@ -51,7 +51,7 @@ class CommandsAutomatorApi:
                 decoded_data = base64.b64decode(encoded)
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
-        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, decoded_data, should_save_files, output_file_path)
+        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, decoded_data, output_file_path)
 
     def load_llm_configuration(self):
         return self.run_async_method(self.llm_config.load_configuration_async)

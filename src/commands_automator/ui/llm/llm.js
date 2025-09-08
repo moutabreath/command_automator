@@ -2,7 +2,6 @@ async function loadLLMConfig() {
     try {
         let llmConfig = await window.pywebview.api.load_llm_configuration();
         document.getElementById('output-file-path').value = llmConfig.outputFilePath || '';
-        document.getElementById('save-to-files').checked = llmConfig.saveToFiles || false;
     } catch (error) {
         console.log('Error loading config:', error);
     }
@@ -12,10 +11,8 @@ async function saveLLMConfig() {
     let config = {};
     try {
         const folderValue = document.getElementById('output-file-path').value;
-        const isSaveToFilesChecked = document.getElementById('save-to-files').checked;
 
         config.outputFilePath = folderValue;
-        config.saveToFiles = isSaveToFilesChecked;
         await window.pywebview.api.save_llm_configuration(config);
     } catch (error) {
         console.log('Error saving config:', error);
@@ -60,9 +57,6 @@ async function initLLMEventListeners() {
     });
     document.getElementById('output-file-path').addEventListener('input', async function (e) {
         console.log('Folder input changed:', e.target.value);
-        await saveLLMConfig();
-    });
-    document.getElementById('save-to-files').addEventListener('change', async () => {
         await saveLLMConfig();
     });
     window.addEventListener('resize', () => {
@@ -148,7 +142,6 @@ function autoResize() {
 
 async function callLLM() {
     const query = document.getElementById('query-box').value.trim();
-    const saveToFiles = document.getElementById('save-to-files').checked;
     const folderInput = document.getElementById('output-file-path').value;
     if (!query) return;
     document.getElementById('send-btn').disabled = true;
@@ -174,7 +167,7 @@ async function callLLM() {
     spinner.style.visibility = 'visible';
 
     try {
-        response = await window.pywebview.api.call_llm(query, imageData, saveToFiles, folderInput);
+        response = await window.pywebview.api.call_llm(query, imageData, folderInput);
     } catch (e) {
         response = `Error: ${e.message || 'Failed to call LLM'}`;
     } finally {

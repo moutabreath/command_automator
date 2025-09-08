@@ -160,7 +160,6 @@ Query: {query}
         self,
         query: str,
         base64_decoded: str,
-        should_save_results_to_file: bool,
         output_file_path: str,
     ) -> str:
         """
@@ -169,7 +168,6 @@ Query: {query}
         Args:
             query: The user's question or request
             base64_decoded: Base64 encoded image data (optional)
-            should_save_results_to_file: Whether to save results to files
             output_file_path: Path to save output files
         Returns:
             The response as a string
@@ -203,7 +201,6 @@ Query: {query}
                         selected_tool,
                         tool_args,
                         session,
-                        should_save_results_to_file,
                         output_file_path,
                     )
                 else:
@@ -213,7 +210,7 @@ Query: {query}
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return "An error occurred while processing your request. Please try again."
         
-    async def use_tool(self, selected_tool, tool_args, session, should_save_results_to_file, output_file_path):
+    async def use_tool(self, selected_tool, tool_args, session, output_file_path):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         response = await session.call_tool(selected_tool, tool_args)
         if response is None or response.content is None:
