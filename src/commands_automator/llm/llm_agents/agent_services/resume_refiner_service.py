@@ -13,9 +13,9 @@ class ResumeRefinerService:
     def refine_resume(self, tool_result, output_file_path):
         try:
             resume_data_dict = json.loads(tool_result)
-        except ValueError as ve:
-            logging.error(f"error with json structure of tool {ve}")
-            return ""
+        except json.JSONDecodeError as jde:
+            logging.error(f"error with json structure of tool {jde}")
+            return ""       
         resume_text = self.get_refined_resume(resume_data_dict)
         cover_letter_text = self.get_cover_letter(resume_data_dict)
         self.save_resume_files(output_file_path, resume_data_dict, resume_text, cover_letter_text)
@@ -30,12 +30,12 @@ class ResumeRefinerService:
         return resume_text
         
     def format_prompts_for_resume(self, resume_data_dict):       
-        general_guidleines = resume_data_dict.get('general_guidelines', '')
+        general_guidelines = resume_data_dict.get('general_guidelines', '')
         resume = resume_data_dict.get('resume', '')        
         jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
      
         prompt = f"""You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
-                    {general_guidleines}\n\n{resume}\n\n\n"""
+                    {general_guidelines}\n\n{resume}\n\n\n"""
         prompt += jobs_desc
         return prompt 
 

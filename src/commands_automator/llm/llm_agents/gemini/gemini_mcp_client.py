@@ -226,10 +226,15 @@ Query: {query}
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
         if selected_tool == 'get_resume_files':
             return self.refine_resume(tool_result, output_file_path)
+        return selected_tool
     
     def refine_resume(self, tool_result, output_file_path):
         if self.api_key:
-            return self.resume_refiner_service.refine_resume(tool_result, output_file_path)
+            try:
+                return self.resume_refiner_service.refine_resume(tool_result, output_file_path)
+            except Exception as e:
+                logging.error(f"Error refining resume: {e}", exc_info=True)
+                return tool_result  # Fallback to raw result
         else:
             return tool_result
 
