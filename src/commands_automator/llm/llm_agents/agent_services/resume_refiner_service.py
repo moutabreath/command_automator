@@ -15,7 +15,7 @@ class ResumeRefinerService:
             resume_data_dict = json.loads(tool_result)
         except json.JSONDecodeError as jde:
             logging.error(f"error with json structure of tool {jde}")
-            return ""       
+            return ""
         resume_text = self.get_refined_resume(resume_data_dict)
         cover_letter_text = self.get_cover_letter(resume_data_dict)
         self.save_resume_files(output_file_path, resume_data_dict, resume_text, cover_letter_text)
