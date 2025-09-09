@@ -3,12 +3,14 @@ import multiprocessing
 from mcp.server.fastmcp import FastMCP
 
 from commands_automator.llm.mcp_servers.resume_data import ResumeData
+from commands_automator.llm.mcp_servers.services.linkedin_scraper import LinkedInJobScraper
 from commands_automator.llm.mcp_servers.services.resume_loader_service import ResumeLoaderService
 
 # Initialize FastMCP
-mcp = FastMCP("resume_fetcher")
+mcp = FastMCP("job_applicant_helper")
 
 resume_loader_service: ResumeLoaderService = None
+linkedin_scraper: LinkedInJobScraper = None
 
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
@@ -64,8 +66,42 @@ async def get_resume_files() -> ResumeData:
             job_description="",
             cover_letter_guidelines=""
         )
-
-
+    
+@mcp.tool()
+async def get_jobs_from_linkedin():
+    global linkedin_scraper
+    
+    # Search parameters
+    keywords = "Software Engineer"
+    location = "Tel Aviv, Israel"
+    
+    logging.info(f"Searching for '{keywords}' jobs in '{location}'...")
+    
+    # Build search URL
+    search_url = linkedin_scraper.build_search_url(
+        keywords=keywords,
+        location=location,
+        remote=True  # Include remote jobs
+    )
+    
+    logging.debug(f"Search URL: {search_url}")
+    
+    # Scrape jobs
+    jobs = linkedin_scraper.scrape_job_listings(search_url, max_pages=2)
+    
+    logging.info(f"Found {len(jobs)} jobs")
+    logging.debug("=" * 60)
+    
+    
+    # Save to file
+    linkedin_scraper.save_jobs_to_json(jobs, 'linkedin_jobs.json')
+    
+    # Optional: Get detailed description for first job
+    if jobs:
+        logging.info(f"Getting detailed description for: {jobs[0].title}")
+        description = linkedin_scraper.get_job_description(jobs[0].link)
+        logging.debug(f"Description: {description[:300]}...")
+        
 # Run the server with streamable-http transport
 class MCPRunner:
  
@@ -73,12 +109,21 @@ class MCPRunner:
         self.mcp_process = multiprocessing.Process(target=self.run_mcp)
         self.mcp_process.start()
         
+          
     def stop_mcp(self):
         """Cleanup method to terminate the MCP process when the agent is destroyed"""
-        if hasattr(self, 'mcp_process') and self.mcp_process.is_alive():
-            self.mcp_process.terminate()
-            self.mcp_process.join()
-
+        try:
+            if hasattr(self, 'mcp_process'):
+                if self.mcp_process.is_alive():
+                    logging.info("Stopping MCP server...")
+                    self.mcp_process.terminate()
+                    self.mcp_process.join(timeout=5)  # Wait up to 5 seconds for clean shutdown
+                    if self.mcp_process.is_alive():
+                        logging.warning("MCP process did not terminate gracefully, killing...")
+                        self.mcp_process.kill()  # Force kill if it doesn't terminate
+                    logging.info("MCP server stopped")
+        except Exception as ex:
+            logging.error(f"Error stopping MCP server: {ex}", exc_info=True)
 
     def run_mcp(self):
         global resume_loader_service

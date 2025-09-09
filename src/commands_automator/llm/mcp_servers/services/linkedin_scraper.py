@@ -1,0 +1,169 @@
+import logging
+import requests
+from bs4 import BeautifulSoup
+import time
+import urllib.parse
+from dataclasses import dataclass
+from typing import List, Optional
+import json
+
+@dataclass
+class Job:
+    title: str
+    company: str
+    location: str
+    description: str
+    link: str
+    posted_date: str
+
+class LinkedInJobScraper:
+    def __init__(self):
+        self.session = requests.Session()
+        self.session.headers.update({
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36',
+            'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+            'Accept-Language': 'en-US,en;q=0.5',
+            'Accept-Encoding': 'gzip, deflate',
+            'Connection': 'keep-alive'
+        })
+    
+    def build_search_url(self, keywords: str, location: str = "", job_type: str = "", 
+                        experience_level: str = "", remote: bool = False) -> str:
+        """Build LinkedIn job search URL with parameters"""
+        base_url = "https://www.linkedin.com/jobs/search/"
+        
+        params = {
+            'keywords': keywords,
+            'location': location,
+            'trk': 'public_jobs_jobs-search-bar_search-submit',
+            'position': '1',
+            'pageNum': '0'
+        }
+        
+        # Add optional filters
+        if job_type:
+            params['f_JT'] = job_type  # F (full-time), P (part-time), C (contract), etc.
+        
+        if experience_level:
+            params['f_E'] = experience_level  # 1 (internship), 2 (entry), 3 (associate), etc.
+        
+        if remote:
+            params['f_WT'] = '2'  # Remote work filter
+        
+        return base_url + "?" + urllib.parse.urlencode(params)
+    
+    def scrape_job_listings(self, search_url: str, max_pages: int = 3) -> List[Job]:
+        """Scrape job listings from LinkedIn search results"""
+        jobs = []
+        
+        try:
+            for page in range(max_pages):
+                logging.info(f"Scraping page {page + 1}...")
+                
+                # Add page parameter to URL
+                page_url = search_url + f"&start={page * 25}"
+                
+                response = self.session.get(page_url)
+                response.raise_for_status()
+                
+                soup = BeautifulSoup(response.content, 'html.parser')
+                
+                # Find job cards
+                job_cards = soup.find_all('div', class_='base-card')
+                
+                if not job_cards:
+                    logging.warning("No job cards found on this page")
+                    break
+                
+                for card in job_cards:
+                    job = self.parse_job_card(card)
+                    if job:
+                        jobs.append(job)
+                
+                # Be respectful with requests
+                time.sleep(2)
+                
+        except requests.RequestException as e:
+            logging.error(f"Error fetching job listings: {e}", exc_info=True)
+        
+        return jobs
+    
+    def parse_job_card(self, card) -> Optional[Job]:
+        """Parse individual job card to extract job information"""
+        try:
+            # Extract job title and link
+            title_element = card.find('h3', class_='base-search-card__title')
+            title = title_element.text.strip() if title_element else "N/A"
+            
+            link_element = card.find('a', class_='base-card__full-link')
+            link = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
+            
+            # Extract company name
+            company_element = card.find('h4', class_='base-search-card__subtitle')
+            if not company_element:
+                company_element = card.find('a', {'data-tracking-control-name': 'public_jobs_topcard-org-name'})
+            company = company_element.text.strip() if company_element else "N/A"
+            
+            # Extract location
+            location_element = card.find('span', class_='job-search-card__location')
+            location = location_element.text.strip() if location_element else "N/A"
+            
+            # Extract posted date
+            date_element = card.find('time')
+            posted_date = date_element.text.strip() if date_element else "N/A"
+            
+            # For description, we'd need to visit the individual job page
+            # For now, we'll leave it as a placeholder
+            description = "Click link to view full description"
+            
+            return Job(
+                title=title,
+                company=company,
+                location=location,
+                description=description,
+                link=link,
+                posted_date=posted_date
+            )
+            
+        except Exception as e:
+            logging.error(f"Error parsing job card: {e}", exc_info=True)
+            return None
+    
+    def get_job_description(self, job_url: str) -> str:
+        """Get detailed job description from individual job page"""
+        try:
+            response = self.session.get(job_url)
+            response.raise_for_status()
+            
+            soup = BeautifulSoup(response.content, 'html.parser')
+            
+            # Look for job description
+            desc_element = soup.find('div', class_='show-more-less-html__markup')
+            if desc_element:
+                return desc_element.get_text(separator=' ', strip=True)
+            
+            return "Description not available"
+            
+        except Exception as e:
+            logging.error(f"Error fetching job description: {e}", exc_info=True)
+            return "Error fetching description"
+    
+    def save_jobs_to_json(self, jobs: List[Job], filename: str):
+        """Save jobs to JSON file"""
+        jobs_dict = [
+            {
+                'title': job.title,
+                'company': job.company,
+                'location': job.location,
+                'description': job.description,
+                'link': job.link,
+                'posted_date': job.posted_date
+            }
+            for job in jobs
+        ]
+        
+        with open(filename, 'w', encoding='utf-8') as f:
+            json.dump(jobs_dict, f, indent=2, ensure_ascii=False)
+        
+        logging.info(f"Saved {len(jobs)} jobs to {filename}")
+

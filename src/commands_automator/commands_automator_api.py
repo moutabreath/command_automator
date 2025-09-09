@@ -6,7 +6,7 @@ import os
 import sys
 import base64
 
-from commands_automator.llm.mcp_servers.resume_mcp import MCPRunner
+from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
 from commands_automator.services.commands_automator_service import CommandsAutomatorService
 from commands_automator.services.configuration_service import ConfigurationService
 from commands_automator.services.llm_service import LLMService
