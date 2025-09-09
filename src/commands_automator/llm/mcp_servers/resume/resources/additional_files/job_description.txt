@@ -1,0 +1,37 @@
+Sr. Software Engineer- ML Team
+at DoubleVerify (View all jobs)
+Tel Aviv, Israel
+Who we are 
+
+We’re looking for a Senior Software Engineer to join our ML team working in Tel Aviv. 
+
+DoubleVerify is an Israeli-founded big data analytics company (Stock: NYSE: DV). We track and analyze tens of billions of ads every day for the biggest brands in the world.
+We operate at a massive scale, handling over 100B events per day and over 1M RPS at peak, we process events in real-time at low latencies (ms) and analyze over 2.5M video years every day. We verify that all ads are fraud free, appear next to appropriate content, appear to people in the right geography and measure the viewability and user’s engagement throughout the ad’s lifecycle. 
+
+We are global, with HQ in NYC and R&D centers in Tel Aviv, New York, Finland, Berlin, Belgium and San Diego. We work in a fast-paced environment and have a lot of challenges to solve. If you like to work in a huge scale environment and want to help us build products that have a huge impact on the industry, and the web - then your place is with us.
+
+ 
+
+What will you do
+
+Join a team of experienced engineers to build backend infrastructure (data processing jobs, micro-services) and create automated workflows to process large datasets for machine learning purposes.
+Design and develop MLOps infrastructure to support our ML/AI models at scale, including CI/CD, automation, evaluation, and monitoring.
+Lead projects by architecting, designing, and implementing solutions that will impact the core components of our system.
+Develop and maintain scalable distributed systems in a BigData environment using stream processing technologies such as Akka Streams, Kafka Streams, or Spark.
+ 
+
+Who you are
+
+4+ years of experience coding in an industry-standard language such as Kotlin, Java, Scala, or Python
+Demonstrated interest in machine learning and the advancements in the field, including familiarity with MLOps tools and frameworks.
+Deep understanding of Computer Science fundamentals: object-oriented design, functional programming, data structures, multi-threading, and distributed systems
+Experience working with various Big data technologies and tools (DataBricks, Snowflake, BigQuery, Kafka, Spark, Airflow, Argo) at scale
+Experience working in Docker/Kubernetes and cloud providers (GCP/AWS/Azure)
+Result-oriented contributor with a "can do" attitude - take a task from concept to full implementation.
+A team player with excellent collaboration and communication skills.
+ 
+
+Nice to have
+
+Hands-on experience with MLOps tools (MLFlow, Ray, Seldon, Kubeflow, Vertex.AI, SageMaker, etc.), ML algorithms and frameworks (PyTorch, TensorFlow, HuggingFace, Sklearn, etc.).
+Experience in the AdTech world

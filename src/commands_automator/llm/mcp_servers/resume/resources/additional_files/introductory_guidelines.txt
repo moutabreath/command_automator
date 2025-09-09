@@ -1,0 +1,15 @@
+I am going to give you a short introduction of me, and then my resume and a job description. 
+Adjust my introduction so that it would best match the job description.
+The intent of this introduction is what I am going to tell the recruiter on the phone.
+I'm a software engineer with 12+ years of experience.
+I've worked across varied technologies and environments; my core experience is in C#, Java, and Python.
+I've also held full-stack roles.
+Until recently I worked at Applied Materials.
+In Israel, the company manufactures chip-validation systems.
+These systems integrate the required hardware and software, including the chip under test.
+The product includes a Java legacy stack and a modern Java Spring Boot service layer with React and Python components.
+I served as a senior software developer and led multiple projects, receiving recognition for one of them.
+Leadership included initial conversations with product managers to refine requirements and align them with product and platform constraints.
+I then produced designs and led development through the sprints to successful delivery.
+I also built a Python tool to accelerate DevOps workflows by copying only relevant artifacts when safe, reducing turnaround from ~1.5 hours to seconds.
+Additionally, I integrated Plotly Dash (Python) into the product.Next I am going to give you my resume

@@ -1,35 +1,44 @@
 import logging
 import os
 import aiofiles
+import os
+from pathlib import Path
 
 class ResumeLoaderService:
-    CURRENT_PATH = 'src/commands_automator/llm'
-    LLM_RESOURCES = f'{os.getcwd()}/{CURRENT_PATH}/resources'
-    RESUME_FILES_PATH_PREFIX = f'{LLM_RESOURCES}/resume'
-    ADDITIONAl_FILE_PATH_PREFIX = f'{RESUME_FILES_PATH_PREFIX}/additional_files'
-    
+    # Resolve the path to …/mcp_servers/resume
+    BASE_DIR = Path(__file__).resolve().parents[1]  # …/resume
+    RESOURCES_DIR = BASE_DIR / "resources"
+    ADDITIONAl_FILE_PATH_PREFIX = RESOURCES_DIR / "additional_files"
+
+    # … the rest of your class unchanged …    
     async def get_main_part_guide_lines(self):
         file_path = f'{self.ADDITIONAl_FILE_PATH_PREFIX}/guidelines.txt'    
         file_text = await self.read_file(file_path)      
         return file_text
 
-    async def get_resume(self):
+    async def get_resume_and_applicant_name(self):
         resume_path, applicant_name = self.find_resume_file()
         if resume_path is None:
-            logging.error(f"No .txt resume file found in {self.RESUME_FILES_PATH_PREFIX}")
-            return None, None
-        resume = await self.read_file(resume_path)
-        return resume, applicant_name
+            logging.error(f"No .txt resume file found in {self.RESOURCES_DIR}")
+        resume_text = await self.read_file(resume_path)
+        
+        return resume_text, applicant_name
     
     def find_resume_file(self):
-        for root, _, files in os.walk(self.RESUME_FILES_PATH_PREFIX):
+        resume_dir = self.RESOURCES_DIR
+        resume_path, applicant_name = "", ""
+        if not resume_dir.exists():
+            logging.error(f"Resumes directory not found: {resume_dir}")
+            return None, None
+            
+        for root, _, files in os.walk(self.RESOURCES_DIR):
             for file in files:
                 if file.lower().endswith('.txt'):
                     resume_path = os.path.join(root, file)
                     applicant_name = file[0:len(file) - 4]
                     applicant_name = applicant_name.replace('_', ' ').replace('-', ' ')
                     return resume_path, applicant_name
-        return None, None
+        return resume_path, applicant_name
         
 
     async def get_highlighted_sections(self):
@@ -56,14 +65,13 @@ class ResumeLoaderService:
         return file_text
     
     async def read_file(self, file_path):
+        content = ""
         try:
             async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
                 content = await file.read()
         except UnicodeDecodeError as e:
             logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
-            return None
         except IOError as ioEror:
             logging.error(f"Error reading file: {file_path} - {ioEror}", exc_info=True)
-            return None
         return content
         

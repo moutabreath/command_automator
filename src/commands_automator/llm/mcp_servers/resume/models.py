@@ -6,4 +6,4 @@ class ResumeData(BaseModel):
     resume: str
     resume_highlighted_sections: list[str]
     job_description: str
-    cover_letter_guidelines: str    
+    cover_letter_guidelines: str

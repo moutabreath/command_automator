@@ -1,0 +1,57 @@
+Tal Druckmann 
+Contact 0545891961 tdruck@gmail.com https://www.linkedin.com/in/tal-druckmann-88489520/ 
+About me 
+Professional Software Engineer with extensive backend experience and a proven ability to design and implement complex systems.
+Passionate about AI/LLMs; built a system that uses Gemini agents to generate resumes automatically.
+Currently completing a specialized workshop focused on distributed systems and high-scale architecture.Professional Experience 
+	
+	Senior Software Engineer * Applied Materials  
+	2022 - Present  
+	At the Israel offices, Applied creates machines for chip validation. 
+	• Developed in Java with Spring Boot; inter-process communication via REST, gRPC, and Redis.
+	• Led a high-visibility project to completion, coordinating across teams and resolving critical development blockers.
+	• Integrated Plotly Dash with a Flask REST API to deliver visualization functionality.
+	• Built a Python tool for script execution, reducing select DevOps tasks from ~1 hour to milliseconds.
+	• Mentored developers on cloud and microservices concepts.
+	• Drove best practices: code reviews, SOLID, TDD, and CI/CD in Agile cycles.
+	• (Optional) Remove: Cygwin experience, unless directly relevant to target roles.	
+	
+	Software Engineer * Teledyne FLIR  
+	2018 - 2022  
+	The product is an enterprise-grade camera manager that synchronizes hundreds of cameras across multiple machines.
+		• Developed and maintained a multithreaded C#/.NET application backed by Microsoft SQL Server.
+		• Built scalable, event-driven components using a message-queue architecture for distributed processing.
+		• Integrated body cameras via AWS using MQTT (pub/sub).
+		• Containerized services with Docker to improve portability and resource efficiency.
+		• Stabilized critical production issues and drove the system to production readiness within two months.
+		• Started on camera integration; later contributed to streaming and infrastructure teams.
+		• Improved security controls and optimized network troubleshooting using Wireshark.	Full-stack Software Engineer * RISCO Group  
+	2016 - 2018 
+	RISCO produces electronic door locks and the software around them. 
+		• As part of the infrastructure team, built end to end solutions, using C# .NET Core and MongoDB and angular 4.4, and hosted 
+		them on azure. 
+		• At times, acted as my own dev-ops and product manager, all while integrating new technologies. 
+		• Deployed Elasticsearch (ELK stack) for system logging and analytics.
+		
+	Server-Side Software Engineer * Amdocs  
+	2015 - 2016  
+	Amdocs provides software for telecommunications service providers.
+		• Worked on the Order Management System using Maven and Java.
+
+	Full-Stack Engineer * Sinapis Technologies Ltd  
+	2014 - 2015  
+	Project-based software company.
+		• Delivered a high-risk project using PHP, Backbone.js, and Java Spring.	Server-Side Software Engineer * Personite  
+	
+	2013 
+	This startup's product was a recommender system. 
+		•  Improved the object-oriented design and written a lot of integrations.
+		
+Personal Projects 
+	https://github.com/moutabreath/CatanGameManager 
+		Designed a REST API for tracking gameplay in Settlers of Catan: Cities & Knights, using .NET 8 and MongoDB. Deployed via 
+		Docker/Kubernetes locally and on AWS EKS. 
+	https://github.com/moutabreath/command_automator 
+		Built a Python desktop app for script running, LLM-powered resume generation, and MCP client-server integration using PyWebView. 
+Education 
+2007 - 2012: BSc In Software Engineering from Ben Gurion University

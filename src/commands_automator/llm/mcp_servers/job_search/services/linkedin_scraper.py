@@ -3,18 +3,8 @@ import requests
 from bs4 import BeautifulSoup
 import time
 import urllib.parse
-from dataclasses import dataclass
 from typing import List, Optional
-import json
-
-@dataclass
-class Job:
-    title: str
-    company: str
-    location: str
-    description: str
-    link: str
-    posted_date: str
+from commands_automator.llm.mcp_servers.job_search.models import Job
 
 class LinkedInJobScraper:
     def __init__(self):
@@ -28,8 +18,23 @@ class LinkedInJobScraper:
         })
     
     def build_search_url(self, keywords: str, location: str = "", job_type: str = "", 
-                        experience_level: str = "", remote: bool = False) -> str:
-        """Build LinkedIn job search URL with parameters"""
+                    experience_level: str = "", remote: bool = False) -> str:
+        """Build LinkedIn job search URL with parameters
+    
+        Args:
+            keywords: Search keywords
+            location: Job location
+            job_type: Job type - F (full-time), P (part-time), C (contract), etc.
+            experience_level: Experience level - 1 (internship), 2 (entry), 3 (associate), etc.
+            remote: Whether to filter for remote jobs
+        """
+        if not keywords:
+            raise ValueError("Keywords cannot be empty")
+        
+        # Validate job_type if provided
+        valid_job_types = ['F', 'P', 'C', 'T', 'I', 'V', 'O']
+        if job_type and job_type not in valid_job_types:
+            raise ValueError(f"Invalid job_type: {job_type}")
         base_url = "https://www.linkedin.com/jobs/search/"
         
         params = {
@@ -63,12 +68,11 @@ class LinkedInJobScraper:
                 # Add page parameter to URL
                 page_url = search_url + f"&start={page * 25}"
                 
-                response = self.session.get(page_url)
-                response.raise_for_status()
-                
+                response = self.session.get(page_url, timeout=30)
+                response.raise_for_status()                
                 soup = BeautifulSoup(response.content, 'html.parser')
                 
-                # Find job cards
+                 # Find job cards
                 job_cards = soup.find_all('div', class_='base-card')
                 
                 if not job_cards:
@@ -80,14 +84,15 @@ class LinkedInJobScraper:
                     if job:
                         jobs.append(job)
                 
-                # Be respectful with requests
-                time.sleep(2)
+                # Be respectful with requests - use randomized delay
+                import random
+                time.sleep(random.uniform(2, 5))
                 
         except requests.RequestException as e:
             logging.error(f"Error fetching job listings: {e}", exc_info=True)
-        
-        return jobs
-    
+         
+        return jobs    
+
     def parse_job_card(self, card) -> Optional[Job]:
         """Parse individual job card to extract job information"""
         try:
@@ -132,9 +137,8 @@ class LinkedInJobScraper:
     def get_job_description(self, job_url: str) -> str:
         """Get detailed job description from individual job page"""
         try:
-            response = self.session.get(job_url)
-            response.raise_for_status()
-            
+            response = self.session.get(job_url, timeout=30)
+            response.raise_for_status()            
             soup = BeautifulSoup(response.content, 'html.parser')
             
             # Look for job description
@@ -148,22 +152,4 @@ class LinkedInJobScraper:
             logging.error(f"Error fetching job description: {e}", exc_info=True)
             return "Error fetching description"
     
-    def save_jobs_to_json(self, jobs: List[Job], filename: str):
-        """Save jobs to JSON file"""
-        jobs_dict = [
-            {
-                'title': job.title,
-                'company': job.company,
-                'location': job.location,
-                'description': job.description,
-                'link': job.link,
-                'posted_date': job.posted_date
-            }
-            for job in jobs
-        ]
-        
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(jobs_dict, f, indent=2, ensure_ascii=False)
-        
-        logging.info(f"Saved {len(jobs)} jobs to {filename}")
 
