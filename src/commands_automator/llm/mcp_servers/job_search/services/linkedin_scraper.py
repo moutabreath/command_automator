@@ -156,7 +156,7 @@ class LinkedInJobScraper:
         try:
             response = self.session.get(job_url, timeout=30)
             response.raise_for_status()            
-            soup = BeautifulSoup(response.content, 'html.parser')
+            soup = BeautifulSoup(response.content, 'lxml')
             
             # Look for job description
             desc_element = soup.find('div', class_='show-more-less-html__markup')
