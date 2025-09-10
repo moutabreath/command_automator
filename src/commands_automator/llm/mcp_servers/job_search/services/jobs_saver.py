@@ -17,11 +17,11 @@ class JobsSaver:
     async def save_jobs_to_file(self, jobs: List[Job], filename: str):
         """Save jobs to JSON file"""
         file_path = os.path.join(self.JOB_FILE_DIR, filename)
-        jobs_dict = [job.model_dump() for job in jobs]
+        jobs_json_string = json.dumps([job.model_dump(mode='json') for job in jobs], indent=4)
         try:
             os.makedirs(os.path.dirname(file_path), exist_ok=True)
             async with aiofiles.open(file_path, "w") as f:
-                await f.write(json.dumps(jobs_dict, indent=4))
+                await f.write(jobs_json_string)
             return True
         except Exception as e:
             logging.error(f"Error saving config file {e}", exc_info=True)

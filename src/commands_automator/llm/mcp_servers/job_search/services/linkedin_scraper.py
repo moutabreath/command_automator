@@ -1,5 +1,6 @@
 import logging
 import requests
+from datetime import date, datetime, timedelta
 from bs4 import BeautifulSoup
 import time
 import urllib.parse
@@ -114,13 +115,26 @@ class LinkedInJobScraper:
             location = location_element.text.strip() if location_element else "N/A"
             
             # Extract posted date
-            date_element = card.find('time')
-            posted_date = date_element.text.strip() if date_element else "N/A"
+            date_element = card.find('time', class_='job-search-card__listdate')
+            posted_date_str = None
+            if date_element and date_element.has_attr('datetime'):
+                posted_date_str = date_element['datetime']
+            
+            try:
+                posted_date = datetime.fromisoformat(posted_date_str).date() if posted_date_str else date.today()
+            except (ValueError, TypeError):
+                logging.warning(f"Could not parse date '{posted_date_str}'. Using today's date.")
+                posted_date = date.today()
             
             # For description, we'd need to visit the individual job page
             # For now, we'll leave it as a placeholder
             description = "Click link to view full description"
             
+            # Basic validation before creating the Job object
+            if title == "N/A" or company == "N/A" or link == "N/A":
+                logging.warning(f"Skipping job card due to missing essential info: title='{title}', company='{company}'")
+                return None
+
             return Job(
                 title=title,
                 company=company,
@@ -130,6 +144,9 @@ class LinkedInJobScraper:
                 posted_date=posted_date
             )
             
+        except (AttributeError, KeyError) as e:
+            logging.error(f"Error parsing job card attributes: {e}", exc_info=True)
+            return None
         except Exception as e:
             logging.error(f"Error parsing job card: {e}", exc_info=True)
             return None
@@ -152,4 +169,3 @@ class LinkedInJobScraper:
             logging.error(f"Error fetching job description: {e}", exc_info=True)
             return "Error fetching description"
     
-

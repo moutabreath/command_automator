@@ -225,7 +225,7 @@ Query: {query}
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
         if selected_tool == 'get_resume_files':
             return self.refine_resume(tool_result, output_file_path)
-        return selected_tool
+        return response.content[0].text
     
     def refine_resume(self, tool_result, output_file_path):
         if self.api_key:
