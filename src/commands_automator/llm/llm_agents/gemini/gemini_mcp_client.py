@@ -114,11 +114,10 @@ Based on the user's query, determine if any of these available tools should be u
 
 IMPORTANT: Only use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
- 2. Asking about searching job from the internet.
+ 2. Asking about searching jobs from the internet.
 If you have already used a tool before, infer if you should use it again. For example if the user query is
 'again', and you have used a tool in the previous query, you may decide to use the tool you previously
 used just before this query.
-
 
 
 For general greetings, chitchat, or questions unrelated to resume content, 

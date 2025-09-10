@@ -26,7 +26,7 @@ class ResumeRefinerService:
         prompt = self.format_prompts_for_resume(resume_data_dict)
         self.resume_chat._config["response_mime_type"] = "text/plain"
         gemini_response = self.resume_chat.send_message(prompt)
-        resume_text = gemini_response._get_text()
+        resume_text = gemini_response.text
         return resume_text
         
     def format_prompts_for_resume(self, resume_data_dict):       
@@ -54,7 +54,7 @@ class ResumeRefinerService:
         cover_letter_text = ''
         if cover_letter_guidelines is not None:
             gemini_response = self.resume_chat.send_message(cover_letter_guidelines)
-            cover_letter_text = gemini_response._get_text()
+            cover_letter_text = gemini_response.text
         return cover_letter_text
 
 
