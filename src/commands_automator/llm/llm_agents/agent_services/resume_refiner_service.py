@@ -13,10 +13,16 @@ class ResumeRefinerService:
     def refine_resume(self, tool_result, output_file_path):
         try:
             resume_data_dict = json.loads(tool_result)
-        except json.JSONDecodeError as jde:
-            logging.error(f"error with json structure of tool {jde}")
+            if not isinstance(resume_data_dict, dict):
+                logging.error(
+                    "tool_result JSON must be an object; got %s",
+                    type(resume_data_dict).__name__
+                )
+                return ""
+        except (json.JSONDecodeError, TypeError) as exc:
+            logging.exception("Failed to parse tool_result JSON: %s", exc)
             return ""
-        resume_text = self.get_refined_resume(resume_data_dict)
+        resume_text = self.get_refined_resume(resume_data_dict)      
         cover_letter_text = self.get_cover_letter(resume_data_dict)
         self.save_resume_files(output_file_path, resume_data_dict, resume_text, cover_letter_text)
         return resume_text + "\n\n" + cover_letter_text
@@ -26,9 +32,13 @@ class ResumeRefinerService:
         prompt = self.format_prompts_for_resume(resume_data_dict)
         self.resume_chat._config["response_mime_type"] = "text/plain"
         gemini_response = self.resume_chat.send_message(prompt)
-        resume_text = gemini_response.text
-        return resume_text
-        
+        try:
+            resume_text = gemini_response.text
+        except Exception as exc:
+            logging.exception("Failed to extract resume text from LLM response: %s", exc)
+            resume_text = ""
+        return resume_text 
+    
     def format_prompts_for_resume(self, resume_data_dict):       
         general_guidelines = resume_data_dict.get('general_guidelines', '')
         resume = resume_data_dict.get('resume', '')        

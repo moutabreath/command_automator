@@ -71,9 +71,9 @@ class LinkedInJobScraper:
                 
                 response = self.session.get(page_url, timeout=30)
                 response.raise_for_status()                
-                soup = BeautifulSoup(response.content, 'html.parser')
+                soup = BeautifulSoup(response.content, 'lxml')
                 
-                 # Find job cards
+                # Find job cards
                 job_cards = soup.find_all('div', class_='base-card')
                 
                 if not job_cards:

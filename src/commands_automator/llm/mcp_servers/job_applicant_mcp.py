@@ -90,11 +90,10 @@ async def get_jobs_from_linkedin():
         List of Job objects
     """
     
-    keywords: str = "Software Engineer",
-    location: str = "Tel Aviv, Israel",
-    remote: bool = True,
+    keywords: str = "Software Engineer"
+    location: str = "Tel Aviv, Israel"
+    remote: bool = True
     max_pages: int = 2
-
     logging.info(f"Searching for '{keywords}' jobs in '{location}'...")
     linkedin_scraper = LinkedInJobScraper()
     
