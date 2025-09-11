@@ -1,14 +1,23 @@
 import logging
 import os
+import sys
 import aiofiles
-import os
 from pathlib import Path
 
 class ResumeLoaderService:
-    # Resolve the path to …/mcp_servers/resume
-    BASE_DIR = Path(__file__).resolve().parents[1]  # …/resume
-    RESOURCES_DIR = BASE_DIR / "resources"
-    ADDITIONAL_FILE_PATH_PREFIX = RESOURCES_DIR / "additional_files"
+    def __init__(self):
+        # Check if we're running in a PyInstaller bundle
+        if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+            # Running in PyInstaller bundle
+            bundle_dir = Path(sys._MEIPASS)
+            self.BASE_DIR = bundle_dir / "llm" / "mcp_servers" / "resume"
+        else:
+            # Running in normal Python environment
+            self.BASE_DIR = Path(__file__).resolve().parents[1]  # …/resume
+        
+        self.RESOURCES_DIR = self.BASE_DIR / "resources"
+        self.ADDITIONAL_FILE_PATH_PREFIX = self.RESOURCES_DIR / "additional_files"
+        logging.info(f"Initialized ResumeLoaderService with BASE_DIR: {self.BASE_DIR}")
 
     async def get_main_part_guide_lines(self):
         file_path = self.ADDITIONAL_FILE_PATH_PREFIX / 'guidelines.txt'     
@@ -65,6 +74,7 @@ class ResumeLoaderService:
     
     async def read_file(self, file_path):
         content = ""
+        logging.info(f"Reading file: {file_path}")
         try:
             async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
                 content = await file.read()

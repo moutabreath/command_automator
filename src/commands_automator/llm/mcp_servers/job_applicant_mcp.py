@@ -25,6 +25,7 @@ async def get_resume_files() -> ResumeData:
     Fetch resume file, applicant name, job description and guidelines
     """    
     global _shared_services
+    
     if _shared_services is None:
         logging.warning("Shared services not initialized, creating new instance")
         resume_loader_service = ResumeLoaderService()
@@ -32,7 +33,9 @@ async def get_resume_files() -> ResumeData:
         resume_loader_service = _shared_services.get('resume_loader_service')
         if resume_loader_service is None:
             logging.warning("ResumeLoaderService not found in shared services")
-            resume_loader_service = ResumeLoaderService()        
+            resume_loader_service = ResumeLoaderService()
+        else:
+            logging.info("Using existing ResumeLoaderService from shared services")
     try:
         resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
         if resume_content is None or applicant_name is None:
@@ -125,10 +128,18 @@ class MCPRunner:
 
     def init_mcp(self):
         """Initialize and start the MCP server process"""
+        try:
+            # Initialize the manager and shared state in the main process
+            global _manager, _shared_services
+            _manager = Manager()
+            _shared_services = _manager.dict()
             
+            logging.info("Initializing MCP process...")
             # Start the MCP process
-        self.mcp_process = multiprocessing.Process(target=self.run_mcp)
-        self.mcp_process.start()
+            self.mcp_process = multiprocessing.Process(target=self.run_mcp)
+            self.mcp_process.start()
+        except Exception as ex:
+            logging.error(f"Error initializing MCP process: {ex}", exc_info=True)
         
     def stop_mcp(self):
         """Cleanup method to terminate the MCP process when the agent is destroyed"""
@@ -150,10 +161,37 @@ class MCPRunner:
 
     def run_mcp(self):
         """Run the MCP server"""
-        # Set server configuration through the settings property
-        mcp.settings.mount_path = "/mcp"
-        mcp.settings.port = 8765
-        mcp.settings.host = "127.0.0.1"
+        try:
+            # Configure logging in the MCP process
+            handler = logging.handlers.WatchedFileHandler("commands_automator.log")
+            formatter = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s {%(module)s %(funcName)s}:%(message)s")
+            handler.setFormatter(formatter)
+            root = logging.getLogger()
+            root.setLevel(logging.DEBUG)
+            root.addHandler(handler)
+            
+            # Initialize global variables in subprocess
+            global _manager, _shared_services
+            if _shared_services is None:
+                logging.info("Initializing shared services in MCP subprocess")
+                _shared_services = {}
+                _shared_services['resume_loader_service'] = ResumeLoaderService()
+                _shared_services['linkedin_scraper'] = LinkedInJobScraper()
+                logging.info("Shared services initialized successfully")
+            
+            # Set server configuration through the settings property
+            mcp.settings.mount_path = "/mcp"
+            mcp.settings.port = 8765
+            mcp.settings.host = "127.0.0.1"
+            
+            logging.info("Starting MCP server in subprocess...")
+            
+            # Run the server with streamable-http transport
+            logging.debug(f"Starting MCP server at http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")
+            mcp.run(transport="streamable-http")
+        except Exception as ex:
+            logging.error(f"Error running MCP server: {ex}", exc_info=True)
+            raise
         
         # Run the server with streamable-http transport
         logging.debug(f"Starting MCP server at http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")

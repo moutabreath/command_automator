@@ -74,17 +74,33 @@ class CommandsAutomatorApi:
 
 
 def main():
-    mcp_runner = MCPRunner()
-    mcp_runner.init_mcp()
-    api = CommandsAutomatorApi()
-    window = webview.create_window(
-        'Commands Automator',
-        'ui/commands_automator.html',
-        js_api=api,
-        width=1000,
-        height=800
-    )
-    webview.start(icon='ui/resources/Commands_Automator.ico')
+    try:
+        logging.info("Starting Commands Automator application...")
+        
+        # Initialize MCP Runner
+        mcp_runner = MCPRunner()
+        try:
+            mcp_runner.init_mcp()
+            logging.info("MCP Runner initialized successfully")
+        except Exception as ex:
+            logging.error(f"Failed to initialize MCP Runner: {ex}", exc_info=True)
+            raise
+        
+        # Initialize API and create window
+        api = CommandsAutomatorApi()
+        window = webview.create_window(
+            'Commands Automator',
+            'ui/commands_automator.html',
+            js_api=api,
+            width=1000,
+            height=800
+        )
+        
+        logging.info("Starting webview...")
+        webview.start(icon='ui/resources/Commands_Automator.ico')
+    except Exception as ex:
+        logging.error(f"Fatal error in main: {ex}", exc_info=True)
+        raise
 
 if __name__ == '__main__':
     if sys.platform == "win32":
