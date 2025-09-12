@@ -21,6 +21,8 @@ taskkill /IM commands_automator_api.exe /F >nul 2>&1
     -w
 
 
-xcopy "dist\commands_automator_api.exe" "commands_automator_api.exe" /Y
-
+copy /Y "dist\commands_automator_api.exe" ".\commands_automator_api.exe" >nul
+if errorlevel 1 (
+  echo Copy failed: dist\commands_automator_api.exe not found.& exit /b 1
+)
 start "" ".\commands_automator_api.exe"
