@@ -3,7 +3,6 @@ import logging
 
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
 
-
 class ResumeRefinerService:
     def __init__(self, resume_chat):
         self.resume_saver_service: ResumeSaverService = ResumeSaverService()
@@ -34,9 +33,9 @@ class ResumeRefinerService:
         gemini_response = self.resume_chat.send_message(prompt)
         try:
             resume_text = gemini_response.text
-        except Exception as exc:
-            logging.exception("Failed to extract resume text from LLM response: %s", exc)
-            resume_text = ""
+        except (AttributeError, TypeError) as exc:
+            logging.exception("Failed to extract resume text from LLM response")
+            resume_text = ""       
         return resume_text 
     
     def format_prompts_for_resume(self, resume_data_dict):       

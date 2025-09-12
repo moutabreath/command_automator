@@ -51,14 +51,14 @@ class ResumeLoaderService:
 
     async def get_highlighted_sections(self):
         resume_sections_content = await self.read_file(f'{self.ADDITIONAL_FILE_PATH_PREFIX}/resume_sections.txt')
-        if resume_sections_content is None:
+        if not resume_sections_content:
             logging.error(f"No resume_sections file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
             return None 
         return resume_sections_content.split('\n')
     
     async def get_job_description(self):
         job_desc = await self.read_file(f'{self.ADDITIONAL_FILE_PATH_PREFIX}/job_description.txt')
-        if job_desc is None:
+        if not job_desc:
             logging.error(f"No job description file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
             return None
         return job_desc
@@ -67,7 +67,7 @@ class ResumeLoaderService:
     async def get_cover_letter_guide_lines(self):
         file_path = f'{self.ADDITIONAL_FILE_PATH_PREFIX}/cover_letter_guidelines.txt'  
         file_text = await self.read_file(file_path)
-        if file_text is None:
+        if not file_text:
             logging.error(f"No cover letter file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
             return None
         return file_text

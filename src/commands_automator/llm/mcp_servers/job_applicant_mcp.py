@@ -1,11 +1,8 @@
-import json
 import logging
 import multiprocessing
 from multiprocessing import Manager, freeze_support
-from typing import List, Optional
 from mcp.server.fastmcp import FastMCP
 
-from commands_automator.llm.mcp_servers.job_search.models import Job
 from commands_automator.llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
 from commands_automator.llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
 from commands_automator.llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
