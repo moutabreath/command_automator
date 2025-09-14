@@ -36,16 +36,19 @@ class ResumeRefinerService:
         except (AttributeError, TypeError) as exc:
             logging.exception("Failed to extract resume text from LLM response")
             resume_text = ""       
-        return resume_text 
+        return resume_text
     
     def format_prompts_for_resume(self, resume_data_dict):       
         general_guidelines = resume_data_dict.get('general_guidelines', '')
         resume = resume_data_dict.get('resume', '')        
         jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
      
-        prompt = f"""You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
-                    {general_guidelines}\n\n{resume}\n\n\n"""
-        prompt += jobs_desc
+        prompt = f"""
+                    "You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
+                    {general_guidelines}
+                    \n\nResume:\n\n {resume}
+                    \n\n\nJob Description:\n\n
+                     {jobs_desc}"""
         return prompt 
 
     
@@ -63,7 +66,13 @@ class ResumeRefinerService:
         cover_letter_text = ''
         if cover_letter_guidelines is not None:
             gemini_response = self.resume_chat.send_message(cover_letter_guidelines)
-            cover_letter_text = gemini_response.text
+            try:
+                # It's safer to access the content through parts
+                cover_letter_text = gemini_response.candidates[0].content.parts[0].text
+            except (AttributeError, TypeError, IndexError, ValueError) as exc:
+                logging.exception("Failed to extract cover letter text from LLM response: %s", exc)
+                logging.debug("Full Gemini response: %s", gemini_response)
+                cover_letter_text = ""
         return cover_letter_text
 
 

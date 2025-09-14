@@ -66,7 +66,7 @@ class SmartMCPClient:
             
             # Only use the tool if query has specific relevant keywords
             if 'get_resume_files' in available_tools and any(term in query.lower() for term in relevant_terms):
-                return 'get_resume_files', {'query': query}
+                return 'get_resume_files', {}
             return None, None
             
         try:
@@ -114,7 +114,7 @@ Based on the user's query, determine if any of these available tools should be u
 
 IMPORTANT: Only use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
- 2. Asking about searching jobs from the internet.
+ 2. Searching jobs from the internet.
 If you have already used a tool before, infer if you should use it again. For example if the user query is
 'again', and you have used a tool in the previous query, you may decide to use the tool you previously
 used just before this query.
