@@ -26,7 +26,7 @@ class SmartMCPClient:
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
         self.resume_chat = self.gemini_client.chats.create(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             history=[]
         )
         config = {
@@ -147,6 +147,7 @@ If no tool should be used and you should answer the query directly, respond with
 }}
 
 Be selective and conservative with tool usage. Be concise. Only output valid JSON.
+If no tool should be selected, respond the query directly.
 Query: {query}
 """
     
@@ -247,7 +248,7 @@ Query: {query}
                     gemini_response = self.resume_chat.send_message([query, image])
                 else:
                     gemini_response = self.resume_chat.send_message(query)
-                gemini_text = gemini_response._get_text()
+                gemini_text = gemini_response.text()
                 return gemini_text
             except Exception as e:
                 logging.error(f"Error using Gemini {e}", exc_info=True)

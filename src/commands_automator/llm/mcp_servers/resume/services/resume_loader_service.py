@@ -26,7 +26,7 @@ class ResumeLoaderService:
 
     async def get_resume_and_applicant_name(self):
         resume_path, applicant_name = self.find_resume_file()
-        if resume_path is None or not resume_path:
+        if not resume_path or not resume_path:
             logging.error(f"No .txt resume file found in {self.RESOURCES_DIR}")
             return "", ""
         resume_text = await self.read_file(resume_path)
@@ -53,14 +53,14 @@ class ResumeLoaderService:
         resume_sections_content = await self.read_file(f'{self.ADDITIONAL_FILE_PATH_PREFIX}/resume_sections.txt')
         if not resume_sections_content:
             logging.error(f"No resume_sections file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
-            return None 
+            return "" 
         return resume_sections_content.split('\n')
     
     async def get_job_description(self):
         job_desc = await self.read_file(f'{self.ADDITIONAL_FILE_PATH_PREFIX}/job_description.txt')
         if not job_desc:
             logging.error(f"No job description file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
-            return None
+            return ""
         return job_desc
     
    
