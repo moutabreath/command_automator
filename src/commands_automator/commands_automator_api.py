@@ -10,6 +10,7 @@ from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
 from commands_automator.services.commands_automator_service import CommandsAutomatorService
 from commands_automator.services.configuration_service import ConfigurationService
 from commands_automator.services.llm_service import LLMService
+from commands_automator.logger_config import setup_logging
 
 class CommandsAutomatorApi:
     def __init__(self):
@@ -17,7 +18,6 @@ class CommandsAutomatorApi:
         self.llm_sevice: LLMService = LLMService()
         self.commands_automator_config = ConfigurationService("src/commands_automator/config/commands-executor-config.json")
         self.llm_config = ConfigurationService('src/commands_automator/llm/config/llm-config.json')
-        self.init_logger()
 
     def load_scripts(self):
         return self.commands_automator_service.load_scripts()
@@ -63,18 +63,10 @@ class CommandsAutomatorApi:
     def select_folder(self):
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
 
-    def init_logger(self):
-        handler = logging.handlers.WatchedFileHandler(
-        os.environ.get("LOGFILE", "commands_automator.log"))
-        formatter =logging.Formatter("%(asctime)s: %(name)s: %(levelname)s {%(module)s %(funcName)s}:%(message)s")
-        handler.setFormatter(formatter)
-        root = logging.getLogger()
-        root.setLevel(os.environ.get("LOGLEVEL", "DEBUG"))
-        root.addHandler(handler)
-
 
 def main():
     try:
+        setup_logging()  # Set up logging at the application entry point
         logging.info("Starting Commands Automator application...")
         
         # Initialize MCP Runner

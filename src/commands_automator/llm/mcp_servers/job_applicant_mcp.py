@@ -7,6 +7,7 @@ from commands_automator.llm.mcp_servers.job_search.services.jobs_saver import Jo
 from commands_automator.llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
 from commands_automator.llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
 from commands_automator.llm.mcp_servers.resume.models import ResumeData
+from commands_automator.logger_config import setup_logging
 
 
 # Initialize FastMCP
@@ -159,14 +160,7 @@ class MCPRunner:
     def run_mcp(self):
         """Run the MCP server"""
         try:
-            # Configure logging in the MCP process
-            handler = logging.handlers.WatchedFileHandler("commands_automator.log")
-            formatter = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s {%(module)s %(funcName)s}:%(message)s")
-            handler.setFormatter(formatter)
-            root = logging.getLogger()
-            root.setLevel(logging.DEBUG)
-            root.addHandler(handler)
-            
+            setup_logging()
             # Initialize global variables in subprocess
             global _manager, _shared_services
             if _shared_services is None:
