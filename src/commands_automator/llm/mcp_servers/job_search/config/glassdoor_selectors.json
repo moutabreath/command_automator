@@ -9,47 +9,43 @@
     },
     "job_details": {
         "title": {
-            "selector": "a.JobCard_jobTitle__GLyJ1, a[data-test='job-title']",
+            "selector": "a[class^='JobCard_jobTitle__'], a[data-test='job-title']",
             "attribute": "inner_text"
         },
         "company": {
-            "selector": "span.EmployerProfile_compactEmployerName__9MGcV, .EmployerProfile_compactEmployerName__9MGcV",
+            "selector": "span[class^='EmployerProfile_compactEmployerName__'], [data-test='employer-name']",
             "attribute": "inner_text"
         },
         "location": {
-            "selector": "div.JobCard_location__Ds1fM, [data-test='emp-location']",
+            "selector": "div[class^='JobCard_location__'], [data-test='emp-location']",
             "attribute": "inner_text"
         },
         "url": {
-            "selector": "a.JobCard_jobTitle__GLyJ1, a[data-test='job-title']",
+            "selector": "a[class^='JobCard_jobTitle__'], a[data-test='job-title']",
             "attribute": "href"
         },
         "company_rating": {
-            "selector": "span.rating-single-star_RatingText__5fdjN, .rating-single-star_RatingText__5fdjN",
+            "selector": "span[class^='rating-single-star_RatingText__'], [data-test='rating']",
             "attribute": "inner_text"
         },
         "company_logo": {
-            "selector": "img.avatar-base_Image__FZpQS, .avatar-base_Image__FZpQS",
+            "selector": "img[class^='avatar-base_Image__']",
             "attribute": "src"
         },
         "description": {
-            "selector": "div.JobCard_jobDescriptionSnippet__l1tnl div, [data-test='descSnippet'] div",
+            "selector": "div[class^='JobCard_jobDescriptionSnippet__'] div, [data-test='descSnippet'] div",
             "attribute": "inner_text"
         },
-        "easy_apply": {
-            "selector": ".EasyApplyButton, [data-test='easy-apply'], .easy-apply",
-            "attribute": "exists"
-        },
         "posted_date": {
-            "selector": "div.JobCard_listingAge__jJsuc, [data-test='job-age']",
+            "selector": "div[class^='JobCard_listingAge__'], [data-test='job-age']",
             "attribute": "inner_text"
         },
         "job_id": {
-            "selector": "a.JobCard_jobTitle__GLyJ1, a[data-test='job-title']",
+            "selector": "a[class^='JobCard_jobTitle__'], a[data-test='job-title']",
             "attribute": "id"
         },
         "tracking_link": {
-            "selector": "a.JobCard_trackingLink__HMyun",
+            "selector": "a[class^='JobCard_trackingLink__']",
             "attribute": "href"
         }
     },
