@@ -16,6 +16,7 @@ Professional Experience
 	• Mentored developers on cloud and microservices concepts.
 	• Drove best practices: code reviews, SOLID, TDD, and CI/CD in Agile sprints.
 	• Relied heavily on Cygwin (a Unix-like environment for Windows).	
+	
 	Software Engineer * Teledyne FLIR  
 	2018 - 2022  
 	The product is an enterprise-grade camera manager that synchronizes hundreds of cameras across multiple machines.
