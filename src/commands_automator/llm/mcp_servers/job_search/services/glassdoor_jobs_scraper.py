@@ -9,7 +9,7 @@ import logging.handlers
 from urllib.parse import urlencode
 from pathlib import Path
 
-class GlassdoorScraper:
+class GlassdoorJobsScraper:
     def __init__(self):
         self.base_url = "https://www.glassdoor.com"
         self.jobs_data = []
@@ -128,8 +128,6 @@ class GlassdoorScraper:
                         job_data[field] = await elem.inner_text()
                 else:
                     job_data[field] = False if config['attribute'] == 'exists' else "N/A"
-            
-            job_data['scraped_at'] = datetime.now().isoformat()
             return job_data
             
         except Exception as e:
@@ -274,6 +272,6 @@ def setup_logging():
 if __name__ == "__main__":
     setup_logging()
     
-    scraper = GlassdoorScraper()
+    scraper = GlassdoorJobsScraper()
     
     asyncio.run(scraper.run_scraper())

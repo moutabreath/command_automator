@@ -53,7 +53,7 @@ class ResumeLoaderService:
         resume_sections_content = await self.read_file(f'{self.ADDITIONAL_FILE_PATH_PREFIX}/resume_sections.txt')
         if not resume_sections_content:
             logging.error(f"No resume_sections file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
-            return "" 
+            return []
         return resume_sections_content.split('\n')
     
     async def get_job_description(self):
@@ -69,7 +69,7 @@ class ResumeLoaderService:
         file_text = await self.read_file(file_path)
         if not file_text:
             logging.error(f"No cover letter file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
-            return None
+            return ""
         return file_text
     
     async def read_file(self, file_path):

@@ -3,6 +3,7 @@ import multiprocessing
 from multiprocessing import Manager, freeze_support
 from mcp.server.fastmcp import FastMCP
 
+from commands_automator.llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
 from commands_automator.llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
 from commands_automator.llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
 from commands_automator.llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
@@ -22,40 +23,21 @@ async def get_resume_files() -> ResumeData:
     """
     Fetch resume file, applicant name, job description and guidelines
     """    
-    global _shared_services
-    
-    if _shared_services is None:
-        logging.warning("Shared services not initialized, creating new instance")
-        resume_loader_service = ResumeLoaderService()
-    else:
-        resume_loader_service = _shared_services.get('resume_loader_service')
-        if resume_loader_service is None:
-            logging.warning("ResumeLoaderService not found in shared services")
-            resume_loader_service = ResumeLoaderService()
-        else:
-            logging.info("Using existing ResumeLoaderService from shared services")
+    resume_loader_service = get_resume_loader_service()
     try:
         resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
         if resume_content is None or applicant_name is None:
             raise ValueError("Resume content or applicant name is missing")
 
         guide_lines = await resume_loader_service.get_main_part_guide_lines()
-        if guide_lines is None:
-            guide_lines = ""  
-        else:
+        if guide_lines != "":
             guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
 
         highlighted_sections = await resume_loader_service.get_highlighted_sections()
-        if highlighted_sections is None:
-            highlighted_sections = []
 
         job_description_content = await resume_loader_service.get_job_description()
-        if job_description_content is None:
-            job_description_content = ""
 
         cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
-        if cover_letter_guide_lines is None:
-            cover_letter_guide_lines = ""
 
         # Create dictionary first to validate data
         data_dict = {
@@ -81,6 +63,52 @@ async def get_resume_files() -> ResumeData:
             job_description="",
             cover_letter_guidelines=""
         )
+
+def get_resume_loader_service():
+    global _shared_services
+    
+    if _shared_services is None:
+        logging.warning("Shared services not initialized, creating new instance")
+        resume_loader_service = ResumeLoaderService()
+    else:
+        resume_loader_service = _shared_services.get('resume_loader_service')
+        if resume_loader_service is None:
+            logging.warning("ResumeLoaderService not found in shared services")
+            resume_loader_service = ResumeLoaderService()
+        else:
+            logging.info("Using existing ResumeLoaderService from shared services")
+    return resume_loader_service
+
+
+def get_linkedin_job_scraper_service():
+    global _shared_services
+    
+    if _shared_services is None:
+        logging.warning("Shared services not initialized, creating new instance")
+        linkedIn_job_scraper = LinkedInJobScraper()
+    else:
+        linkedIn_job_scraper = _shared_services.get('linkedin_scraper')
+        if linkedIn_job_scraper is None:
+            logging.warning("LinkedIn Job Scraper not found in shared services")
+            linkedIn_job_scraper = LinkedInJobScraper()
+        else:
+            logging.info("Using existing LinkedIn Job Scraper from shared services")
+    return linkedIn_job_scraper
+
+def get_job_saver_service():
+    global _shared_services
+    
+    if _shared_services is None:
+        logging.warning("Shared services not initialized, creating new instance")
+        job_saver = JobsSaver()
+    else:
+        job_saver = _shared_services.get('job_saver')
+        if job_saver is None:
+            logging.warning("Job Saver not found in shared services")
+            job_saver = JobsSaver()
+        else:
+            logging.info("Using existing Job Saver from shared services")
+    return job_saver
     
 @mcp.tool()
 async def get_jobs_from_linkedin():
@@ -90,13 +118,15 @@ async def get_jobs_from_linkedin():
     Returns:
         List of Job objects
     """
+    linkedin_scraper = get_linkedin_job_scraper_service()
+    
+    jobs_saver = JobsSaver()
     
     keywords: str = "Software Engineer"
     location: str = "Tel Aviv, Israel"
     remote: bool = True
     max_pages: int = 2
     logging.info(f"Searching for '{keywords}' jobs in '{location}'...")
-    linkedin_scraper = LinkedInJobScraper()
     
     search_url = linkedin_scraper.build_search_url(
         keywords=keywords,
@@ -111,7 +141,6 @@ async def get_jobs_from_linkedin():
     logging.info(f"Found {len(jobs)} jobs")
     logging.debug("=" * 60)
     
-    jobs_saver = JobsSaver()
     await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
 
     # Optional: Get detailed description for first job
@@ -162,13 +191,7 @@ class MCPRunner:
         try:
             setup_logging()
             # Initialize global variables in subprocess
-            global _manager, _shared_services
-            if _shared_services is None:
-                logging.info("Initializing shared services in MCP subprocess")
-                _shared_services = {}
-                _shared_services['resume_loader_service'] = ResumeLoaderService()
-                _shared_services['linkedin_scraper'] = LinkedInJobScraper()
-                logging.info("Shared services initialized successfully")
+            self.init_shared_services()
             
             # Set server configuration through the settings property
             mcp.settings.mount_path = "/mcp"
@@ -187,6 +210,17 @@ class MCPRunner:
         # Run the server with streamable-http transport
         logging.debug(f"Starting MCP server at http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")
         mcp.run(transport="streamable-http")
+
+    def init_shared_services(self):
+        global _manager, _shared_services
+        if _shared_services is None:
+            logging.info("Initializing shared services in MCP subprocess")
+            _shared_services = {}
+            _shared_services['resume_loader_service'] = ResumeLoaderService()
+            _shared_services['linkedin_scraper'] = LinkedInJobScraper()
+            _shared_services['glassdoor_scraper'] = GlassdoorJobsScraper()
+            _shared_services['job_saver'] = JobsSaver()
+            logging.info("Shared services initialized successfully")
 
     def __enter__(self):  
         return self  
