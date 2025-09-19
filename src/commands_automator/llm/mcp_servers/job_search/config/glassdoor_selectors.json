@@ -1,0 +1,61 @@
+{
+    "containers": {
+        "job_container": [".jobCard", "div[class*='jobCard']", "[class*='JobCard']"], 
+        "job_card": ".jobCard"
+    },
+    "stats": {
+        "overview": ".stats p",
+        "location_filters": ".location-filter .filter-tag"
+    },
+    "job_details": {
+        "title": {
+            "selector": "a.JobCard_jobTitle__GLyJ1, a[data-test='job-title']",
+            "attribute": "inner_text"
+        },
+        "company": {
+            "selector": "span.EmployerProfile_compactEmployerName__9MGcV, .EmployerProfile_compactEmployerName__9MGcV",
+            "attribute": "inner_text"
+        },
+        "location": {
+            "selector": "div.JobCard_location__Ds1fM, [data-test='emp-location']",
+            "attribute": "inner_text"
+        },
+        "url": {
+            "selector": "a.JobCard_jobTitle__GLyJ1, a[data-test='job-title']",
+            "attribute": "href"
+        },
+        "company_rating": {
+            "selector": "span.rating-single-star_RatingText__5fdjN, .rating-single-star_RatingText__5fdjN",
+            "attribute": "inner_text"
+        },
+        "company_logo": {
+            "selector": "img.avatar-base_Image__FZpQS, .avatar-base_Image__FZpQS",
+            "attribute": "src"
+        },
+        "description": {
+            "selector": "div.JobCard_jobDescriptionSnippet__l1tnl div, [data-test='descSnippet'] div",
+            "attribute": "inner_text"
+        },
+        "easy_apply": {
+            "selector": ".EasyApplyButton, [data-test='easy-apply'], .easy-apply",
+            "attribute": "exists"
+        },
+        "posted_date": {
+            "selector": "div.JobCard_listingAge__jJsuc, [data-test='job-age']",
+            "attribute": "inner_text"
+        },
+        "job_id": {
+            "selector": "a.JobCard_jobTitle__GLyJ1, a[data-test='job-title']",
+            "attribute": "id"
+        },
+        "tracking_link": {
+            "selector": "a.JobCard_trackingLink__HMyun",
+            "attribute": "href"
+        }
+    },
+    "popups": {
+        "signup_modal": "[data-test=\"modal-close\"], .modal-close, [aria-label=\"Close\"], .CloseButton",
+        "cookie_consent": "#onetrust-accept-btn-handler, .cookie-accept, [id*='cookie'] button",
+        "opportunity_popup": ".CloseButton, [aria-label=\"Close\"], .modal-close"
+    }
+}
