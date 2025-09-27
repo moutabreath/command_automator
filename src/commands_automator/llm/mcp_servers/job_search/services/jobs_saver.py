@@ -7,9 +7,10 @@ from typing import List
 import aiofiles
 
 from commands_automator.llm.mcp_servers.job_search.models import Job
+from commands_automator.llm.mcp_servers.services.shared_service import SharedService
 
 
-class JobsSaver:
+class JobsSaver(SharedService):
 
     BASE_DIR = Path(__file__).resolve().parents[1]
     JOB_FILE_DIR = os.path.join(BASE_DIR,"results")
@@ -26,3 +27,5 @@ class JobsSaver:
         except Exception as e:
             logging.error(f"Error saving config file {e}", exc_info=True)
             return False
+    
+    

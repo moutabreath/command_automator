@@ -218,15 +218,21 @@ Query: {query}
         
     async def use_tool(self, selected_tool, tool_args, session, output_file_path):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
-        response = await session.call_tool(selected_tool, tool_args)
-        if response is None or response.content is None:
-            logging.error("No response from tool")
-            return ""
+        try:
+            response = await session.call_tool(selected_tool, tool_args)
+           
+            if response is None or response.isError:
+                raise Exception("Tool execution failed with error")        
+        except Exception as e:
+            logging.error(f"Error using tool: {e}", exc_info=True)
+            return "Sorry, I couldn't execute tool."
+      
         tool_result = response.content[0].text
         logging.debug(f"Tool response received ({len(tool_result)} characters)")
+        
         if selected_tool == 'get_resume_files':
             return self.refine_resume(tool_result, output_file_path)
-        return response.content[0].text
+        return tool_result
     
     def refine_resume(self, tool_result, output_file_path):
         if self.api_key:
@@ -253,8 +259,6 @@ Query: {query}
             except Exception as e:
                 logging.error(f"Error using Gemini {e}", exc_info=True)
                 return "Sorry, I couldn't process your request with Gemini or MCP tools."
-        else:
-            return "No suitable tool found and Gemini API key not provided."
 
     async def get_available_tools(self, session):
         try:

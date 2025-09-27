@@ -6,8 +6,9 @@ import time
 import urllib.parse
 from typing import List, Optional
 from commands_automator.llm.mcp_servers.job_search.models import Job
+from commands_automator.llm.mcp_servers.services.shared_service import SharedService
 
-class LinkedInJobScraper:
+class LinkedInJobScraper(SharedService):
     def __init__(self):
         self.session = requests.Session()
         self.session.headers.update({
@@ -96,23 +97,25 @@ class LinkedInJobScraper:
 
     def parse_job_card(self, card) -> Optional[Job]:
         """Parse individual job card to extract job information"""
+        job = Job()
         try:
             # Extract job title and link
             title_element = card.find('h3', class_='base-search-card__title')
-            title = title_element.text.strip() if title_element else "N/A"
-            
+            job.title = title_element.text.strip() if title_element else "N/A"
+
             link_element = card.find('a', class_='base-card__full-link')
-            link = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
-            
+            job.link = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
+       
             # Extract company name
             company_element = card.find('h4', class_='base-search-card__subtitle')
             if not company_element:
                 company_element = card.find('a', {'data-tracking-control-name': 'public_jobs_topcard-org-name'})
             company = company_element.text.strip() if company_element else "N/A"
+            job.company = company
             
             # Extract location
             location_element = card.find('span', class_='job-search-card__location')
-            location = location_element.text.strip() if location_element else "N/A"
+            job.location = location_element.text.strip() if location_element else "N/A"
             
             # Extract posted date
             date_element = card.find('time', class_='job-search-card__listdate')
@@ -121,35 +124,21 @@ class LinkedInJobScraper:
                 posted_date_str = date_element['datetime']
             
             try:
-                posted_date = datetime.fromisoformat(posted_date_str).date() if posted_date_str else date.today()
+                job.posted_date = datetime.fromisoformat(posted_date_str).date() if posted_date_str else date.today()
             except (ValueError, TypeError):
                 logging.warning(f"Could not parse date '{posted_date_str}'. Using today's date.")
-                posted_date = date.today()
+                job.posted_date = date.today()
             
             # For description, we'd need to visit the individual job page
             # For now, we'll leave it as a placeholder
-            description = "Click link to view full description"
-            
-            # Basic validation before creating the Job object
-            if title == "N/A" or company == "N/A" or link == "N/A":
-                logging.warning(f"Skipping job card due to missing essential info: title='{title}', company='{company}'")
-                return None
-
-            return Job(
-                title=title,
-                company=company,
-                location=location,
-                description=description,
-                link=link,
-                posted_date=posted_date
-            )
+            job.description = "Click link to view full description"
             
         except (AttributeError, KeyError) as e:
             logging.error(f"Error parsing job card attributes: {e}", exc_info=True)
-            return None
         except Exception as e:
             logging.error(f"Error parsing job card: {e}", exc_info=True)
-            return None
+        finally:
+            return job
     
     def get_job_description(self, job_url: str) -> str:
         """Get detailed job description from individual job page"""

@@ -4,7 +4,9 @@ import sys
 import aiofiles
 from pathlib import Path
 
-class ResumeLoaderService:
+from commands_automator.llm.mcp_servers.services.shared_service import SharedService
+
+class ResumeLoaderService(SharedService):
     def __init__(self):
         # Check if we're running in a PyInstaller bundle
         if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):

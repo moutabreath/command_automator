@@ -5,14 +5,17 @@ import os
 from playwright.async_api import async_playwright
 import random
 import logging
-import logging.handlers
 from urllib.parse import urlencode
 from pathlib import Path
+from .time_parser import parse_time_expression
 
-class GlassdoorJobsScraper:
+from commands_automator.llm.mcp_servers.job_search.models import Job
+from commands_automator.llm.mcp_servers.services.shared_service import SharedService
+
+class GlassdoorJobsScraper(SharedService):
     def __init__(self):
         self.base_url = "https://www.glassdoor.com"
-        self.jobs_data = []
+        self.jobs = []
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -76,14 +79,6 @@ class GlassdoorJobsScraper:
         except Exception as e:
             logging.error(f"Cleanup error: {e}", exc_info=True)
     
-    def save_to_json(self, filename="glassdoor_jobs.json"):
-        """Save scraped data to JSON file"""
-        with open(filename, 'w', encoding='utf-8') as f:
-            json.dump(self.jobs_data, f, indent=2, ensure_ascii=False)
-        logging.info(f"Data saved to {filename}")
-    
-
-    
     def build_search_url(self, job_title, location, page=1):
         """Build Glassdoor job search URL"""
         params = {
@@ -105,7 +100,7 @@ class GlassdoorJobsScraper:
                     await self.random_delay(1, 2)
                 
         except Exception as e:
-            print(f"Popup handling error: {e}")
+            logging.error(f"Popup handling error: {e}", exc_info=True)
     
     async def extract_job_details(self, job_element):
         """Extract details from a single job listing"""
@@ -128,22 +123,44 @@ class GlassdoorJobsScraper:
                         job_data[field] = await elem.inner_text()
                 else:
                     job_data[field] = False if config['attribute'] == 'exists' else "N/A"
-            return job_data
+
+            return Job(
+                title=job_data['title'],
+                company=job_data['company'],
+                location=job_data['location'],
+                description=job_data['description'],
+                link=job_data['url'],
+                posted_date=self.calc_date_from_range(job_data['posted_date'])
+            )
             
         except Exception as e:
-            print(f"Error extracting job details: {e}")
-            return None 
+            logging.error(f"Error extracting job details: {e}", exc_info=True)
+            return Job() 
 
             
   
+    def calc_date_from_range(self, posted_date_str: str) -> datetime:
+        """
+        Convert a relative time string (e.g., '30d+', '1h') to a datetime object
+        representing when the job was posted.
+        """
+        if not posted_date_str:
+            return datetime.now()  # Default to current time if no date string provided
+            
+        try:
+            return parse_time_expression(posted_date_str)
+        except ValueError as e:
+            logging.warning(f"Could not parse date string '{posted_date_str}': {e}")
+            return datetime.now()  # Default to current time if parsing fails
+            
     def filter_israel_center(self):
         """Filter jobs for Israel center region"""
         center_keywords = ['tel aviv', 'herzliya', 'petah tikva', 'ramat gan', 'givatayim', 
                           'bnei brak', 'holon', 'bat yam', 'center', 'central']
         
         filtered_jobs = []
-        for job in self.jobs_data:
-            location = job.get('location', '').lower()
+        for job in self.jobs:
+            location = job.location.lower()
             if any(keyword in location for keyword in center_keywords):
                 filtered_jobs.append(job)
         
@@ -180,12 +197,12 @@ class GlassdoorJobsScraper:
             for i in range(min(job_count, max_jobs)):
                 try:
                     job_element = job_elements.nth(i)
-                    job_data = await self.extract_job_details(job_element)
+                    job = await self.extract_job_details(job_element)
                     
-                    if job_data and job_data['title'] != "N/A":
-                        self.jobs_data.append(job_data)
+                    if job and job.title != "N/A":
+                        self.jobs.append(job)
                         jobs_scraped += 1
-                        logging.info(f"Scraped: {job_data['title']} at {job_data['company']}")
+                        logging.info(f"Scraped: {job.title} at {job.company}")
                     
                     # Small delay between job extractions
                     await self.random_delay(0.5, 1.5)
@@ -231,47 +248,25 @@ class GlassdoorJobsScraper:
             await self.cleanup()
     
  
-    async def run_scraper(self):
+    async def run_scraper(self, job_title, location, max_pages=3, max_jobs_per_page=20):
         
         await self.setup_browser()
-        # Scrape software engineer jobs in Israel
+        # Scrape software engineer jobs in Israe,l
         await self.scrape_jobs(
-            job_title="Senior Software Engineer",
-            location="Israel", 
-            max_pages=3,
-            max_jobs_per_page=20
+            job_title=job_title,
+            location=location, 
+            max_pages=max_pages,
+            max_jobs_per_page=max_jobs_per_page
         )
         
         # Filter for center region
         center_jobs = self.filter_israel_center()
-        
-        # Save results
-        self.save_to_json("glassdoor_jobs.json")
-        
+            
         # Print summary
-        logging.info(f"Total jobs found: {len(scraper.jobs_data)}")
-        logging.info(f"Jobs in center region: {len(center_jobs)}")
+        logging.info(f"Total jobs found: {len(self.jobs)}")
+        logging.info(f"Total filtered jobs: {len(center_jobs)}")
+
+        return center_jobs
   
-def setup_logging():
-    """
-    Configures the root logger for the application.
 
-    It sets up a file handler that rotates logs and uses environment variables
-    for the log file path and log level, with sensible defaults.
-    """
-    log_file = os.environ.get("LOGFILE", "commands_automator.log")
-    log_level = os.environ.get("LOGLEVEL", "DEBUG")
-
-    handler = logging.handlers.WatchedFileHandler(log_file)
-    formatter = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s {%(module)s %(funcName)s}:%(message)s")
-    handler.setFormatter(formatter)
-    root = logging.getLogger()
-    root.setLevel(log_level)
-    root.addHandler(handler)
     
-if __name__ == "__main__":
-    setup_logging()
-    
-    scraper = GlassdoorJobsScraper()
-    
-    asyncio.run(scraper.run_scraper())
