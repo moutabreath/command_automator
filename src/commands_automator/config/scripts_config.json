@@ -25,6 +25,12 @@
       "free_text_required": false
     },
     {
+      "script_name": "kill_process_on_port.cmd",
+      "short_description": "Kill process locking file",
+      "detailed_Description": "Kill the process that is holding the file in the argument",
+      "free_text_required": true
+    },
+    {
       "script_name": "annonymize.py",
       "short_description": "Annonymize",
       "detailed_Description": "Given a file and a list of tokens, replace the value after the tokens with 'dummy'",
