@@ -36,7 +36,7 @@ class CommandsAutomatorService:
         executables = []
         current_dir = os.getcwd()
         logging.debug(current_dir)
-        scripts_dir = os.path.join(os.getcwd(), 'src/commands_automator','user_scripts')
+        scripts_dir = os.path.join(os.getcwd(), 'src', 'commands_automator','user_scripts')
         logging.debug(scripts_dir)
         files = glob.glob(f'{scripts_dir}/**/*.py', recursive=True)
         files2 = glob.glob(f'{scripts_dir}/**/*.sh', recursive=True)
