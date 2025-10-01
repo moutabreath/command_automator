@@ -15,6 +15,7 @@ import io
 
 from commands_automator.llm.llm_agents.agent_services.resume_refiner_service import ResumeRefinerService
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
+from commands_automator.utils import file_utils
 
 
 class SmartMCPClient:
@@ -220,19 +221,36 @@ Query: {query}
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         try:
             response = await session.call_tool(selected_tool, tool_args)
-           
+            
             if response is None or response.isError:
-                raise Exception("Tool execution failed with error")        
+                tool_result = response.content[0].text if response and response.content else ""
+                if isinstance(tool_result, dict) and tool_result.get("type") == "text" and "error executing tool" in tool_result.get("text", "").lower():
+                    raise Exception("Tool execution failed with error")
+                raise Exception(f"Tool execution failed: {tool_result}")
+
+            tool_result = response.content[0].text
+            logging.debug(f"Tool response received ({len(tool_result)} characters)")
+            
+       
+            return self.resume_after_tool(selected_tool, tool_result, output_file_path)
+            
         except Exception as e:
             logging.error(f"Error using tool: {e}", exc_info=True)
             return "Sorry, I couldn't execute tool."
-      
-        tool_result = response.content[0].text
-        logging.debug(f"Tool response received ({len(tool_result)} characters)")
-        
+     
+     
+    
+    def resume_after_tool(self, selected_tool, tool_result, output_file_path):
         if selected_tool == 'get_resume_files':
             return self.refine_resume(tool_result, output_file_path)
+        if (selected_tool == 'search_jobs_from_the_internet'):
+            return self.get_unified_jobs()
         return tool_result
+    
+    def get_unified_jobs(self):
+        jobs_file_path = file_utils.JOB_FILE_DIR
+        pass
+
     
     def refine_resume(self, tool_result, output_file_path):
         if self.api_key:
@@ -271,18 +289,11 @@ Query: {query}
         return available_tools
 
 
-    def convert_none_to_empty_string(self, text):
-        if text == None:
-            return ""
-        return text
-
-
-
-    def get_files_to_attach(self, image_file_path):
+    def get_files_to_attach(self, image_file_path, mime_type):
         logging.debug("got file to upload")
         self.delete_files()
         file = self.upload_to_gemini(image_file_path)
-        file_data : types.FileData = types.FileData(file_uri=file.uri, mime_type="image/png")
+        file_data : types.FileData = types.FileData(file_uri=file.uri, mime_type=mime_type)
         return types.Part(file_data=file_data)
     
     def upload_to_gemini(self, path, mime_type=None):

@@ -1,31 +1,18 @@
 import json
 import logging
 import os
-from pathlib import Path
 from typing import List
-
 import aiofiles
 
 from commands_automator.llm.mcp_servers.job_search.models import Job
 from commands_automator.llm.mcp_servers.services.shared_service import SharedService
+from commands_automator.utils import file_utils
 
 
 class JobsSaver(SharedService):
-
-    BASE_DIR = Path(__file__).resolve().parents[1]
-    JOB_FILE_DIR = os.path.join(BASE_DIR,"results")
-
     async def save_jobs_to_file(self, jobs: List[Job], filename: str):
         """Save jobs to JSON file"""
-        file_path = os.path.join(self.JOB_FILE_DIR, filename)
-        jobs_json_string = json.dumps([job.model_dump(mode='json') for job in jobs], indent=4)
-        try:
-            os.makedirs(os.path.dirname(file_path), exist_ok=True)
-            async with aiofiles.open(file_path, "w") as f:
-                await f.write(jobs_json_string)
-            return True
-        except Exception as e:
-            logging.error(f"Error saving config file {e}", exc_info=True)
-            return False
-    
-    
+        file_path = os.path.join(file_utils.JOB_FILE_DIR, filename)
+        jobs_json_string = file_utils.serialize_objects(jobs)
+        return await file_utils.save_file(file_path, jobs_json_string)
+

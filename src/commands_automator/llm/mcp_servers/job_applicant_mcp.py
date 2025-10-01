@@ -9,7 +9,7 @@ from commands_automator.llm.mcp_servers.job_search.services.linkedin_scraper imp
 from commands_automator.llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
 from commands_automator.llm.mcp_servers.resume.models import ResumeData
 from commands_automator.llm.mcp_servers.services.shared_service import SharedService
-from commands_automator.logger_config import setup_logging
+from commands_automator.utils.logger_config import setup_logging
 
 
 # Initialize FastMCP
