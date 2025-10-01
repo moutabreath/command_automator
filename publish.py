@@ -8,7 +8,7 @@ def copy_to_deploy():
     deploy_dir = os.path.join(source_dir, 'deploy')
     
     # Create timestamp folder
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M')
+    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
     deploy_dir = os.path.join(deploy_dir, f'commands_automator_api_{timestamp}')
     
     # Create deploy directory if it doesn't exist
@@ -45,11 +45,10 @@ def copy_to_deploy():
             dest_folder = os.path.join(deploy_dir, folder_name)
             
             if os.path.exists(source_folder):
-                shutil.copytree(source_folder, dest_folder)
+                shutil.copytree(source_folder, dest_folder, dirs_exist_ok=True)
                 print(f"Copied {folder_name} folder and its contents")
             else:
                 print(f"Warning: {folder_name} folder not found in source directory")
-        print(f"\nDeployment completed successfully!")
         print(f"Files deployed to: {deploy_dir}")        
     except Exception as e:
         print(f"Error during deployment: {str(e)}")
