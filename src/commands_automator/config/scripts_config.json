@@ -25,9 +25,15 @@
       "free_text_required": false
     },
     {
-      "script_name": "kill_process_on_port.cmd",
+      "script_name": "kill_prcoess_holding_file.cmd",
       "short_description": "Kill process locking file",
-      "detailed_Description": "Kill the process that is holding the file in the argument",
+      "detailed_Description": "Kill the process that is holding the file from the argument",
+      "free_text_required": true
+    },
+    {
+      "script_name": "kill_process_on_port.cmd",
+      "short_description": "Kill process holding port",
+      "detailed_Description": "Kill the process that is holding the port from the argument",
       "free_text_required": true
     },
     {
