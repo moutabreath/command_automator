@@ -1,8 +1,6 @@
 import asyncio
 import logging
 import webview
-import logging.handlers
-import os
 import sys
 import base64
 
@@ -10,7 +8,7 @@ from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
 from commands_automator.services.commands_automator_service import CommandsAutomatorService
 from commands_automator.services.configuration_service import ConfigurationService
 from commands_automator.services.llm_service import LLMService
-from commands_automator.logger_config import setup_logging
+from commands_automator.utils.logger_config import setup_logging
 
 class CommandsAutomatorApi:
     def __init__(self):
