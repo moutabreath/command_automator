@@ -24,27 +24,26 @@ async def save_file(file_path, content):
         logging.error(f"Error saving file {e}", exc_info=True)
         return False
     
-async def serialize_to_json(text):
+def serialize_to_json(text) -> str:
     try:
         return json.dumps(text, indent=4)
-    except (json.JSONDecodeError) as e:
+    except (TypeError, ValueError) as e:
         logging.error(f"Error converting text to JSON: {e}", exc_info=True)
         return "{}"
-
+    
 def serialize_objects(objects: List[T]) -> str:
-        """
-        Serialize a list of Pydantic models to JSON string
-        Args:
-            objects: List of any Pydantic model objects
-        Returns:
-            JSON string representation of the objects
-        """
-        try:
-            return json.dumps([obj.model_dump(mode='json') for obj in objects], indent=4)
-        except (json.JSONDecodeError) as e:
-            logging.error(f"Error converting list to JSON: {e}", exc_info=True)
-            return "{}"
-
+    """
+    Serialize a list of Pydantic models to JSON string
+    Args:
+        objects: List of any Pydantic model objects
+    Returns:
+        JSON string representation of the objects
+    """
+    try:
+        return json.dumps([obj.model_dump(mode='json') for obj in objects], indent=4)
+    except (TypeError, ValueError) as e:
+        logging.error(f"Error converting list to JSON: {e}", exc_info=True)
+        return "{}"
 
   
 async def read_file_as_json(file_path):
