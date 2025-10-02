@@ -25,7 +25,7 @@
       "free_text_required": false
     },
     {
-      "script_name": "kill_prcoess_holding_file.cmd",
+      "script_name": "kill_process_holding_file.cmd",
       "short_description": "Kill process locking file",
       "detailed_Description": "Kill the process that is holding the file from the argument",
       "free_text_required": true
