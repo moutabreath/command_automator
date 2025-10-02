@@ -13,7 +13,7 @@ def setup_logging():
     log_level = os.environ.get("LOGLEVEL", "DEBUG")
 
     handler = logging.handlers.WatchedFileHandler(log_file)
-    formatter = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s {%(module)s %(funcName)s}:%(message)s")
+    formatter = logging.Formatter("%(asctime)s: %(name)s: %(levelname)s {%(module)s %(funcName)s}: %(message)s")
     handler.setFormatter(formatter)
     root = logging.getLogger()
     root.setLevel(log_level)
