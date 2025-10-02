@@ -97,26 +97,37 @@ class LinkedInJobScraper(SharedService):
 
     def parse_job_card(self, card) -> Optional[Job]:
         """Parse individual job card to extract job information"""
-        job = Job()
         try:
+            # Create a dictionary to collect all fields first
+            job_data = {}
+            
             # Extract job title and link
             title_element = card.find('h3', class_='base-search-card__title')
-            job.title = title_element.text.strip() if title_element else "N/A"
+            job_data['title'] = title_element.text.strip() if title_element else "N/A"
 
-            link_element = card.find('a', class_='base-card__full-link')
-            job.link = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
-       
             # Extract company name
             company_element = card.find('h4', class_='base-search-card__subtitle')
             if not company_element:
                 company_element = card.find('a', {'data-tracking-control-name': 'public_jobs_topcard-org-name'})
-            company = company_element.text.strip() if company_element else "N/A"
-            job.company = company
-            
+            job_data['company'] = company_element.text.strip() if company_element else "N/A"
+
             # Extract location
             location_element = card.find('span', class_='job-search-card__location')
-            job.location = location_element.text.strip() if location_element else "N/A"
+            job_data['location'] = location_element.text.strip() if location_element else "N/A"
             
+            # Add description before creating the Job object
+            job_data['description'] = "Click link to view full description"
+            
+            # Log the collected data before creating Job object
+            logging.debug(f"Attempting to create Job with data: {job_data}")
+            
+            # Create the Job object with all required fields
+            job = Job(**job_data)
+            
+            # Add optional fields after creation
+            link_element = card.find('a', class_='base-card__full-link')
+            job.link = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
+
             # Extract posted date
             date_element = card.find('time', class_='job-search-card__listdate')
             posted_date_str = None
@@ -128,17 +139,13 @@ class LinkedInJobScraper(SharedService):
             except (ValueError, TypeError):
                 logging.warning(f"Could not parse date '{posted_date_str}'. Using today's date.")
                 job.posted_date = date.today()
+                
+            return job
             
-            # For description, we'd need to visit the individual job page
-            # For now, we'll leave it as a placeholder
-            job.description = "Click link to view full description"
-            
-        except (AttributeError, KeyError) as e:
-            logging.error(f"Error parsing job card attributes: {e}", exc_info=True)
         except Exception as e:
             logging.error(f"Error parsing job card: {e}", exc_info=True)
-        finally:
-            return job
+            logging.error(f"Job data collected so far: {job_data}")
+            return None
     
     def get_job_description(self, job_url: str) -> str:
         """Get detailed job description from individual job page"""
@@ -156,5 +163,4 @@ class LinkedInJobScraper(SharedService):
             
         except Exception as e:
             logging.error(f"Error fetching job description: {e}", exc_info=True)
-            return "Error fetching description"
-    
+            return ""

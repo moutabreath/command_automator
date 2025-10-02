@@ -79,17 +79,17 @@ class GlassdoorJobsScraper(SharedService):
         except Exception as e:
             logging.error(f"Cleanup error: {e}", exc_info=True)
     
-    def build_search_url(self, job_title, location, page=1):
+    def build_search_url(self, job_title, location, page):
         """Build Glassdoor job search URL"""
         params = {
             'locId': 119,
             'locT': 'N',
-            'sc.keyword' : job_title
+            'sc.keyword': job_title
         }
         # Example URL: https://www.glassdoor.com/Job/israel-senior-software-engineer-jobs-SRCH_IL.0,6_IN119_KO7,31.htm?sc.keyword=senior+software+engineer
         url_job_title = job_title.replace(' ', '-')
         return f"{self.base_url}/Job/{location}-{url_job_title}-jobs-SRCH_IL.0,6_IN119_KO7,31.htm?{urlencode(params)}"
-      
+       
     async def handle_popups(self):
         """Handle common Glassdoor popups"""
         try:
@@ -98,7 +98,7 @@ class GlassdoorJobsScraper(SharedService):
                 if await popup_elem.count() > 0:
                     await popup_elem.first.click()
                     await self.random_delay(1, 2)
-                
+                    
         except Exception as e:
             logging.error(f"Popup handling error: {e}", exc_info=True)
     
@@ -132,12 +132,10 @@ class GlassdoorJobsScraper(SharedService):
                 link=job_data['url'],
                 posted_date=self.calc_date_from_range(job_data['posted_date'])
             )
-            
+        
         except Exception as e:
             logging.error(f"Error extracting job details: {e}", exc_info=True)
-            return Job() 
-
-            
+            return Job(title="N/A", company="N/A", location="N/A" )
   
     def calc_date_from_range(self, posted_date_str: str) -> datetime:
         """
@@ -145,14 +143,14 @@ class GlassdoorJobsScraper(SharedService):
         representing when the job was posted.
         """
         if not posted_date_str:
-            return datetime.now()  # Default to current time if no date string provided
-            
+            return None
+        
         try:
             return parse_time_expression(posted_date_str)
         except ValueError as e:
             logging.warning(f"Could not parse date string '{posted_date_str}': {e}")
-            return datetime.now()  # Default to current time if parsing fails
-            
+            return None
+        
     def filter_israel_center(self):
         """Filter jobs for Israel center region"""
         center_keywords = ['tel aviv', 'herzliya', 'petah tikva', 'ramat gan', 'givatayim', 
@@ -212,7 +210,6 @@ class GlassdoorJobsScraper(SharedService):
                     continue
             
             return jobs_scraped
-            
         except Exception as e:
             logging.error(f"Error scraping page {url}: {e}", exc_info=True)
             return 0
@@ -267,6 +264,3 @@ class GlassdoorJobsScraper(SharedService):
         logging.info(f"Total filtered jobs: {len(center_jobs)}")
 
         return center_jobs
-  
-
-    
