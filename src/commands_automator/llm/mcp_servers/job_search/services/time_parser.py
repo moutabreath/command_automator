@@ -18,15 +18,15 @@ def parse_time_expression(time_expr: str) -> date:
         digits = ''.join(filter(str.isdigit, time_expr))
         letters = ''.join(filter(str.isalpha, time_expr.lower()))
 
+        today = date.today()
+
         if not digits or not letters:
             logging.warning(f"Invalid time expression '{time_expr}', missing number or unit")
             return today
 
         # Extract number and unit
         number = int(digits)
-        unit = letters        
-        today = date.today()
-        
+        unit = letters
         # For hours and minutes, return today
         if unit in ['h', 'm']:
             return today

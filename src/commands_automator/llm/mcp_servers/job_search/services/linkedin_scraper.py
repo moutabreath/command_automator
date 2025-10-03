@@ -1,8 +1,9 @@
 import logging
 import requests
-from datetime import date, datetime, timedelta
+from datetime import date, datetime
 from bs4 import BeautifulSoup
 import time
+import random
 import urllib.parse
 from typing import List, Optional
 from commands_automator.llm.mcp_servers.job_search.models import Job
@@ -87,14 +88,13 @@ class LinkedInJobScraper(SharedService):
                         jobs.append(job)
                 
                 # Be respectful with requests - use randomized delay
-                import random
                 time.sleep(random.uniform(2, 5))
                 
         except requests.RequestException as e:
             logging.error(f"Error fetching job listings: {e}", exc_info=True)
          
-        return jobs    
-
+        return jobs
+    
     def parse_job_card(self, card) -> Optional[Job]:
         """Parse individual job card to extract job information"""
         try:
