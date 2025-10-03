@@ -35,6 +35,7 @@ class GlassdoorJobsScraper(SharedService):
     
     async def setup_browser(self):
         """Initialize browser with stealth settings"""
+        await self.cleanup()
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
             headless=False,  # Set to True for headless mode
@@ -81,15 +82,21 @@ class GlassdoorJobsScraper(SharedService):
     
     def build_search_url(self, job_title, location, page):
         """Build Glassdoor job search URL"""
+        # Calculate URL path indices based on input lengths
+        location_start = 0
+        location_end = len(location)
+        keyword_start = location_end + 1  # +1 for the hyphen separator
+        keyword_end = keyword_start + len(job_title.replace(' ', '-'))
+
         params = {
             'locId': 119,
             'locT': 'N',
             'sc.keyword': job_title
         }
-        # Example URL: https://www.glassdoor.com/Job/israel-senior-software-engineer-jobs-SRCH_IL.0,6_IN119_KO7,31.htm?sc.keyword=senior+software+engineer
         url_job_title = job_title.replace(' ', '-')
-        return f"{self.base_url}/Job/{location}-{url_job_title}-jobs-SRCH_IL.0,6_IN119_KO7,31.htm?{urlencode(params)}"
-       
+        path_component = f"SRCH_IL.{location_start},{location_end}_IN119_KO{keyword_start},{keyword_end}"
+        return f"{self.base_url}/Job/{location}-{url_job_title}-jobs-{path_component}.htm?{urlencode(params)}"
+         
     async def handle_popups(self):
         """Handle common Glassdoor popups"""
         try:
@@ -115,8 +122,7 @@ class GlassdoorJobsScraper(SharedService):
                     if config['attribute'] == 'exists':
                         job_data[field] = True
                     elif config['attribute'] == 'href':
-                        href = await elem.get_attribute('href')
-                        job_data[field] = href if href and href.startswith('http') else f"{self.base_url}{href}"
+                        await self.extract_link(job_data, field, elem)
                     elif config['attribute'] == 'src':
                         job_data[field] = await elem.get_attribute('src') or "N/A"
                     else:
@@ -135,9 +141,23 @@ class GlassdoorJobsScraper(SharedService):
         
         except Exception as e:
             logging.error(f"Error extracting job details: {e}", exc_info=True)
-            return Job(title="N/A", company="N/A", location="N/A" )
-  
-    def calc_date_from_range(self, posted_date_str: str) -> datetime:
+            return Job(
+                title="N/A",
+                company="N/A",
+                location="N/A",
+                description="N/A",
+                link="N/A",
+                posted_date=None
+            )
+
+    async def extract_link(self, job_data, field, elem):
+        href = await elem.get_attribute('href')
+        if href:
+            job_data[field] = href if href and href.startswith('http') else f"{self.base_url}{href}"
+        else:
+            job_data[field] = "N/A"
+        
+    def calc_date_from_range(self, posted_date_str: str) -> datetime | None:
         """
         Convert a relative time string (e.g., '30d+', '1h') to a datetime object
         representing when the job was posted.
@@ -182,9 +202,9 @@ class GlassdoorJobsScraper(SharedService):
                 try:
                     await self.page.wait_for_selector(job_container_selector, timeout=15000)
                     break
-                except:
+                except Exception:
                     continue
-            
+                
             # Get all job listings on the page
             job_elements = self.page.locator(self.selectors['containers']['job_card'])
             job_count = await job_elements.count()

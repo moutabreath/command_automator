@@ -1,6 +1,6 @@
 {
     "containers": {
-        "job_container": [".jobCard", "div[class*='jobCard']", "[class*='JobCard']"], 
+        "job_container": [".jobCard", "div[class*='jobCard']", "[class*='JobCard']"],
         "job_card": ".jobCard"
     },
     "stats": {
