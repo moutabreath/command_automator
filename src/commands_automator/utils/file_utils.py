@@ -13,15 +13,17 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 JOB_FILE_DIR = os.path.join(BASE_DIR, "llm", "mcp_servers", "job_search", "results")
 
 
-async def save_file(file_path, content):
+async def save_file(file_path: str, content: str) -> bool:
     try:
         # Ensure the directory exists
-        os.makedirs(os.path.dirname(file_path), exist_ok=True)
+        dir_path = os.path.dirname(file_path)
+        if dir_path:
+            os.makedirs(dir_path, exist_ok=True)
         async with aiofiles.open(file_path, "w") as f:
             await f.write(content)
         return True
     except Exception as e:
-        logging.error(f"Error saving file {e}", exc_info=True)
+        logging.error(f"Error saving file {file_path}: {e}", exc_info=True)
         return False
     
 def serialize_to_json(text) -> str:
@@ -29,8 +31,6 @@ def serialize_to_json(text) -> str:
         return json.dumps(text, indent=4)
     except (TypeError, ValueError) as e:
         logging.error(f"Error converting text to JSON: {e}", exc_info=True)
-        return "{}"
-    
 def serialize_objects(objects: List[T]) -> str:
     """
     Serialize a list of Pydantic models to JSON string
@@ -43,8 +43,7 @@ def serialize_objects(objects: List[T]) -> str:
         return json.dumps([obj.model_dump(mode='json') for obj in objects], indent=4)
     except (TypeError, ValueError) as e:
         logging.error(f"Error converting list to JSON: {e}", exc_info=True)
-        return "{}"
-
+        return "[]"
   
 async def read_file_as_json(file_path):
     try:

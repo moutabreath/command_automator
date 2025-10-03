@@ -20,6 +20,9 @@ taskkill /IM commands_automator_api.exe /F >nul 2>&1
     --hidden-import multiprocessing.connection ^
     -w
 
+if errorlevel 1 (
+    echo Build failed. Check build errors.& exit /b 1
+)
 
 copy /Y "dist\commands_automator_api.exe" ".\commands_automator_api.exe" >nul
 if errorlevel 1 (

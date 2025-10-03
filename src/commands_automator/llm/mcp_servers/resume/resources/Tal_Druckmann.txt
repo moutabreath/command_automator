@@ -47,8 +47,7 @@ Professional Experience
 		
 	2013 
 	This startup's product was a recommender system. 
-		•  Improved the object-oriented design and written a lot of integrations.
-		
+		•  Improved the object-oriented design and wrote many integrations.		
 Personal Projects 
 	https://github.com/moutabreath/CatanGameManager 
 		Designed a REST API for tracking gameplay in Settlers of Catan: Cities & Knights, using .NET 8 and MongoDB. Deployed via 

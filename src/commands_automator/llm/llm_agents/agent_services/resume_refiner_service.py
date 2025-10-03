@@ -1,12 +1,12 @@
 import json
 import logging
-
+from google.genai.chats import Chat
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
 
 class ResumeRefinerService:
-    def __init__(self, resume_chat):
+    def __init__(self, resume_chat: Chat):
         self.resume_saver_service: ResumeSaverService = ResumeSaverService()
-        self.resume_chat = resume_chat
+        self.resume_chat : Chat = resume_chat
 
 
     def refine_resume(self, tool_result, output_file_path):
@@ -77,6 +77,6 @@ class ResumeRefinerService:
 
 
     def convert_none_to_empty_string(self, text):
-        if text == None:
+        if text is None:
             return ""
         return text

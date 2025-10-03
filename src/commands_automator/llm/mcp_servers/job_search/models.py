@@ -6,7 +6,7 @@ class Job(BaseModel):
     title: str = Field(min_length=1)
     company: str = Field(min_length=1)
     location: str = Field(min_length=1)
-    description: Optional[str] = Field(min_length=1)    
+    description: Optional[str] = Field(default=None, min_length=1)  
     link: Optional[HttpUrl] = None
     posted_date: Optional[date] = None
     

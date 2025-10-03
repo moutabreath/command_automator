@@ -12,4 +12,4 @@ I served as a senior software developer and led multiple projects, receiving rec
 Leadership included initial conversations with product managers to refine requirements and align them with product and platform constraints.
 I then produced designs and led development through the sprints to successful delivery.
 I also built a Python tool to accelerate DevOps workflows by copying only relevant artifacts when safe, reducing turnaround from ~1.5 hours to seconds.
-Additionally, I integrated Plotly Dash (Python) into the product.Next I am going to give you my resume
+Additionally, I integrated Plotly Dash (Python) into the product. Next I am going to give you my resume

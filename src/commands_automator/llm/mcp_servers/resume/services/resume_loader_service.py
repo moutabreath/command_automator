@@ -28,7 +28,7 @@ class ResumeLoaderService(SharedService):
 
     async def get_resume_and_applicant_name(self):
         resume_path, applicant_name = self.find_resume_file()
-        if not resume_path or not resume_path:
+        if not resume_path or not applicant_name:
             logging.error(f"No .txt resume file found in {self.RESOURCES_DIR}")
             return "", ""
         resume_text = await self.read_file(resume_path)

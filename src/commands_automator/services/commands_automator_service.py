@@ -24,7 +24,7 @@ class CommandsAutomatorService:
             return  
         scripts_config = data['scripts']  
         for script in scripts_config:  
-            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_Description']  
+            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_description']  
             if script_name == "" or tag_name == "" or script_desc == "":  
                 continue  
             self.scripts_attributes[script_name] = script
@@ -65,7 +65,7 @@ class CommandsAutomatorService:
         return self.get_script_attribute(file, 'short_description')
 
     def get_script_description(self, file):
-        return self.get_script_attribute(file, 'detailed_Description')
+        return self.get_script_attribute(file, 'detailed_description')
 
     def get_arguments_for_script(self, script_path, additional_text, flags):
         script_name = os.path.basename(script_path)
