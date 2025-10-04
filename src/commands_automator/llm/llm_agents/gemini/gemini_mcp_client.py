@@ -10,12 +10,11 @@ from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
 from google.genai import types
 from google.genai.types import GenerateContentResponse
-from PIL import Image
-import io
 
+from commands_automator.llm.llm_agents.agent_services.job_search_service import JobSearchService
 from commands_automator.llm.llm_agents.agent_services.resume_refiner_service import ResumeRefinerService
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
-from commands_automator.utils import file_utils
+from commands_automator.llm.llm_agents.gemini.gemini_utils import GeminiUtils
 
 
 class SmartMCPClient:
@@ -26,22 +25,14 @@ class SmartMCPClient:
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
-        self.resume_chat = self.gemini_client.chats.create(
-            model="gemini-2.5-flash",
-            history=[]
-        )
-        config = {
-            "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
-            "top_p": 0.95,       # Focus on high-probability words
-            "top_k": 64,        # Consider top-k words for each step
-            "max_output_tokens": 8192,  # Limit response length
-            "response_mime_type": "application/json",  # Output as plain text
-        }
-
-        self.resume_chat._config = config
+        self.gemini_utils: GeminiUtils = GeminiUtils(self.gemini_client)
+       
+        self.resume_chat = self.gemini_utils.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat)
 
-    async def decide_tool_usage(self, query, available_tools, session):
+        self.job_search_service = JobSearchService(self.gemini_utils)    
+
+    async def decide_tool_usage(self, query, available_tools, session: ClientSession):
         """
         Use Gemini to decide which tool to use based on the query
         
@@ -89,10 +80,10 @@ class SmartMCPClient:
             logging.error(f"Error using Gemini for tool decision {e}", exc_info=True)
             # Fall back to direct tool usage if error occurs
             if 'get_resume_files' in available_tools:
-                return 'get_resume_files', {'query': query}
+                return 'get_resume_files', {}
             return None, None
         
-    async def init_messages(self, query, available_tools, session):
+    async def init_messages(self, query, available_tools, session: ClientSession):
     # Get tool schemas from MCP server
         tools_response = await session.list_tools()
         tool_descriptions = {}
@@ -151,7 +142,6 @@ Be selective and conservative with tool usage. Be concise. Only output valid JSO
 If no tool should be selected, respond the query directly.
 Query: {query}
 """
-    
 
     async def is_mcp_server_ready(self, timeout=2):
         try:
@@ -181,7 +171,7 @@ Query: {query}
         """
         try:
             if not await self.is_mcp_server_ready():
-                return self.call_gemini_api_directly(query, base64_decoded)
+                return self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
 
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
 
@@ -211,74 +201,43 @@ Query: {query}
                         output_file_path,
                     )
                 else:
-                    return self.call_gemini_api_directly(query, base64_decoded)
+                    return self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
 
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return "An error occurred while processing your request. Please try again."
         
-    async def use_tool(self, selected_tool, tool_args, session, output_file_path):
+    async def use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         try:
             response = await session.call_tool(selected_tool, tool_args)
             
-            if response is None or response.isError:
-                tool_result = response.content[0].text if response and response.content else ""
-                if isinstance(tool_result, dict) and tool_result.get("type") == "text" and "error executing tool" in tool_result.get("text", "").lower():
-                    raise Exception("Tool execution failed with error")
-                raise Exception(f"Tool execution failed: {tool_result}")
+            if response is None:
+                raise Exception(f"Tool execution failed")
+            if response.isError:
+                logging.error(f"Tool execution failed: {response.error}")
+                error_msg = response.content[0].text if response and response.content else "Unknown error"
+                raise Exception(f"Tool execution failed: {error_msg}")
 
             tool_result = response.content[0].text
             logging.debug(f"Tool response received ({len(tool_result)} characters)")
-            
-       
-            return self.resume_after_tool(selected_tool, tool_result, output_file_path)
+
+            return self.use_tool_result(selected_tool, tool_result, output_file_path)
             
         except Exception as e:
             logging.error(f"Error using tool: {e}", exc_info=True)
             return "Sorry, I couldn't execute tool."
-     
-     
     
-    def resume_after_tool(self, selected_tool, tool_result, output_file_path):
+    def use_tool_result(self, selected_tool, tool_result, output_file_path):
         if selected_tool == 'get_resume_files':
-            return self.refine_resume(tool_result, output_file_path)
-        if (selected_tool == 'search_jobs_from_the_internet'):
-            return self.get_unified_jobs()
-        return tool_result
-    
-    def get_unified_jobs(self):
-        jobs_file_path = file_utils.JOB_FILE_DIR
-        pass
+            return self.resume_refiner_service.refine_resume(tool_result, output_file_path)
+        if selected_tool == 'search_jobs_from_the_internet':
+            return self.job_search_service.get_unified_jobs()
+        return tool_result  
+            
 
-    
-    def refine_resume(self, tool_result, output_file_path):
-        if self.api_key:
-            try:
-                return self.resume_refiner_service.refine_resume(tool_result, output_file_path)
-            except Exception as e:
-                logging.error(f"Error refining resume: {e}", exc_info=True)
-                return tool_result  # Fallback to raw result
-        else:
-            return tool_result
 
-        
-    def call_gemini_api_directly(self, query, base64_decoded):
-        if self.api_key:
-            try:
-                self.resume_chat._config["response_mime_type"] = "text/plain"
-                if base64_decoded:
-                    image = Image.open(io.BytesIO(base64_decoded))
-                    gemini_response = self.resume_chat.send_message([query, image])
-                else:
-                    gemini_response = self.resume_chat.send_message(query)
-                gemini_text = gemini_response.text()
-                return gemini_text
-            except Exception as e:
-                logging.error(f"Error using Gemini {e}", exc_info=True)
-                return "Sorry, I couldn't process your request with Gemini or MCP tools."
-
-    async def get_available_tools(self, session):
+    async def get_available_tools(self, session: ClientSession):
         try:
             tools_response = await session.list_tools()
             available_tools = [tool.name for tool in tools_response.tools]
@@ -288,20 +247,3 @@ Query: {query}
             available_tools = []
         return available_tools
 
-
-    def get_files_to_attach(self, image_file_path, mime_type):
-        logging.debug("got file to upload")
-        self.delete_files()
-        file = self.upload_to_gemini(image_file_path)
-        file_data : types.FileData = types.FileData(file_uri=file.uri, mime_type=mime_type)
-        return types.Part(file_data=file_data)
-    
-    def upload_to_gemini(self, path, mime_type=None):
-        """Uploads a file to Gemini for use in prompts."""
-        file = self.gemini_client.files.upload(file=path)
-        print(f"Uploaded file '{file.display_name}' as: {file.uri}")
-        return file    
-
-    def delete_files(self):
-        for f in self.gemini_client.files.list():
-            self.gemini_client.files.delete(name=f.name)
