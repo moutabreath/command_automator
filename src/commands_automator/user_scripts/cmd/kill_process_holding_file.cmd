@@ -59,11 +59,11 @@ if %errorlevel% neq 0 (
     goto :end
 )
 
-for /f "tokens=2,3 delims=," %%a in ('openfiles /query /fo csv /v 2^>nul ^| findstr /i "%filename%"') do (
+for /f "tokens=3 delims=," %%a in ('openfiles /query /fo csv /v 2^>nul ^| findstr /i "%filename%"') do (
     set "process=%%a"
     set "process=!process:"=!"
     echo Found: !process! using the file
-    
+
     for /f "tokens=2" %%p in ('tasklist /v /fo csv /nh ^| findstr /i "!process!"') do (
         set "pid=%%p"
         set "pid=!pid:"=!"
@@ -79,7 +79,6 @@ for /f "tokens=2,3 delims=," %%a in ('openfiles /query /fo csv /v 2^>nul ^| find
         )
     )
 )
-
 :end
 echo.
 echo Done.

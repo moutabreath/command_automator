@@ -274,8 +274,8 @@ def main():
         mcp_runner.mcp_process.join()
     except KeyboardInterrupt:
         logging.info("Keyboard interrupt received, shutting down...")
+    finally:
         mcp_runner.stop_mcp()
-
 
 if __name__ == '__main__':
     main()

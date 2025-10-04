@@ -32,5 +32,4 @@ for /f "tokens=5" %%i in ('netstat -ano -p TCP ^| findstr /R /C:":%PORT% .*LISTE
 echo No process found using port %PORT%
 exit /b 0
 
-:found
 echo Done.

@@ -31,6 +31,8 @@ def serialize_to_json(text) -> str:
         return json.dumps(text, indent=4)
     except (TypeError, ValueError) as e:
         logging.error(f"Error converting text to JSON: {e}", exc_info=True)
+        return "{}"
+    
 def serialize_objects(objects: List[T]) -> str:
     """
     Serialize a list of Pydantic models to JSON string
@@ -44,12 +46,12 @@ def serialize_objects(objects: List[T]) -> str:
     except (TypeError, ValueError) as e:
         logging.error(f"Error converting list to JSON: {e}", exc_info=True)
         return "[]"
-  
-async def read_file_as_json(file_path):
+    
+async def read_file_as_json(file_path: str) -> dict:
     try:
         async with aiofiles.open(file_path, "r") as f:
             data = await f.read()
         return json.loads(data)
-    except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:  
-        logging.error(f"Error loading config file: {e}", exc_info=True)  
+    except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:
+        logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
         return {}
