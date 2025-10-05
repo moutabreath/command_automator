@@ -34,15 +34,21 @@ def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = 
             line = add_line_with_link(doc, line, url)            
             continue           
 
-        if "*" in line:
+        if "**" in line:
             p = doc.add_paragraph()            
             p.paragraph_format.space_before = Pt(0)
             p.paragraph_format.space_after = Pt(0)
-            line.replace("**", "")
-            run = p.add_run(line)
-            run.bold = True
-            run.font.size = Pt(9)
+            
+            # Split the line by ** markers
+            parts = line.split('**')
+            for i, part in enumerate(parts):
+                run = p.add_run(part)
+                run.font.size = Pt(9)
+                # Every odd-indexed part (1,3,5...) was between ** markers
+                if i % 2 == 1:
+                    run.bold = True
             continue
+
         if line.startswith('-'):
             p = doc.add_paragraph(line[1:], style='ListBullet')
             p.paragraph_format.space_before = Pt(0)
