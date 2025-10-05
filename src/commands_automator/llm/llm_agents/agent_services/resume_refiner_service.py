@@ -2,14 +2,16 @@ import json
 import logging
 from google.genai.chats import Chat
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
+from commands_automator.llm.llm_agents.gemini.gemini_utils import GeminiUtils
 
 class ResumeRefinerService:
-    def __init__(self, resume_chat: Chat):
+    def __init__(self, resume_chat: Chat, gemini_utils: GeminiUtils):
         self.resume_saver_service: ResumeSaverService = ResumeSaverService()
-        self.resume_chat : Chat = resume_chat
+        self.resume_chat: Chat = resume_chat
+        self.gemini_utils: GeminiUtils = gemini_utils
 
 
-    def refine_resume(self, tool_result, output_file_path):
+    def refine_resume(self, tool_result: str, output_file_path: str) -> str:
         try:
             resume_data_dict = json.loads(tool_result)
             if not isinstance(resume_data_dict, dict):
@@ -19,38 +21,36 @@ class ResumeRefinerService:
                 )
                 return ""
         except (json.JSONDecodeError, TypeError) as exc:
-            logging.exception("Failed to parse tool_result JSON: %s", exc)
+            logging.exception("Failed to parse tool_result JSON: %s", exc,exc_info=True)
             return ""
-        resume_text = self.get_refined_resume(resume_data_dict)      
+
+        resume_text = self.get_refined_resume(resume_data_dict)
         cover_letter_text = self.get_cover_letter(resume_data_dict)
         self.save_resume_files(output_file_path, resume_data_dict, resume_text, cover_letter_text)
-        return resume_text + "\n\n" + cover_letter_text
-        
+
+        if cover_letter_text:
+            return resume_text + "\n\n" + cover_letter_text
+        return resume_text        
     
-    def get_refined_resume(self, resume_data_dict):
+    def get_refined_resume(self, resume_data_dict: dict) -> str:
         prompt = self.format_prompts_for_resume(resume_data_dict)
-        self.resume_chat._config["response_mime_type"] = "text/plain"
-        gemini_response = self.resume_chat.send_message(prompt)
-        try:
-            resume_text = gemini_response.text
-        except (AttributeError, TypeError) as exc:
-            logging.exception("Failed to extract resume text from LLM response")
-            resume_text = ""       
+        resume_text = self.gemini_utils.get_response_from_gemini(prompt=prompt,
+                                                                      chat=self.resume_chat)
+       
         return resume_text
     
-    def format_prompts_for_resume(self, resume_data_dict):       
-        general_guidelines = resume_data_dict.get('general_guidelines', '')
-        resume = resume_data_dict.get('resume', '')        
+    def format_prompts_for_resume(self, resume_data_dict: dict) -> str:
+        general_guidelines = self.convert_none_to_empty_string(resume_data_dict.get('general_guidelines', ''))
+        resume = self.convert_none_to_empty_string(resume_data_dict.get('resume', ''))
         jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
-     
+
         prompt = f"""
-                    "You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
+                    You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
                     {general_guidelines}
                     \n\nResume:\n\n {resume}
-                    \n\n\nJob Description:\n\n
+                    \n\n\nJob Descrtiption:\n\n
                      {jobs_desc}"""
-        return prompt 
-
+        return prompt
     
     def save_resume_files(self, output_file_path, resume_data_dict, resume_text, cover_letter_text):
         resume_highlighted_sections = self.convert_none_to_empty_string(resume_data_dict.get('resume_highlighted_sections', ''))
@@ -60,22 +60,14 @@ class ResumeRefinerService:
         if (cover_letter_text != ''):
             self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name, resume_file_name)
 
-
-    def get_cover_letter(self, resume_data_dict):
+    def get_cover_letter(self, resume_data_dict: dict) -> str:
         cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
         cover_letter_text = ''
-        if cover_letter_guidelines is not None:
-            gemini_response = self.resume_chat.send_message(cover_letter_guidelines)
-            try:
-                # It's safer to access the content through parts
-                cover_letter_text = gemini_response.candidates[0].content.parts[0].text
-            except (AttributeError, TypeError, IndexError, ValueError) as exc:
-                logging.exception("Failed to extract cover letter text from LLM response: %s", exc)
-                logging.debug("Full Gemini response: %s", gemini_response)
-                cover_letter_text = ""
+        if cover_letter_guidelines:
+            cover_letter_text = self.gemini_utils.get_response_from_gemini(prompt=cover_letter_guidelines,
+                                                                            chat=self.resume_chat)         
         return cover_letter_text
-
-
+    
     def convert_none_to_empty_string(self, text):
         if text is None:
             return ""

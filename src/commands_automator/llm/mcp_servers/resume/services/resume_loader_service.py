@@ -41,14 +41,19 @@ class ResumeLoaderService(SharedService):
             logging.error(f"Resumes directory not found: {resume_dir}")
             return resume_path, applicant_name
             
-        for root, _, files in os.walk(self.RESOURCES_DIR):
-            for file in files:
-                if file.lower().endswith('.txt'):
-                    resume_path = os.path.join(root, file)
-                    applicant_name = file[0:len(file) - 4]
-                    applicant_name = applicant_name.replace('_', ' ').replace('-', ' ')
-                    return resume_path, applicant_name
-        return resume_path, applicant_name
+    def find_resume_file(self):
+        resume_dir = self.RESOURCES_DIR
+        if not resume_dir.exists():
+            logging.error(f"Resumes directory not found: {resume_dir}")
+            return "", ""
+
+        txt_files = sorted(resume_dir.rglob('*.txt'))
+        if not txt_files:
+            return "", ""
+
+        resume_path = txt_files[0]
+        applicant_name = resume_path.stem.replace('_', ' ').replace('-', ' ')
+        return str(resume_path), applicant_name
         
 
     async def get_highlighted_sections(self):

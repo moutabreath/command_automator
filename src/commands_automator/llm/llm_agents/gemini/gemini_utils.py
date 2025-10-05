@@ -26,16 +26,15 @@ class GeminiUtils:
         }
         chat  = self.gemini_client.chats.create(
             model= self.GEMINI_MODEL,
+            config=config,
             history=[]
         )
 
-        chat._config = config
         return chat
     
     def get_response_from_gemini(self, prompt: str,  chat: Chat, base64_decoded : str = None, file_paths : list[str] = None) -> str:
             try:
-                self.delete_files()
-                chat._config[self.CONFIG_RESPONSE_MIME_TYPE] = self.MIME_TYPE_TEXT
+                chat._config[self.CONFIG_RESPONSE_MIME_TYPE] = self.MIME_TYPE_TEXT           
                 if base64_decoded:
                     image = Image.open(io.BytesIO(base64_decoded))
                     gemini_response = chat.send_message([prompt, image])
@@ -65,7 +64,12 @@ class GeminiUtils:
         file_data : FileData = FileData(file_uri=file.uri, mime_type=mime_type)
         return Part(file_data=file_data)  
     
-    def delete_files(self):
+    def delete_all_files(self):
+        """
+        WARNING: Deletes ALL files from the Gemini client.
+        Use with caution in shared environments.
+        Consider using selective deletion instead.
+        """
         for f in self.gemini_client.files.list():
             try:
                 self.gemini_client.files.delete(name=f.name)

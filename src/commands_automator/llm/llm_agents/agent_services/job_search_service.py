@@ -1,5 +1,6 @@
 import logging
 import os
+from google.genai.chats import Chat
 
 from commands_automator.llm.llm_agents.gemini.gemini_utils import GeminiUtils
 from commands_automator.utils import file_utils
@@ -7,8 +8,8 @@ from commands_automator.utils import file_utils
 class JobSearchService:
 
     def __init__(self, gemini_utils: GeminiUtils):
-        self.gemini_utils = gemini_utils       
-        self.job_search_chat = self.gemini_utils.init_chat()
+        self.gemini_utils: GeminiUtils = gemini_utils       
+        self.job_search_chat: Chat = self.gemini_utils.init_chat()
         
 
     def get_unified_jobs(self):
@@ -17,8 +18,7 @@ class JobSearchService:
             file_paths = self.get_job_files_path()         
 
             if not file_paths:
-                return "No valid job files could be uploaded"
-
+                return "No job files found in the directory"
             # Prepare the prompt for Gemini
             prompt = self.phrase_prompt()
 
@@ -30,7 +30,7 @@ class JobSearchService:
             return "Sorry, I couldn't process the job listings."
     
     def phrase_prompt(self):
-        return """I am attaching JSON files containing job listings. Return a unifed list of jobs
+        return """I am attaching JSON files containing job listings. Return a unified list of jobs
              according to the following criteria:
 1. Only include jobs that are in the center district of Israel
 2. Only include jobs that are actually a software engineer. No deveops or QA.
@@ -42,11 +42,19 @@ Please format the response in a clear, structured way."""
     def get_job_files_path(self):
         file_paths = []
         # Get all JSON files from the jobs directory
-        json_files = [f for f in os.listdir(file_utils.JOB_FILE_DIR) if f.endswith('.json')]
-        if not json_files:
-            logging.warning("No job files found in directory")
+        try:
+            json_files = [
+                f
+                for f in os.listdir(file_utils.JOB_FILE_DIR)
+                if f.endswith('.json')
+            ]
+            if not json_files:
+                logging.warning("No job files found in directory")
+                return file_paths
+        except (FileNotFoundError, PermissionError) as e:
+            logging.error(f"Cannot access job files directory: {e}", exc_info=True)
             return file_paths
-     
+
         for file_name in json_files:
             file_path = os.path.join(file_utils.JOB_FILE_DIR, file_name)
             file_paths.append(file_path)

@@ -48,7 +48,7 @@ Project-based software company.
 Server-Side Software Engineer * Personite
 2013 
 This startup's product was a recommender system. 
-•  Improved the object-oriented design and wrote many integrations.
+• Improved the object-oriented design and wrote many integrations.
 
 Personal Projects 
 https://github.com/moutabreath/CatanGameManager 

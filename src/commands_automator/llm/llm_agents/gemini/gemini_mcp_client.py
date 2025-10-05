@@ -28,7 +28,7 @@ class SmartMCPClient:
         self.gemini_utils: GeminiUtils = GeminiUtils(self.gemini_client)
        
         self.resume_chat = self.gemini_utils.init_chat()
-        self.resume_refiner_service = ResumeRefinerService(self.resume_chat)
+        self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_utils)
 
         self.job_search_service = JobSearchService(self.gemini_utils)    
 
