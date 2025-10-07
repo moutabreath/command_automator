@@ -20,7 +20,7 @@ class LinkedInJobScraper(SharedService):
             'Connection': 'keep-alive'
         })
     
-    def build_search_url(self, keywords: str, location: str = "", job_type: str = "", 
+    def build_search_url(self, job_title: str, location: str = "", job_type: str = "", 
                     experience_level: str = "", remote: bool = False) -> str:
         """Build LinkedIn job search URL with parameters
     
@@ -31,7 +31,7 @@ class LinkedInJobScraper(SharedService):
             experience_level: Experience level - 1 (internship), 2 (entry), 3 (associate), etc.
             remote: Whether to filter for remote jobs
         """
-        if not keywords:
+        if not job_title:
             raise ValueError("Keywords cannot be empty")
         
         # Validate job_type if provided
@@ -41,7 +41,7 @@ class LinkedInJobScraper(SharedService):
         base_url = "https://www.linkedin.com/jobs/search/"
         
         params = {
-            'keywords': keywords,
+            'keywords': job_title,
             'location': location,
             'trk': 'public_jobs_jobs-search-bar_search-submit',
             'position': '1',
@@ -163,4 +163,4 @@ class LinkedInJobScraper(SharedService):
             
         except Exception as e:
             logging.error(f"Error fetching job description: {e}", exc_info=True)
-            return ""
+            return "Description not available"

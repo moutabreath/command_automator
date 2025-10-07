@@ -1,6 +1,7 @@
 import logging
 import multiprocessing
 from multiprocessing import freeze_support
+from typing import List
 from mcp.server.fastmcp import FastMCP
 
 from commands_automator.llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
@@ -20,6 +21,13 @@ mcp = FastMCP("job_applicant_helper")
 _shared_services = None
 
 
+class ServiceNames:
+    RESUME_LOADER = 'resume_loader_service'
+    LINKEDIN_SCRAPER = 'linkedin_job_scraper'
+    GLASSDOOR_SCRAPER = 'glassdoor_jobs_scraper'
+    JOB_SAVER = 'job_saver'
+
+
 def get_shared_service(shared_service_name) -> SharedService:
     """Get a service from the shared services dict"""
     global _shared_services
@@ -35,10 +43,10 @@ def init_shared_services():
     """Initialize services in the child process. Returns a dict of services."""
     logging.info("Initializing shared services in MCP subprocess")
     services = {
-        'resume_loader_service': ResumeLoaderService(),
-        'linkedin_job_scraper': LinkedInJobScraper(),
-        'glassdoor_jobs_scraper': GlassdoorJobsScraper(),
-        'job_saver': JobsSaver()
+        ServiceNames.RESUME_LOADER: ResumeLoaderService(),
+        ServiceNames.LINKEDIN_SCRAPER: LinkedInJobScraper(),
+        ServiceNames.GLASSDOOR_SCRAPER: GlassdoorJobsScraper(),
+        ServiceNames.JOB_SAVER: JobsSaver()
     }
     logging.info("Shared services initialized successfully")
     return services
@@ -49,7 +57,7 @@ async def get_resume_files() -> ResumeData:
     """
     Fetch resume file, applicant name, job description and guidelines
     """    
-    resume_loader_service = get_shared_service("resume_loader_service")
+    resume_loader_service: ResumeLoaderService = get_shared_service(ServiceNames.RESUME_LOADER)
     try:
         resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
         if resume_content is None or applicant_name is None:
@@ -79,7 +87,7 @@ async def get_resume_files() -> ResumeData:
         logging.debug(f"Created ResumeData successfully: {resume_data.model_dump()}")
         return resume_data
     except Exception as ex:
-        logging.error(f"Error fetching resume: {ex}")
+        logging.error(f"Error fetching resume or related context: {ex}", exc_info=True)
         return ResumeData(
             applicant_name="",
             general_guidelines="",
@@ -91,7 +99,9 @@ async def get_resume_files() -> ResumeData:
 
 
 @mcp.tool()
-async def search_jobs_from_the_internet() -> list:
+async def search_jobs_from_the_internet(job_title: str = "Software Engineer",
+    location: str = "Tel Aviv, Israel",
+    remote: bool = True) -> list:
     """
     Search for jobs from multiple sources (LinkedIn and Glassdoor).
     
@@ -100,14 +110,16 @@ async def search_jobs_from_the_internet() -> list:
     """
     jobs = []
     try:
-        linkedin_jobs = await get_jobs_from_linkedin()
-        jobs.extend(linkedin_jobs)
+        linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
+        if linkedin_jobs and len(linkedin_jobs) > 0:
+            jobs.extend(linkedin_jobs)
     except Exception as ex:
         logging.error(f"LinkedIn scraper failed: {ex}")
     
     try:
-        glassdoor_jobs = await get_jobs_from_glassdoor()
-        jobs.extend(glassdoor_jobs)
+        glassdoor_jobs = await _run_glassdoor_scraper(job_title=job_title, location=location)
+        if glassdoor_jobs and len(glassdoor_jobs) > 0:
+            jobs.extend(glassdoor_jobs)
     except Exception as ex:
         logging.error(f"Glassdoor scraper failed: {ex}")
 
@@ -115,80 +127,84 @@ async def search_jobs_from_the_internet() -> list:
 
     
 @mcp.tool()
-async def get_jobs_from_linkedin():
+async def get_jobs_from_linkedin(job_title: str = "Software Engineer",
+    location: str = "Tel Aviv, Israel",
+    remote: bool = True) -> list:
     """
     Search for jobs on LinkedIn.    
     
     Returns:
         List of Job objects
     """ 
-    return await run_linkedin_scraper()
+    return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
 
 
-async def run_linkedin_scraper():
+async def _run_linkedin_scraper(job_title: str,
+    location: str,
+    remote: bool
+    ) -> list:
     """Run the LinkedIn job scraper"""
-    linkedin_scraper = get_shared_service("linkedin_job_scraper")
-    jobs_saver = get_shared_service("job_saver")
+    linkedin_scraper: LinkedInJobScraper = get_shared_service(ServiceNames.LINKEDIN_SCRAPER)
+    jobs_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
     
-    keywords: str = "Software Engineer"
-    location: str = "Tel Aviv, Israel"
-    remote: bool = True
     max_pages: int = 2
-    logging.info(f"Searching for '{keywords}' jobs in '{location}'...")
+    logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
     
     search_url = linkedin_scraper.build_search_url(
-        keywords=keywords,
+        job_title=job_title,
         location=location,
         remote=remote
     )
     
     logging.debug(f"Search URL: {search_url}")
     
-    jobs = linkedin_scraper.scrape_job_listings(search_url, max_pages=max_pages)
+    jobs = linkedin_scraper.scrape_job_listings(search_url=search_url, max_pages=max_pages)
     
     logging.info(f"Found {len(jobs)} jobs")
     logging.debug("=" * 60)
-    
-    await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
-
-    # Optional: Get detailed description for first job
-    if jobs:
+    if jobs and len(jobs) > 0:    
+        await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
         logging.info(f"Getting detailed description for: {jobs[0].title}")
         description = linkedin_scraper.get_job_description(jobs[0].link)
         logging.debug(f"Description: {description[:300]}...")
-    
+    else:
+        logging.warning("No jobs found from LinkedIn scraper")
+   
     return jobs
 
-
 @mcp.tool()
-async def get_jobs_from_glassdoor():
+async def get_jobs_from_glassdoor(job_title: str = "Software Engineer",
+    location: str = "Tel Aviv, Israel") -> List:
     """
     Search for jobs on Glassdoor.
 
     Returns:
         List of Job objects
     """
-    return await run_glassdoor_scraper()
+    return await _run_glassdoor_scraper(job_title, location)
 
 
-async def run_glassdoor_scraper(
-    job_title: str = "Software Engineer",
-    location: str = "Tel Aviv, Israel",
-    max_pages: int = 3,
-    max_jobs_per_page: int = 20
-):
+async def _run_glassdoor_scraper(
+    job_title: str,
+    location: str, 
+) -> List:
     """Run the Glassdoor job scraper"""
-    glassdoor_scraper = get_shared_service("glassdoor_jobs_scraper")
-    job_saver = get_shared_service("job_saver")
+    max_pages: int = 3
+    max_jobs_per_page: int = 20
+    glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
+    job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
 
     jobs = await glassdoor_scraper.run_scraper(
         job_title=job_title,
         location=location,
         max_pages=max_pages,
-        max_jobs_per_page=max_jobs_per_page
-    )
+        max_jobs_per_page=max_jobs_per_page)
     
-    await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')
+    if jobs and len(jobs) > 0:
+        await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')
+    else:
+        logging.warning("No jobs found from Glassdoor scraper")
+    
     return jobs
 
 

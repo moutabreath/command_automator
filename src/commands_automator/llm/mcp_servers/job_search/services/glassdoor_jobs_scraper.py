@@ -1,7 +1,7 @@
 import asyncio
 import json
 from datetime import datetime
-import os
+from typing import List
 from playwright.async_api import async_playwright
 import random
 import logging
@@ -15,7 +15,6 @@ from commands_automator.llm.mcp_servers.services.shared_service import SharedSer
 class GlassdoorJobsScraper(SharedService):
     def __init__(self):
         self.base_url = "https://www.glassdoor.com"
-        self.jobs = []
         self.headers = {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
@@ -32,10 +31,12 @@ class GlassdoorJobsScraper(SharedService):
                 self.selectors = json.load(f)
         except Exception as e:
             raise Exception(f"Failed to load selectors configuration: {e}")
-    
+        
     async def setup_browser(self):
         """Initialize browser with stealth settings"""
-        await self.cleanup()
+        if hasattr(self, 'browser'):
+            await self.cleanup()
+        self.playwright = await async_playwright().start()      
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
             headless=False,  # Set to True for headless mode
@@ -80,7 +81,7 @@ class GlassdoorJobsScraper(SharedService):
         except Exception as e:
             logging.error(f"Cleanup error: {e}", exc_info=True)
     
-    def build_search_url(self, job_title, location, page):
+    def _build_search_url(self, job_title: str, location:str, page):
         """Build Glassdoor job search URL"""
         # Calculate URL path indices based on input lengths
         location_start = 0
@@ -109,7 +110,7 @@ class GlassdoorJobsScraper(SharedService):
         except Exception as e:
             logging.error(f"Popup handling error: {e}", exc_info=True)
     
-    async def extract_job_details(self, job_element):
+    async def _extract_job_details(self, job_element) -> Job:
         """Extract details from a single job listing"""
         try:
             job_data = {}
@@ -122,7 +123,7 @@ class GlassdoorJobsScraper(SharedService):
                     if config['attribute'] == 'exists':
                         job_data[field] = True
                     elif config['attribute'] == 'href':
-                        await self.extract_link(job_data, field, elem)
+                        await self._extract_link(job_data, field, elem)
                     elif config['attribute'] == 'src':
                         job_data[field] = await elem.get_attribute('src') or "N/A"
                     else:
@@ -136,7 +137,7 @@ class GlassdoorJobsScraper(SharedService):
                 location=job_data['location'],
                 description=job_data['description'],
                 link=job_data['url'],
-                posted_date=self.calc_date_from_range(job_data['posted_date'])
+                posted_date=self._calc_date_from_range(job_data['posted_date'])
             )
         
         except Exception as e:
@@ -150,14 +151,14 @@ class GlassdoorJobsScraper(SharedService):
                 posted_date=None
             )
 
-    async def extract_link(self, job_data, field, elem):
+    async def _extract_link(self, job_data, field, elem):
         href = await elem.get_attribute('href')
         if href:
             job_data[field] = href if href and href.startswith('http') else f"{self.base_url}{href}"
         else:
             job_data[field] = "N/A"
         
-    def calc_date_from_range(self, posted_date_str: str) -> datetime | None:
+    def _calc_date_from_range(self, posted_date_str: str) -> datetime | None:
         """
         Convert a relative time string (e.g., '30d+', '1h') to a datetime object
         representing when the job was posted.
@@ -171,13 +172,13 @@ class GlassdoorJobsScraper(SharedService):
             logging.warning(f"Could not parse date string '{posted_date_str}': {e}")
             return None
         
-    def filter_israel_center(self):
+    def _filter_israel_center(self, jobs: List[Job]) -> List[Job]:
         """Filter jobs for Israel center region"""
         center_keywords = ['tel aviv', 'herzliya', 'petah tikva', 'ramat gan', 'givatayim', 
                           'bnei brak', 'holon', 'bat yam', 'center', 'central']
         
         filtered_jobs = []
-        for job in self.jobs:
+        for job in jobs:
             location = job.location.lower()
             if any(keyword in location for keyword in center_keywords):
                 filtered_jobs.append(job)
@@ -186,7 +187,7 @@ class GlassdoorJobsScraper(SharedService):
         return filtered_jobs
 
 
-    async def scrape_job_page(self, url, max_jobs=50):
+    async def _scrape_job_page(self, url: str, max_jobs: int) -> List[Job]:
         """Scrape jobs from a single page"""
         try:
             logging.debug(f"Scraping: {url}")
@@ -203,23 +204,24 @@ class GlassdoorJobsScraper(SharedService):
                     await self.page.wait_for_selector(job_container_selector, timeout=15000)
                     break
                 except Exception:
+                    logging.debug(f"Container selector '{job_container_selector}' not found, trying next...")
                     continue
-                
+            else:
+                logging.warning("No job container selectors matched, page structure may have changed")                
             # Get all job listings on the page
             job_elements = self.page.locator(self.selectors['containers']['job_card'])
             job_count = await job_elements.count()
             
             logging.debug(f"Found {job_count} job listings on this page")
             
-            jobs_scraped = 0
+            jobs = []
             for i in range(min(job_count, max_jobs)):
                 try:
                     job_element = job_elements.nth(i)
-                    job = await self.extract_job_details(job_element)
+                    job = await self._extract_job_details(job_element)
                     
                     if job and job.title != "N/A":
-                        self.jobs.append(job)
-                        jobs_scraped += 1
+                        jobs.append(job)
                         logging.info(f"Scraped: {job.title} at {job.company}")
                     
                     # Small delay between job extractions
@@ -229,26 +231,28 @@ class GlassdoorJobsScraper(SharedService):
                     logging.error(f"Error processing job {i}: {e}")
                     continue
             
-            return jobs_scraped
         except Exception as e:
             logging.error(f"Error scraping page {url}: {e}", exc_info=True)
-            return 0
+        finally:
+            return jobs
     
-    async def scrape_jobs(self, job_title, location, max_pages=5, max_jobs_per_page=30):
+    async def _scrape_jobs(self, job_title: str, 
+                          location: str, max_pages: int, 
+                          max_jobs_per_page: int) -> List[Job] :
         """Main scraping method"""
         logging.info(f"Starting scrape for '{job_title}' jobs in '{location}'")        
         
         try:
-            total_jobs = 0
+            jobs = []
             
             for page in range(1, max_pages + 1):
                 logging.info(f"=== Scraping Page {page} ===")
                 
-                url = self.build_search_url(job_title, location, page)
-                jobs_on_page = await self.scrape_job_page(url, max_jobs_per_page)
-                total_jobs += jobs_on_page
+                url = self._build_search_url(job_title, location, page)
+                page_jobs = await self._scrape_job_page(url, max_jobs_per_page)
+                jobs.extend(page_jobs)
                 
-                if jobs_on_page == 0:
+                if len(page_jobs) == 0:
                     logging.info("No jobs found on this page, stopping...")
                     break
                 
@@ -256,20 +260,20 @@ class GlassdoorJobsScraper(SharedService):
                 await self.random_delay(5, 10)
             
             logging.info("=== Scraping Complete ===")
-            logging.info(f"Total jobs scraped: {total_jobs}")
+            logging.info(f"Total jobs scraped: {len(jobs)}")
             
         except Exception as e:
             logging.error(f"Error during scraping: {e}", exc_info=True)
         
         finally:
             await self.cleanup()
+            return jobs
     
  
-    async def run_scraper(self, job_title, location, max_pages=3, max_jobs_per_page=20):
+    async def run_scraper(self, job_title: str, location: str, max_pages: int, max_jobs_per_page: int):
         
         await self.setup_browser()
-        # Scrape software engineer jobs in Israe,l
-        await self.scrape_jobs(
+        jobs = await self._scrape_jobs(
             job_title=job_title,
             location=location, 
             max_pages=max_pages,
@@ -277,10 +281,10 @@ class GlassdoorJobsScraper(SharedService):
         )
         
         # Filter for center region
-        center_jobs = self.filter_israel_center()
+        center_jobs = self._filter_israel_center(jobs)
             
         # Print summary
-        logging.info(f"Total jobs found: {len(self.jobs)}")
+        logging.info(f"Total jobs found: {len(jobs)}")
         logging.info(f"Total filtered jobs: {len(center_jobs)}")
 
         return center_jobs
