@@ -184,19 +184,19 @@ async def get_jobs_from_glassdoor(job_title: str = "Software Engineer",
     return await _run_glassdoor_scraper(job_title, location)
 
 
-async def _run_glassdoor_scraper(
-    job_title: str,
-    location: str, 
-) -> List:
+async def _run_glassdoor_scraper(job_title:str, location: str) -> List:
     """Run the Glassdoor job scraper"""
     max_pages: int = 3
     max_jobs_per_page: int = 20
     glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
     job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
 
+    forbidden_titles = ['QA', 'Devops', 'Junior', 'Graduate', 'Front End']
+
     jobs = await glassdoor_scraper.run_scraper(
         job_title=job_title,
         location=location,
+        forbidden_titles=forbidden_titles,
         max_pages=max_pages,
         max_jobs_per_page=max_jobs_per_page)
     

@@ -69,7 +69,7 @@ async def read_text_file(file_path: str | Path) -> str:
         logging.error(f"Error reading file: {file_path} - {ioError}", exc_info=True)  
     return content
 
-def get_mime_type(self, file_path: str) -> str:
+def get_mime_type(file_path: str) -> str:
     """Detect MIME type based on file extension."""
     ext = os.path.splitext(file_path)[1].lower()
     mime_types = {

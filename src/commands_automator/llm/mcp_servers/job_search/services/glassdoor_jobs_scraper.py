@@ -109,7 +109,7 @@ class GlassdoorJobsScraper(SharedService):
         except Exception as e:
             logging.error(f"Popup handling error: {e}", exc_info=True)
     
-    async def _extract_job_details(self, job_element) -> Job:
+    async def _extract_job_details(self, job_element, forbidden_titles: list[str]) -> Job:
         """Extract details from a single job listing"""
         try:
             job_data = {}
@@ -130,14 +130,7 @@ class GlassdoorJobsScraper(SharedService):
                 else:
                     job_data[field] = False if config['attribute'] == 'exists' else "N/A"
 
-            return Job(
-                title=job_data['title'],
-                company=job_data['company'],
-                location=job_data['location'],
-                description=job_data['description'],
-                link=job_data['url'],
-                posted_date=self._calc_date_from_range(job_data['posted_date'])
-            )
+            return self.validate_job(job_data, forbidden_titles)
         
         except Exception as e:
             logging.error(f"Error extracting job details: {e}", exc_info=True)
@@ -149,6 +142,19 @@ class GlassdoorJobsScraper(SharedService):
                 link="N/A",
                 posted_date=None
             )
+        
+    def validate_job(self, job_data, forbidden_titles):
+        """Validate job data against forbidden titles"""
+        if any(title.lower() in job_data['title'].lower() for title in forbidden_titles):
+            return None
+        return Job(
+                    title=job_data['title'],
+                    company=job_data['company'],
+                    location=job_data['location'],
+                    description=job_data['description'],
+                    link=job_data['url'],
+                    posted_date=self._calc_date_from_range(job_data['posted_date'])
+                )
 
     async def _extract_link(self, job_data, field, elem):
         href = await elem.get_attribute('href')
@@ -186,7 +192,7 @@ class GlassdoorJobsScraper(SharedService):
         return filtered_jobs
 
 
-    async def _scrape_job_page(self, url: str, max_jobs: int) -> List[Job]:
+    async def _scrape_job_page(self, url: str, forbidden_titles: list[str], max_jobs: int) -> List[Job]:
         """Scrape jobs from a single page"""
         try:
             logging.debug(f"Scraping: {url}")
@@ -217,7 +223,7 @@ class GlassdoorJobsScraper(SharedService):
             for i in range(min(job_count, max_jobs)):
                 try:
                     job_element = job_elements.nth(i)
-                    job = await self._extract_job_details(job_element)
+                    job = await self._extract_job_details(job_element, forbidden_titles)
                     
                     if job and job.title != "N/A":
                         jobs.append(job)
@@ -236,8 +242,9 @@ class GlassdoorJobsScraper(SharedService):
             return jobs
     
     async def _scrape_jobs(self, job_title: str, 
-                          location: str, max_pages: int, 
-                          max_jobs_per_page: int) -> List[Job] :
+                          location: str,
+                          forbidden_titles: list[str],
+                          max_pages: int, max_jobs_per_page: int) -> List[Job] :
         """Main scraping method"""
         logging.info(f"Starting scrape for '{job_title}' jobs in '{location}'")        
         
@@ -248,7 +255,7 @@ class GlassdoorJobsScraper(SharedService):
                 logging.info(f"=== Scraping Page {page} ===")
                 
                 url = self._build_search_url(job_title, location, page)
-                page_jobs = await self._scrape_job_page(url, max_jobs_per_page)
+                page_jobs = await self._scrape_job_page(url, forbidden_titles, max_jobs_per_page)
                 jobs.extend(page_jobs)
                 
                 if len(page_jobs) == 0:
@@ -269,12 +276,14 @@ class GlassdoorJobsScraper(SharedService):
             return jobs
     
  
-    async def run_scraper(self, job_title: str, location: str, max_pages: int, max_jobs_per_page: int) -> List[Job]:
+    async def run_scraper(self, job_title: str, location: str, forbidden_titles: list[str], 
+                          max_pages: int, max_jobs_per_page: int) -> List[Job]:
         
         await self.setup_browser()
         jobs = await self._scrape_jobs(
             job_title=job_title,
             location=location, 
+            forbidden_titles=forbidden_titles,
             max_pages=max_pages,
             max_jobs_per_page=max_jobs_per_page
         )

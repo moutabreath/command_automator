@@ -29,21 +29,22 @@ class JobSearchService:
             logging.error(f"Error processing unified jobs: {e}", exc_info=True)
             return "Sorry, I couldn't process the job listings."
     
-    def phrase_prompt(self):
+    def phrase_prompt(self) -> str:
         """Build the prompt for Gemini to unify and filter job listings.
         
         Returns:
             Formatted prompt string with filtering criteria.
         """
         return """I am attaching JSON files containing job listings. Return a unified list of jobs
-             according to the following criteria:
+according to the following criteria:
 1. Only include jobs that are in the center district of Israel
 2. Only include jobs that are actually a software engineer. No devops or QA.
 3. Jobs may appear in multiple files. In that case, merge as much details as you can into one list item.
 4. Filter out if the job has a requirement for proficiency with node.js or requires experience with it
 
 Please format the response in a clear, structured way."""
-    def get_job_files_path(self):
+
+    def get_job_files_path(self) -> list[str]:
         file_paths = []
         # Get all JSON files from the jobs directory
         try:
