@@ -11,7 +11,7 @@ if "%1"=="" (
 set "PORT=%~1"
 
 REM Validate numeric port (1-65535)
-echo(%PORT%| findstr /R "^[0-9][0-9]*$" >nul || (echo Invalid port: %PORT% & exit /b 2))
+echo %PORT%| findstr /R "^[0-9][0-9]*$" >nul || (echo Invalid port: %PORT% & exit /b 2)
 set /a PORT_NUM=%PORT% >nul 2>&1 || (echo Invalid port: %PORT% & exit /b 2)
 
 for /f "tokens=5" %%i in ('netstat -ano -p TCP ^| findstr /R /C:":%PORT% .*LISTENING"') do (
@@ -31,5 +31,3 @@ for /f "tokens=5" %%i in ('netstat -ano -p TCP ^| findstr /R /C:":%PORT% .*LISTE
 
 echo No process found using port %PORT%
 exit /b 0
-
-echo Done.
