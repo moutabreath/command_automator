@@ -36,7 +36,6 @@ class GlassdoorJobsScraper(SharedService):
         """Initialize browser with stealth settings"""
         if hasattr(self, 'browser'):
             await self.cleanup()
-        self.playwright = await async_playwright().start()      
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
             headless=False,  # Set to True for headless mode
@@ -270,7 +269,7 @@ class GlassdoorJobsScraper(SharedService):
             return jobs
     
  
-    async def run_scraper(self, job_title: str, location: str, max_pages: int, max_jobs_per_page: int):
+    async def run_scraper(self, job_title: str, location: str, max_pages: int, max_jobs_per_page: int) -> List[Job]:
         
         await self.setup_browser()
         jobs = await self._scrape_jobs(

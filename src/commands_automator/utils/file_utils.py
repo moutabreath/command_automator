@@ -57,13 +57,13 @@ async def read_json_file(file_path: str) -> dict:
         return {}
     
 async def read_text_file(file_path: str | Path) -> str:
-        content: str = ""
-        logging.info(f"Reading file: {file_path}")
-        try:
-            async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
-                content = await file.read()
-        except UnicodeDecodeError as e:
-            logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
-        except IOError as ioError:
-            logging.error(f"Error reading file: {file_path} - {ioError}", exc_info=True)  
-        return content
+    content: str = ""
+    logging.info(f"Reading file: {file_path}")
+    try:
+        async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
+            content = await file.read()
+    except UnicodeDecodeError as e:
+        logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
+    except IOError as ioError:
+        logging.error(f"Error reading file: {file_path} - {ioError}", exc_info=True)  
+    return content
