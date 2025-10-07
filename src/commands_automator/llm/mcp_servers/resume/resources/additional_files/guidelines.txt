@@ -1,13 +1,6 @@
 I am going to give you my resume and a job description.
-First, extract the company name from the job description.
-Guidelines regarding how to extract the company name:
-  - (prefer the end-client over an agency). Normalize by:
-  - Removing common trailing legal suffixes only (e.g., Inc., Corp., Corporation, Co., LLC, LLP, Ltd., Limited, GmbH, AG, SA, NV, BV, PLC, Pty Ltd., SAS, SRL, S.p.A., AB, Oy, K.K.) if present at the end.
-  - Trimming surrounding spaces and collapsing internal whitespace to single spaces; preserve internal punctuation such as hyphens, ampersands, and apostrophes.
-  - Converting spaces to single underscores after normalization.
-  - Preserving capitalization of the brand name.
-  - Prefix the resume with: ***applicant_name***_<Company_Name>
-If a hiring company cannot be confidently determined, omit the company suffix and output just: ***applicant_name***
+First, extract the company name from the job description (prefer the end-client over an agency), and
+prefix the resume with: ***applicant_name***_<Company_Name>
 
 Next, revise my resume according to the job description.
 
