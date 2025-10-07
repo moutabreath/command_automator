@@ -47,7 +47,7 @@ def serialize_objects(objects: List[T]) -> str:
         logging.error(f"Error converting list to JSON: {e}", exc_info=True)
         return "[]"
     
-async def read_file_as_json(file_path: str) -> dict:
+async def read_json_file(file_path: str) -> dict:
     try:
         async with aiofiles.open(file_path, "r") as f:
             data = await f.read()
@@ -55,3 +55,15 @@ async def read_file_as_json(file_path: str) -> dict:
     except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:
         logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
         return {}
+    
+async def read_text_file(file_path: str | Path) -> str:
+        content: str = ""
+        logging.info(f"Reading file: {file_path}")
+        try:
+            async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
+                content = await file.read()
+        except UnicodeDecodeError as e:
+            logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
+        except IOError as ioError:
+            logging.error(f"Error reading file: {file_path} - {ioError}", exc_info=True)  
+        return content
