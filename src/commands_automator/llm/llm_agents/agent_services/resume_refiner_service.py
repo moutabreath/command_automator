@@ -48,7 +48,7 @@ class ResumeRefinerService:
                     You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
                     {general_guidelines}
                     \n\nResume:\n\n {resume}
-                    \n\n\nJob Descrtiption:\n\n
+                    \n\n\nJob Description:\n\n
                      {jobs_desc}"""
         return prompt
     
