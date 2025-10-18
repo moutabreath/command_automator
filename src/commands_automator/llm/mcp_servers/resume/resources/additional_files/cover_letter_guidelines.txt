@@ -2,4 +2,4 @@ Add a cover letter. Assume the job description came from LinkedIn.
 Follow these guidelines:
 - Address the Hiring Manager
 - The address of the company is not known
-- If the role involves designing large-scale systems, emphasize that I have a solid understanding of software systems in general and that I completed a workshop on designing large-scale systems led by a former architect at Imperva.
+- If the role involves designing large-scale systems, emphasize that I have a solid understanding of software systems in general and that I completed a workshop on designing large-scale systems.
