@@ -132,14 +132,9 @@ If the tool definition has no paramters respond in JSON fomrat:
   "tool": "tool_name",
   "args": {{}}
 }}
-If no tool should be used and you should answer the query directly, respond with:
-{{
-  "tool": null,
-  "args": null
-}}
 
 Be selective and conservative with tool usage. Be concise. Only output valid JSON.
- If no tool should be selected, respond to the query directly.Query: {query}
+If no tool should be selected, respond to the query directly. Query: {query}
 """
 
     async def is_mcp_server_ready(self, timeout=2):

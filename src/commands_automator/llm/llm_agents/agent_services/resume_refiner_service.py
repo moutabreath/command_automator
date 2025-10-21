@@ -40,35 +40,29 @@ class ResumeRefinerService:
         return resume_text
     
     def format_prompts_for_resume(self, resume_data_dict: dict) -> str:
-        general_guidelines = self.convert_none_to_empty_string(resume_data_dict.get('general_guidelines', ''))
-        resume = self.convert_none_to_empty_string(resume_data_dict.get('resume', ''))
-        jobs_desc = self.convert_none_to_empty_string(resume_data_dict.get('job_description', ''))
+        general_guidelines = resume_data_dict.get('general_guidelines', '')
+        resume = resume_data_dict.get('resume', '')
+        jobs_desc = resume_data_dict.get('job_description', '')
 
         prompt = f"""
-                    You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
-                    {general_guidelines}
-                    \n\nResume:\n\n {resume}
-                    \n\n\nJob Description:\n\n
-                     {jobs_desc}"""
+You have finished using the mcp tool. Now output text according to the following guidelines.\n\n
+{general_guidelines}
+\n\nResume:\n\n {resume}
+\n\n\nJob Description:\n\n
+{jobs_desc}"""
         return prompt
     
+    def get_cover_letter(self, resume_data_dict: dict) -> str:
+        cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
+        cover_letter_text = ''
+        if cover_letter_guidelines:
+            cover_letter_text= self.gemini_utils.get_response_from_gemini(prompt=cover_letter_guidelines, chat=self.resume_chat)         
+        return cover_letter_text
+    
     def save_resume_files(self, output_file_path, resume_data_dict, resume_text, cover_letter_text):
-        resume_highlighted_sections = self.convert_none_to_empty_string(resume_data_dict.get('resume_highlighted_sections', ''))
+        resume_highlighted_sections = resume_data_dict.get('resume_highlighted_sections', '')
         applicant_name = resume_data_dict.get('applicant_name', '')
         resume_file_name = self.resume_saver_service.get_resume_file_name(resume_text, applicant_name)
         self.resume_saver_service.save_resume(resume_text, output_file_path, applicant_name, resume_file_name, resume_highlighted_sections)
         if (cover_letter_text != ''):
             self.resume_saver_service.save_cover_letter(cover_letter_text, output_file_path, applicant_name, resume_file_name)
-
-    def get_cover_letter(self, resume_data_dict: dict) -> str:
-        cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
-        cover_letter_text = ''
-        if cover_letter_guidelines:
-            cover_letter_text = self.gemini_utils.get_response_from_gemini(prompt=cover_letter_guidelines,
-                                                                            chat=self.resume_chat)         
-        return cover_letter_text
-    
-    def convert_none_to_empty_string(self, text):
-        if text is None:
-            return ""
-        return text
