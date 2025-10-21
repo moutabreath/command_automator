@@ -10,7 +10,7 @@ from PIL import Image
 
 from commands_automator.utils import file_utils
 
-class GeminiUtils:
+class GeminiAgent:
     GEMINI_MODEL = "gemini-2.5-flash"
 
     CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"

@@ -14,7 +14,7 @@ from google.genai.types import GenerateContentResponse
 from commands_automator.llm.llm_agents.agent_services.job_search_service import JobSearchService
 from commands_automator.llm.llm_agents.agent_services.resume_refiner_service import ResumeRefinerService
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
-from commands_automator.llm.llm_agents.gemini.gemini_utils import GeminiUtils
+from commands_automator.llm.llm_agents.gemini.gemini_agent import GeminiAgent
 
 
 class SmartMCPClient:
@@ -25,7 +25,7 @@ class SmartMCPClient:
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
-        self.gemini_utils: GeminiUtils = GeminiUtils(self.gemini_client)
+        self.gemini_utils: GeminiAgent = GeminiAgent(self.gemini_client)
        
         self.resume_chat = self.gemini_utils.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_utils)

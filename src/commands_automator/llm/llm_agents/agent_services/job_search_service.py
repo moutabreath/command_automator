@@ -3,13 +3,13 @@ import mimetypes
 import os
 from google.genai.chats import Chat
 
-from commands_automator.llm.llm_agents.gemini.gemini_utils import GeminiUtils
+from commands_automator.llm.llm_agents.gemini.gemini_agent import GeminiAgent
 from commands_automator.utils import file_utils
 
 class JobSearchService:
 
-    def __init__(self, gemini_utils: GeminiUtils):
-        self.gemini_utils: GeminiUtils = gemini_utils       
+    def __init__(self, gemini_utils: GeminiAgent):
+        self.gemini_utils: GeminiAgent = gemini_utils       
         self.job_search_chat: Chat = self.gemini_utils.init_chat()
         
 

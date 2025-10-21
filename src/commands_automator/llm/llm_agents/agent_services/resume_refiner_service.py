@@ -2,13 +2,13 @@ import json
 import logging
 from google.genai.chats import Chat
 from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
-from commands_automator.llm.llm_agents.gemini.gemini_utils import GeminiUtils
+from commands_automator.llm.llm_agents.gemini.gemini_agent import GeminiAgent
 
 class ResumeRefinerService:
-    def __init__(self, resume_chat: Chat, gemini_utils: GeminiUtils):
+    def __init__(self, resume_chat: Chat, gemini_utils: GeminiAgent):
         self.resume_saver_service: ResumeSaverService = ResumeSaverService()
         self.resume_chat: Chat = resume_chat
-        self.gemini_utils: GeminiUtils = gemini_utils
+        self.gemini_utils: GeminiAgent = gemini_utils
 
 
     async def refine_resume(self, tool_result: str, output_file_path: str) -> str:
