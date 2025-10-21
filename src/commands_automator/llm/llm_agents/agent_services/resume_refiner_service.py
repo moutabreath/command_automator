@@ -11,7 +11,7 @@ class ResumeRefinerService:
         self.gemini_utils: GeminiUtils = gemini_utils
 
 
-    def refine_resume(self, tool_result: str, output_file_path: str) -> str:
+    async def refine_resume(self, tool_result: str, output_file_path: str) -> str:
         try:
             resume_data_dict = json.loads(tool_result)
             if not isinstance(resume_data_dict, dict):
@@ -24,17 +24,17 @@ class ResumeRefinerService:
             logging.exception("Failed to parse tool_result JSON: %s", exc,exc_info=True)
             return ""
 
-        resume_text = self.get_refined_resume(resume_data_dict)
-        cover_letter_text = self.get_cover_letter(resume_data_dict)
+        resume_text = await self.get_refined_resume(resume_data_dict)
+        cover_letter_text = await self.get_cover_letter(resume_data_dict)
         self.save_resume_files(output_file_path, resume_data_dict, resume_text, cover_letter_text)
 
         if cover_letter_text:
             return resume_text + "\n\n" + cover_letter_text
         return resume_text        
     
-    def get_refined_resume(self, resume_data_dict: dict) -> str:
+    async def get_refined_resume(self, resume_data_dict: dict) -> str:
         prompt = self.format_prompts_for_resume(resume_data_dict)
-        resume_text = self.gemini_utils.get_response_from_gemini(prompt=prompt,
+        resume_text = await self.gemini_utils.get_response_from_gemini(prompt=prompt,
                                                                       chat=self.resume_chat)
        
         return resume_text
@@ -52,11 +52,12 @@ You have finished using the mcp tool. Now output text according to the following
 {jobs_desc}"""
         return prompt
     
-    def get_cover_letter(self, resume_data_dict: dict) -> str:
+    async def get_cover_letter(self, resume_data_dict: dict) -> str:
         cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
         cover_letter_text = ''
         if cover_letter_guidelines:
-            cover_letter_text= self.gemini_utils.get_response_from_gemini(prompt=cover_letter_guidelines, chat=self.resume_chat)         
+            cover_letter_text = await self.gemini_utils.get_response_from_gemini(prompt=cover_letter_guidelines, 
+                                                                                 chat=self.resume_chat)         
         return cover_letter_text
     
     def save_resume_files(self, output_file_path, resume_data_dict, resume_text, cover_letter_text):

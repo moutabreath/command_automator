@@ -1,4 +1,5 @@
 import logging
+import mimetypes
 import os
 from google.genai.chats import Chat
 
@@ -12,7 +13,7 @@ class JobSearchService:
         self.job_search_chat: Chat = self.gemini_utils.init_chat()
         
 
-    def get_unified_jobs(self):
+    async def get_unified_jobs(self):
         try:
             # Upload each JSON file to Gemini
             file_paths = self.get_job_files_path()         
@@ -23,7 +24,9 @@ class JobSearchService:
             prompt = self.phrase_prompt()
 
             # Send to Gemini with file attachments
-            return self.gemini_utils.get_response_from_gemini(chat=self.job_search_chat, prompt=prompt, file_paths=file_paths)
+            return await self.gemini_utils.get_response_from_gemini(chat=self.job_search_chat,
+                                                                     prompt=prompt,
+                                                                     file_paths=file_paths)
     
         except Exception as e:
             logging.error(f"Error processing unified jobs: {e}", exc_info=True)

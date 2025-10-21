@@ -68,22 +68,3 @@ async def read_text_file(file_path: str | Path) -> str:
     except IOError as ioError:
         logging.error(f"Error reading file: {file_path} - {ioError}", exc_info=True)  
     return content
-
-def get_mime_type(file_path: str) -> str:
-    """Detect MIME type based on file extension."""
-    ext = os.path.splitext(file_path)[1].lower()
-    mime_types = {
-        '.txt': 'text/plain',
-        '.json': 'application/json',
-        '.pdf': 'application/pdf',
-        '.png': 'image/png',
-        '.jpg': 'image/jpeg',
-        '.jpeg': 'image/jpeg',
-        '.gif': 'image/gif',
-        '.doc': 'application/msword',
-        '.docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
-    }
-    mime_type, _ = mimetypes.guess_type(file_path)
-    if not mime_type:
-        return mime_types.get(ext, 'application/octet-stream')
-    return mime_type  

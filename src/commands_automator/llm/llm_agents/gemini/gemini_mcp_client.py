@@ -165,7 +165,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
         """
         try:
             if not await self.is_mcp_server_ready():
-                return self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                return await self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
 
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
 
@@ -216,17 +216,17 @@ If no tool should be selected, respond to the query directly. Query: {query}
             tool_result = response.content[0].text
             logging.debug(f"Tool response received ({len(tool_result)} characters)")
 
-            return self.use_tool_result(selected_tool, tool_result, output_file_path)
+            return await self.use_tool_result(selected_tool, tool_result, output_file_path)
             
         except Exception as e:
             logging.error(f"Error using tool: {e}", exc_info=True)
             return "Sorry, I couldn't execute tool."
     
-    def use_tool_result(self, selected_tool, tool_result, output_file_path):
+    async def use_tool_result(self, selected_tool, tool_result, output_file_path):
         if selected_tool == 'get_resume_files':
-            return self.resume_refiner_service.refine_resume(tool_result, output_file_path)
+            return await self.resume_refiner_service.refine_resume(tool_result, output_file_path)
         if selected_tool == 'search_jobs_from_the_internet':
-            return self.job_search_service.get_unified_jobs()
+            return await self.job_search_service.get_unified_jobs()
         return tool_result  
             
 
