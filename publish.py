@@ -3,7 +3,17 @@ import shutil
 from datetime import datetime
 
 def copy_to_deploy():
-    # Source and destination paths
+    """
+    Create a timestamped deployment directory and copy application files.
+    
+    Creates a directory at ./deploy/commands_automator_api_<timestamp>/ and copies
+    the executable, README, and required resource folders. Prints warnings for
+    missing files/folders but continues execution.
+    
+    Raises:
+        Exception: Re-raises any exception encountered during file operations.
+    """
+    # Source and destination paths    # Source and destination paths
     source_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory
     deploy_dir = os.path.join(source_dir, 'deploy')
     
