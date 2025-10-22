@@ -195,8 +195,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
                         output_file_path,
                     )
                 else:
-                    return self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-
+                    return await self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return "An error occurred while processing your request. Please try again."
@@ -210,7 +209,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
                 raise Exception(f"Tool execution failed")
             if response.isError:
                 logging.error(f"Tool execution failed: {response.error}")
-                error_msg = response.content[0].text if response and response.content else "Unknown error"
+                error_msg = response.content[0].text if response and response.content and len(response.content) > 0  else "Unknown error"
                 raise Exception(f"Tool execution failed: {error_msg}")
 
             tool_result = response.content[0].text

@@ -25,15 +25,14 @@ class LinkedInJobScraper(SharedService):
         """Build LinkedIn job search URL with parameters
     
         Args:
-            keywords: Search keywords
+            job_title: Job title or search keywords
             location: Job location
             job_type: Job type - F (full-time), P (part-time), C (contract), etc.
             experience_level: Experience level - 1 (internship), 2 (entry), 3 (associate), etc.
             remote: Whether to filter for remote jobs
         """
         if not job_title:
-            raise ValueError("Keywords cannot be empty")
-        
+            raise ValueError("job_title cannot be empty")        
         # Validate job_type if provided
         valid_job_types = ['F', 'P', 'C', 'T', 'I', 'V', 'O']
         if job_type and job_type not in valid_job_types:
@@ -97,10 +96,9 @@ class LinkedInJobScraper(SharedService):
     
     def parse_job_card(self, card) -> Optional[Job]:
         """Parse individual job card to extract job information"""
+        # Create a dictionary to collect all fields first
+        job_data = {}
         try:
-            # Create a dictionary to collect all fields first
-            job_data = {}
-            
             # Extract job title and link
             title_element = card.find('h3', class_='base-search-card__title')
             job_data['title'] = title_element.text.strip() if title_element else "N/A"

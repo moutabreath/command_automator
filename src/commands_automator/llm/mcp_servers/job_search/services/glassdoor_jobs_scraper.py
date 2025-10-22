@@ -134,14 +134,7 @@ class GlassdoorJobsScraper(SharedService):
         
         except Exception as e:
             logging.error(f"Error extracting job details: {e}", exc_info=True)
-            return Job(
-                title="N/A",
-                company="N/A",
-                location="N/A",
-                description="N/A",
-                link="N/A",
-                posted_date=None
-            )
+            return None
         
     def validate_job(self, job_data, forbidden_titles):
         """Validate job data against forbidden titles"""
