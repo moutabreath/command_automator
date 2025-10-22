@@ -26,9 +26,11 @@ class ServiceNames:
     LINKEDIN_SCRAPER = 'linkedin_job_scraper'
     GLASSDOOR_SCRAPER = 'glassdoor_jobs_scraper'
     JOB_SAVER = 'job_saver'
+from typing import TypeVar
 
+T = TypeVar('T', ResumeLoaderService, LinkedInJobScraper, GlassdoorJobsScraper, JobsSaver)
 
-def get_shared_service(shared_service_name) -> SharedService:
+def get_shared_service(shared_service_name: str) -> T:
     """Get a service from the shared services dict"""
     global _shared_services
     if _shared_services is None:
@@ -166,7 +168,8 @@ async def _run_linkedin_scraper(job_title: str,
         await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
         logging.info(f"Getting detailed description for: {jobs[0].title}")
         description = linkedin_scraper.get_job_description(jobs[0].link)
-        logging.debug(f"Description: {description[:300]}...")
+        if description:
+            logging.debug(f"Description: {description[:300]}...")
     else:
         logging.warning("No jobs found from LinkedIn scraper")
    
@@ -215,7 +218,7 @@ class MCPRunner:
         self.mcp_process = None
 
     def init_mcp(self):
-        """Initialize and start the MCP server process"""
+        """Initialize services in the child process"""
         try:
             logging.info("Initializing MCP process...")
             # Start the MCP process

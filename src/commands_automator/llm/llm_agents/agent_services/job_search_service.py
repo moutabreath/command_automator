@@ -25,6 +25,7 @@ class JobSearchService:
 
             # Send to Gemini with file attachments
             return await self.gemini_utils.get_response_from_gemini(chat=self.job_search_chat,
+                                                                    response_mime_type=mimetypes.types_map['.json'],
                                                                      prompt=prompt,
                                                                      file_paths=file_paths)
     
