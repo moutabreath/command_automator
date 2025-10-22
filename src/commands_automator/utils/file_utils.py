@@ -14,18 +14,20 @@ BASE_DIR = Path(__file__).resolve().parents[2]
 JOB_FILE_DIR = os.path.join(BASE_DIR, "llm", "mcp_servers", "job_search", "results")
 
 
+from pathlib import Path
+
 async def save_file(file_path: str, content: str) -> bool:
     try:
         # Ensure the directory exists
-        dir_path = os.path.dirname(file_path)
+        dir_path = Path(file_path).parent
         if dir_path:
-            os.makedirs(dir_path, exist_ok=True)
-        async with aiofiles.open(file_path, "w") as f:
+            dir_path.mkdir(parents=True, exist_ok=True)
+        async with aiofiles.open(file_path, "w", encoding="utf-8") as f:
             await f.write(content)
         return True
-    except Exception as e:
+    except (OSError, IOError) as e:
         logging.error(f"Error saving file {file_path}: {e}", exc_info=True)
-        return False
+        return False    
     
 def serialize_to_json(text) -> str:
     try:
