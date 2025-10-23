@@ -26,10 +26,8 @@ class SmartMCPClient:
         self.api_key = os.environ.get("GOOGLE_API_KEY")
         self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
         self.gemini_utils: GeminiAgent = GeminiAgent(self.gemini_client)
-       
         self.resume_chat = self.gemini_utils.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_utils)
-
         self.job_search_service = JobSearchService(self.gemini_utils)    
 
     async def decide_tool_usage(self, query, available_tools, session: ClientSession):

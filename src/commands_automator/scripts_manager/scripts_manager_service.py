@@ -78,7 +78,9 @@ class ScriptsManagerService:
             args.append('cmd')
             args.append('/c')
         args.append(script_path)
-        args.append(additional_text)
+
+        if additional_text:
+            args.append(additional_text)
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
                 return None
@@ -114,9 +116,13 @@ class ScriptsManagerService:
 
     @staticmethod
     def run_app(run_version_command: str):
+        """Run a command. Accepts either a list or string (requires shell=True for strings)."""
         si = subprocess.STARTUPINFO()
         si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
-        subprocess.run(run_version_command, startupinfo=si)
+        # Ensure we're using the safe list form
+        if isinstance(run_version_command, str):
+            logging.warning("run_app received string; consider passing list for safety")
+        subprocess.run(run_version_command, startupinfo=si, shell=False)
 
 
     def get_string_from_thread_result(self, result, err):
