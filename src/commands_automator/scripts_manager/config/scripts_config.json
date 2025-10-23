@@ -37,8 +37,8 @@
       "free_text_required": true
     },
     {
-      "script_name": "annonymize.py",
-      "short_description": "Annonymize",
+      "script_name": "anonymize.py",
+      "short_description": "Anonymize",    
       "detailed_description": "Given a file and a list of tokens, replace the value after the tokens with 'dummy'",
       "free_text_required": true
     },
