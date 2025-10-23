@@ -6,8 +6,10 @@ import subprocess
 
 import chardet
 
+from commands_automator.utils.file_utils import SCRIPTS_CONFIG_DIR, SCRIPTS_DIR
 
-class CommandsAutomatorService:
+
+class ScriptsManagerService:
     def __init__(self):
         self.names_to_scripts = {}
         self.scripts_attributes = {}
@@ -16,8 +18,7 @@ class CommandsAutomatorService:
 
     def load_scripts_config(self):  
         try:  
-            config_path = os.path.join('src/commands_automator', 'config', 'scripts_config.json')  
-            with open(config_path) as f:  
+            with open(f'{SCRIPTS_CONFIG_DIR}') as f:  
                 data = json.load(f)  
         except IOError:  
             logging.error("Error loading scripts_config.json", exc_info=True)  
@@ -34,14 +35,10 @@ class CommandsAutomatorService:
 
     def load_scripts(self):
         executables = []
-        current_dir = os.getcwd()
-        logging.debug(current_dir)
-        scripts_dir = os.path.join(os.getcwd(), 'src', 'commands_automator','user_scripts')
-        logging.debug(scripts_dir)
-        files = glob.glob(f'{scripts_dir}/**/*.py', recursive=True)
-        files2 = glob.glob(f'{scripts_dir}/**/*.sh', recursive=True)
-        files3 = glob.glob(f'{scripts_dir}/**/*.cmd', recursive=True)
-        files4 = glob.glob(f'{scripts_dir}/**/*.exe', recursive=True)
+        files = glob.glob(f'{SCRIPTS_DIR}/**/*.py', recursive=True)
+        files2 = glob.glob(f'{SCRIPTS_DIR}/**/*.sh', recursive=True)
+        files3 = glob.glob(f'{SCRIPTS_DIR}/**/*.cmd', recursive=True)
+        files4 = glob.glob(f'{SCRIPTS_DIR}/**/*.exe', recursive=True)
         files.extend(files2)
         files.extend(files3)
         files.extend(files4)

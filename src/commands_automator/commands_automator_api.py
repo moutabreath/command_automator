@@ -5,17 +5,18 @@ import sys
 import base64
 
 from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
-from commands_automator.services.commands_automator_service import CommandsAutomatorService
+from commands_automator.scripts_manager.scripts_manager_service import ScriptsManagerService
 from commands_automator.services.configuration_service import ConfigurationService
-from commands_automator.services.llm_service import LLMService
+from commands_automator.llm.llm_service import LLMService
+from commands_automator.utils.file_utils import LLM_CONFIG_DIR, SCRIPTS_MANAGER_CONFIG_DIR
 from commands_automator.utils.logger_config import setup_logging
 
 class CommandsAutomatorApi:
     def __init__(self):
-        self.commands_automator_service = CommandsAutomatorService()
+        self.commands_automator_service = ScriptsManagerService()
         self.llm_sevice: LLMService = LLMService()
-        self.commands_automator_config = ConfigurationService("src/commands_automator/config/commands-executor-config.json")
-        self.llm_config = ConfigurationService('src/commands_automator/llm/config/llm-config.json')
+        self.commands_automator_config = ConfigurationService(SCRIPTS_MANAGER_CONFIG_DIR)
+        self.llm_config = ConfigurationService(LLM_CONFIG_DIR)
 
     def load_scripts(self):
         return self.commands_automator_service.load_scripts()

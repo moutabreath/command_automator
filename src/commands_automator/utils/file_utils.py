@@ -1,20 +1,27 @@
 import json
 import logging
-import mimetypes
 import os
 from pathlib import Path
 from typing import List, TypeVar
 import aiofiles
 from pydantic import BaseModel
 
+# Get the project root directory
+PROJECT_ROOT = Path(__file__).resolve().parents[3]  # Go up 3 levels from utils/file_utils.py
+
+# Define base directories using proper path joining
+BASE_DIR = PROJECT_ROOT / 'src' / 'commands_automator'
+SCRIPTS_MANAGER_BASE_DIR = BASE_DIR / 'scripts_manager'
+LLM_BASE_DIR = BASE_DIR / 'llm'
+
+# Define specific directories
+SCRIPTS_MANAGER_CONFIG_DIR = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-executor-config.json'
+SCRIPTS_CONFIG_DIR = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
+SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
+
+LLM_CONFIG_DIR = LLM_BASE_DIR / 'config' / 'llm-config.json'
+
 T = TypeVar('T', bound=BaseModel)
-
-# Define base paths
-BASE_DIR = Path(__file__).resolve().parents[2]
-JOB_FILE_DIR = os.path.join(BASE_DIR, "llm", "mcp_servers", "job_search", "results")
-
-
-from pathlib import Path
 
 async def save_file(file_path: str, content: str) -> bool:
     try:
