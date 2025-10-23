@@ -16,5 +16,9 @@ if not exist "%source%" (
 if exist "%source%\*" (
     robocopy "%source%" "%destination%" /S /E /MT:16 /NFL /NDL /NJH /NJS
 ) else (
-    xcopy "%source%" "%destination%"
+    xcopy "%source%" "%destination%" /Y /I
+    if errorlevel 1 (
+        echo Error: XCopy failed
+            exit /b 1
+        )
 )

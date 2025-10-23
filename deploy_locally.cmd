@@ -10,7 +10,7 @@ taskkill /IM commands_automator_api.exe /F >nul 2>&1
     -i src/commands_automator/ui/resources/Commands_Automator.ico ^
     -F ^
     --add-data "src/commands_automator/ui;ui" ^
-    --add-data "src/commands_automator/config;config" ^
+    --add-data "src/commands_automator/scripts_manager/config;config" ^
     --add-data "src/commands_automator/llm;llm" ^
     --add-data "src/commands_automator/llm/mcp_servers/job_applicant_mcp/resources;llm/mcp_servers/job_applicant_mcp/resources" ^
     --hidden-import mcp.server.fastmcp ^  
