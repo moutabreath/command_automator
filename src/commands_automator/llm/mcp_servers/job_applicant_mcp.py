@@ -252,7 +252,7 @@ class MCPRunner:
             # Initialize logging in the child process
             setup_logging()
             
-            # Initialize services in the child process)
+            # Initialize services in the child process
             _shared_services = init_shared_services()
             
             # Set server configuration

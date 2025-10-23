@@ -12,7 +12,9 @@ set "PORT=%~1"
 
 REM Validate numeric port (1-65535)
 echo %PORT%| findstr /R "^[0-9][0-9]*$" >nul || (echo Invalid port: %PORT% & exit /b 2)
-set /a PORT_NUM=%PORT% >nul 2>&1 || (echo Invalid port: %PORT% & exit /b 2)
+set /a PORT_NUM=%PORT% 2>nul
+if !PORT_NUM! LSS 1 (echo Invalid port: %PORT% must be between 1-65535 & exit /b 2)
+if !PORT_NUM! GTR 65535 (echo Invalid port: %PORT% must be between 1-65535 & exit /b 2)
 
 for /f "tokens=5" %%i in ('netstat -ano -p TCP ^| findstr /R /C:":%PORT% .*LISTENING"') do (
     set "PID=%%i"

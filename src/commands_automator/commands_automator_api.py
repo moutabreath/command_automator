@@ -8,14 +8,14 @@ from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
 from commands_automator.scripts_manager.scripts_manager_service import ScriptsManagerService
 from commands_automator.services.configuration_service import ConfigurationService
 from commands_automator.llm.llm_service import LLMService
-from commands_automator.utils.file_utils import LLM_CONFIG_DIR, SCRIPTS_MANAGER_CONFIG_DIR
+from commands_automator.utils.file_utils import LLM_CONFIG_DIR, SCRIPTS_MANAGER_CONFIG_FILE
 from commands_automator.utils.logger_config import setup_logging
 
 class CommandsAutomatorApi:
     def __init__(self):
         self.commands_automator_service = ScriptsManagerService()
-        self.llm_sevice: LLMService = LLMService()
-        self.commands_automator_config = ConfigurationService(SCRIPTS_MANAGER_CONFIG_DIR)
+        self.llm_service: LLMService = LLMService()
+        self.commands_automator_config = ConfigurationService(SCRIPTS_MANAGER_CONFIG_FILE)
         self.llm_config = ConfigurationService(LLM_CONFIG_DIR)
 
     def load_scripts(self):
@@ -50,7 +50,7 @@ class CommandsAutomatorApi:
                 decoded_data = base64.b64decode(encoded)
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
-        return self.run_async_method(self.llm_sevice.chat_with_bot, prompt, decoded_data, output_file_path)
+        return self.run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path)
 
     def load_llm_configuration(self):
         return self.run_async_method(self.llm_config.load_configuration_async)

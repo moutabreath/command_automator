@@ -30,7 +30,7 @@ class GlassdoorJobsScraper(SharedService):
             with open(config_path, 'r') as f:
                 self.selectors = json.load(f)
         except Exception as e:
-            raise Exception(f"Failed to load selectors configuration: {e}")
+            raise Exception(f"Failed to load selectors configuration: {e}") from e
         
     async def setup_browser(self):
         """Initialize browser with stealth settings"""
@@ -109,7 +109,7 @@ class GlassdoorJobsScraper(SharedService):
         except Exception as e:
             logging.error(f"Popup handling error: {e}", exc_info=True)
     
-    async def _extract_job_details(self, job_element, forbidden_titles: list[str]) -> Job:
+    async def _extract_job_details(self, job_element, forbidden_titles: list[str]) -> Job | None:
         """Extract details from a single job listing"""
         try:
             job_data = {}
@@ -138,6 +138,10 @@ class GlassdoorJobsScraper(SharedService):
         
     def validate_job(self, job_data, forbidden_titles):
         """Validate job data against forbidden titles"""
+        required_keys = ['title', 'company', 'location', 'description', 'url', 'posted_date']
+        if not all(key in job_data for key in required_keys):
+             logging.warning(f"Missing required keys in job_data: {set(required_keys) - set(job_data.keys())}")
+             return None
         if any(title.lower() in job_data['title'].lower() for title in forbidden_titles):
             return None
         return Job(
@@ -186,7 +190,8 @@ class GlassdoorJobsScraper(SharedService):
 
 
     async def _scrape_job_page(self, url: str, forbidden_titles: list[str], max_jobs: int) -> List[Job]:
-        """Scrape jobs from a single page"""
+        """Scrape jobs from a single page"""        
+        jobs = []
         try:
             logging.debug(f"Scraping: {url}")
             await self.page.goto(url, wait_until='domcontentloaded', timeout=30000)
@@ -212,7 +217,6 @@ class GlassdoorJobsScraper(SharedService):
             
             logging.debug(f"Found {job_count} job listings on this page")
             
-            jobs = []
             for i in range(min(job_count, max_jobs)):
                 try:
                     job_element = job_elements.nth(i)
@@ -244,10 +248,10 @@ class GlassdoorJobsScraper(SharedService):
         try:
             jobs = []
             
-            for page in range(1, max_pages + 1):
-                logging.info(f"=== Scraping Page {page} ===")
+            for page_num in range(1, max_pages + 1):
+                logging.info(f"=== Scraping Page {page_num} ===")
                 
-                url = self._build_search_url(job_title, location, page)
+                url = self._build_search_url(job_title, location, page_num)
                 page_jobs = await self._scrape_job_page(url, forbidden_titles, max_jobs_per_page)
                 jobs.extend(page_jobs)
                 
@@ -266,8 +270,7 @@ class GlassdoorJobsScraper(SharedService):
         
         finally:
             await self.cleanup()
-            return jobs
-    
+            return jobs    
  
     async def run_scraper(self, job_title: str, location: str, forbidden_titles: list[str], 
                           max_pages: int, max_jobs_per_page: int) -> List[Job]:

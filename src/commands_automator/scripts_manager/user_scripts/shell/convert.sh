@@ -7,5 +7,4 @@ path=$1
 path=$path  | perl -pe 's/\\/\\\\/g'
 
 
-python ../utils/convertWin2Unix.py  $path
-# echo $path
+python ../utils/convertWin2Unix.py "$path"# echo $path

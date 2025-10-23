@@ -20,6 +20,7 @@ def run_remove_parenthesis(text):
     x = x.replace("}", "")
     x = x.replace("[", "")
     x = x.replace("]", "")
+    return x
 
 def run_replace_string():
     if len(sys.argv) <= 1:
@@ -27,4 +28,5 @@ def run_replace_string():
         sys.exit(1)
     replace_and_remove_parenthesis(sys.argv[1])
 
-run_replace_string()
+if __name__ == "__main__":
+    run_replace_string()

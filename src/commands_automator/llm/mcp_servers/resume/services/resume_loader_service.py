@@ -24,8 +24,11 @@ class ResumeLoaderService(SharedService):
     async def get_main_part_guide_lines(self) -> str:
         file_path: Path = self.ADDITIONAL_FILE_PATH_PREFIX / 'guidelines.txt'     
         file_text: str = await file_utils.read_text_file(file_path)      
+        if not file_text:
+            logging.error(f"No guidelines file found at {file_path}")
+            return ""
         return file_text
-
+    
     async def get_resume_and_applicant_name(self) -> Tuple[str, str]:
         resume_path, applicant_name = self.find_resume_file()
         if not resume_path or not applicant_name:

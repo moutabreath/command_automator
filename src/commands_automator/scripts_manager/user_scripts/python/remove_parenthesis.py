@@ -12,6 +12,8 @@ def run_replace_string():
     x = x.replace("}", "")
     x = x.replace("[", "")
     x = x.replace("]", "")
+    x = x.replace("(", "")
+    x = x.replace(")", "")   
     print(x)
 
 

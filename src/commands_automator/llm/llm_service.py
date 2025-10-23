@@ -1,3 +1,4 @@
+import logging
 from commands_automator.llm.llm_agents.gemini.gemini_mcp_client import SmartMCPClient
 
 class LLMService():
@@ -32,5 +33,5 @@ class LLMService():
             )
         except Exception as e:
             # Log the error and re-raise with context
-            print(f"Error processing LLM query: {e}", exc_info=True)
+            logging.error(f"Error processing LLM query: {e}", exc_info=True)
             raise

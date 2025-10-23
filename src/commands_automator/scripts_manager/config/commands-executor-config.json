@@ -1,5 +1,5 @@
 {
-    "outpuFilePath": "C:\\Users\\tdruc\\OneDrive\\Documents\\Resume",
+    "outputFilePath": "C:\\Users\\tdruc\\OneDrive\\Documents\\Resume",
     "saveToFiles": true,
     "selected_script": "Replace parenthesis",
     "additional_text": "     * add([4,5])\n     * add([9,15])",

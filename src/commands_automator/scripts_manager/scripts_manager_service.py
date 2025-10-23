@@ -6,7 +6,7 @@ import subprocess
 
 import chardet
 
-from commands_automator.utils.file_utils import SCRIPTS_CONFIG_DIR, SCRIPTS_DIR
+from commands_automator.utils.file_utils import SCRIPTS_CONFIG_FILE, SCRIPTS_DIR
 
 
 class ScriptsManagerService:
@@ -18,12 +18,15 @@ class ScriptsManagerService:
 
     def load_scripts_config(self):  
         try:  
-            with open(f'{SCRIPTS_CONFIG_DIR}') as f:  
+            with open(f'{SCRIPTS_CONFIG_FILE}') as f:  
                 data = json.load(f)  
         except IOError:  
             logging.error("Error loading scripts_config.json", exc_info=True)  
             return  
-        scripts_config = data['scripts']  
+        scripts_config = data.get('scripts', [])
+        if not scripts_config:
+            logging.warning("No scripts found in scripts_config.json")
+            return
         for script in scripts_config:  
             script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_description']  
             if script_name == "" or tag_name == "" or script_desc == "":  
@@ -67,11 +70,11 @@ class ScriptsManagerService:
     def get_arguments_for_script(self, script_path, additional_text, flags):
         script_name = os.path.basename(script_path)
         args = []
-        if script_name.endswith('py'):
+        if script_name.endswith('.py'):
             args.append('python')
-        if script_name.endswith('sh'):
+        if script_name.endswith('.sh'):
             args.append('bash')
-        if script_name.endswith('cmd'):
+        if script_name.endswith('.cmd'):
             args.append('cmd')
             args.append('/c')
         args.append(script_path)
@@ -82,6 +85,7 @@ class ScriptsManagerService:
             free_text_args = flags.split(" ")
             split_arr = list(filter(None, ' '.join(free_text_args).split()))
             args.extend(split_arr)
+            
         other_script_name_as_input = self.get_other_script_name_as_input(script_name)
         if other_script_name_as_input is not None:
             cleaners_path = os.path.join(os.getcwd(), 'cleaners')
@@ -138,7 +142,10 @@ class ScriptsManagerService:
 
 
     def should_use_free_text(self, script_name):
-        return self.scripts_attributes[script_name]['free_text_required']
+        if script_name in self.scripts_attributes:
+            return self.scripts_attributes[script_name].get('free_text_required', False)
+        return False
+            
     
     def get_other_script_name_as_input(self, script_name):
         if 'other_script_name_as_input' in self.scripts_attributes[script_name]:
@@ -163,9 +170,9 @@ class ScriptsManagerService:
 
     def run_internal(self, args, venv):
         logging.log(logging.DEBUG, "entered")
-        self.proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=venv)
+        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=venv)
         logging.log(logging.DEBUG, "popen done")
-        output, err = self.proc.communicate()
+        output, err = proc.communicate()
         logging.log(logging.DEBUG, "proc communicate done")
         return output, err
 

@@ -15,8 +15,8 @@ SCRIPTS_MANAGER_BASE_DIR = BASE_DIR / 'scripts_manager'
 LLM_BASE_DIR = BASE_DIR / 'llm'
 
 # Define specific directories
-SCRIPTS_MANAGER_CONFIG_DIR = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-executor-config.json'
-SCRIPTS_CONFIG_DIR = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
+SCRIPTS_MANAGER_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-executor-config.json'
+SCRIPTS_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
 SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
 
 LLM_CONFIG_DIR = LLM_BASE_DIR / 'config' / 'llm-config.json'
