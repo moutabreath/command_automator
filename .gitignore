@@ -21,3 +21,4 @@ src/commandautomator.egg-info/
 src/commands_automator/llm/mcp_servers/job_search/results/*
 src/commands_automator/llm/mcp_servers/resume/resources/additional_files/job_description.txt
 src/commands_automator/scripts_manager/config/commands-executor-config.json
+src/commands_automator/llm/config/llm-config.json
