@@ -3,18 +3,17 @@ import json
 import logging
 import os
 import subprocess
-
 import chardet
+from typing import List, Dict, Optional
 
 from commands_automator.utils.file_utils import SCRIPTS_CONFIG_FILE, SCRIPTS_DIR
 
 
 class ScriptsManagerService:
     def __init__(self):
-        self.names_to_scripts = {}
-        self.scripts_attributes = {}
+        self.names_to_scripts: Dict[str, str] = {}
+        self.scripts_attributes: Dict[str, Dict] = {}
         self.load_scripts_config()
-
 
     def load_scripts_config(self):  
         try:  
@@ -36,23 +35,36 @@ class ScriptsManagerService:
     def get_name_to_scripts(self):
         return self.names_to_scripts
 
-    def load_scripts(self):
+    def load_scripts(self) -> List[str]:
+        """
+        Load all executable scripts from the scripts directory.
+        Returns:
+            List[str]: List of executable script names
+        """
         executables = []
-        files = glob.glob(f'{SCRIPTS_DIR}/**/*.py', recursive=True)
-        files2 = glob.glob(f'{SCRIPTS_DIR}/**/*.sh', recursive=True)
-        files3 = glob.glob(f'{SCRIPTS_DIR}/**/*.cmd', recursive=True)
-        files4 = glob.glob(f'{SCRIPTS_DIR}/**/*.exe', recursive=True)
-        files.extend(files2)
-        files.extend(files3)
-        files.extend(files4)
+        self.names_to_scripts.clear()
+        
+        # Get all script files
+        extensions = ['*.py', '*.sh', '*.cmd', '*.exe']
+        files = []
+        try:            
+            for ext in extensions:
+                files.extend(glob.glob(f'{SCRIPTS_DIR}/**/{ext}', recursive=True))
+
+        except Exception as e:
+            logging.error(f"Error loading scripts: {e}", exc_info=True)
+     
+        # Process each file
         for file in files:
             file_name = self.get_name_from_script(file)
             if file_name is None:
-                file_name = file
+                file_name = os.path.basename(file)
             self.names_to_scripts[file_name] = file
             executables.append(file_name)
-        executables = sorted(executables, key=lambda x: x.lower())
 
+        # Sort alphabetically, case-insensitive
+        executables.sort(key=str.lower)
+        logging.debug(f"Loaded {len(executables)} scripts")
         return executables
 
     def get_script_attribute(self, file, attribute):

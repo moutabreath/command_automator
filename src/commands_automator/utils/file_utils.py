@@ -59,7 +59,7 @@ def serialize_objects(objects: List[T]) -> str:
     
 async def read_json_file(file_path: str) -> dict:
     try:
-        async with aiofiles.open(file_path, "r") as f:
+        async with aiofiles.open(file_path, "r", encoding='utf-8') as f:
             data = await f.read()
         return json.loads(data)
     except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:
@@ -70,7 +70,7 @@ async def read_text_file(file_path: str | Path) -> str:
     content: str = ""
     logging.info(f"Reading file: {file_path}")
     try:
-        async with aiofiles.open(file_path, 'r', encoding="utf8") as file:
+        async with aiofiles.open(file_path, 'r', encoding="utf-8") as file:
             content = await file.read()
     except UnicodeDecodeError as e:
         logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
