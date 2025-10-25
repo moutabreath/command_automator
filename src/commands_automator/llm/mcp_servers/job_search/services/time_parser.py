@@ -1,5 +1,6 @@
 from datetime import timedelta, date
 import logging
+import re
 
 def parse_time_expression(time_expr: str) -> date:
     """
@@ -14,19 +15,17 @@ def parse_time_expression(time_expr: str) -> date:
         time_expr = time_expr.strip().rstrip('+')
         
         # Extract number and unit
-        # Validate input has both number and unit
-        digits = ''.join(filter(str.isdigit, time_expr))
-        letters = ''.join(filter(str.isalpha, time_expr.lower()))
+        match = re.match(r'^(\d+)([a-z]+)$', time_expr.lower())
 
         today = date.today()
 
-        if not digits or not letters:
-            logging.warning(f"Invalid time expression '{time_expr}', missing number or unit")
-            return today
+        if not match:
+             logging.warning(f"Invalid time expression '{time_expr}', missing number or unit")
+             return today
 
         # Extract number and unit
-        number = int(digits)
-        unit = letters
+        number = int(match.group(1))
+        unit = match.group(2)
         # For hours and minutes, return today
         if unit in ['h', 'm']:
             return today
