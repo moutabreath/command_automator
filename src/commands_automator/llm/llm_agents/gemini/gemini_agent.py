@@ -20,7 +20,7 @@ class GeminiAgent:
         self.delete_all_files()
 
     def init_chat(self) -> Chat:
-        self.config = {
+        self.base_config = {
             "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
             "top_p": 0.95,       # Focus on high-probability words
             "top_k": 64,        # Consider top-k words for each step
@@ -28,8 +28,8 @@ class GeminiAgent:
             self.CONFIG_RESPONSE_MIME_TYPE: mimetypes.types_map['.json'],
         }
         chat = self.gemini_client.chats.create(
-            model= self.GEMINI_MODEL,
-            config=self.config,
+            model=self.GEMINI_MODEL,
+            config=self.base_config.copy(),
             history=[]
         )
 
@@ -42,11 +42,16 @@ class GeminiAgent:
                                  file_paths: list[str] = None,
                                  ) -> str:
 
-        self.config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
-        
+        self.base_config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
+        parts = [Part(text=prompt)]
+
         if file_paths:            
-            prompt = prompt + await self.get_json_files_content(file_paths)
-            parts = [Part(text=prompt)]
+            parts.extend(await self.get_json_files_content_as_parts(file_paths))
+            for part in parts:                
+                response = chat.send_message(message=part, config=self.base_config)
+            if response:
+                return response.text 
+            
         # Handle single image from base64
         elif base64_decoded:
             try:
@@ -56,8 +61,7 @@ class GeminiAgent:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
 
         try:
-            parts = [Part(text=prompt)]
-            response = chat.send_message(message=parts, config=self.config)
+            response = chat.send_message(message=parts, config=self.base_config)
             if response:
                 return response.text
 
@@ -65,12 +69,12 @@ class GeminiAgent:
             logging.error(f"Error using Gemini: {e}", exc_info=True)
             return f"Sorry, I couldn't process your request with Gemini: {str(e)}"    
 
-    async def get_json_files_content(self, file_paths: list[str]) -> str:
-        combined_content =""
+    async def get_json_files_content_as_parts(self, file_paths: list[str]) -> list[Part]:
+        parts = []
         for file_path in file_paths:
             content = await file_utils.read_text_file(file_path)
-            combined_content =  f"{combined_content}\n\n\n{content}"
-        return combined_content
+            parts.append(Part(text=content))
+        return parts
         
     
     def get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
