@@ -1,6 +1,9 @@
+from enum import Enum
 import io
+import json
 import logging
 import mimetypes
+import os
 from google import genai
 from google.genai.chats import Chat
 from google.genai.types import FileData
@@ -10,14 +13,27 @@ from PIL import Image
 
 from commands_automator.utils import file_utils
 
+
+class LLMResponseCode(Enum):
+    """Enumeration of possible Gemini API operation results"""
+    OK = 1
+    ERROR_USING_GEMINI_API = 2
+
+class LLMAgentResponse:
+    def __init__(self, text: str, code: LLMResponseCode):
+        self.text = text
+        self.code = code
+        
+
 class GeminiAgent:
     GEMINI_MODEL = "gemini-2.5-flash"
 
     CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"
 
-    def __init__(self, gemini_client: genai.Client):
-        self.gemini_client: genai.Client = gemini_client
-        self.delete_all_files()
+    def __init__(self):
+        self.api_key = os.environ.get("GOOGLE_API_KEY")
+        self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
+        self._delete_all_files()
 
     def init_chat(self) -> Chat:
         self.base_config = {
@@ -40,17 +56,19 @@ class GeminiAgent:
                                  response_mime_type: str = mimetypes.types_map['.txt'],
                                  base64_decoded: str = None,
                                  file_paths: list[str] = None,
-                                 ) -> str:
+                                 ) -> LLMAgentResponse:
 
         self.base_config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
         parts = [Part(text=prompt)]
 
         if file_paths:            
-            parts.extend(await self.get_json_files_content_as_parts(file_paths))
+            parts.extend(await self._get_json_files_content_as_parts(file_paths))
             for part in parts:                
                 response = chat.send_message(message=part, config=self.base_config)
             if response:
-                return response.text 
+                return LLMAgentResponse(response.text, LLMResponseCode.OK)
+            else:
+                return LLMAgentResponse(f"Couldn't get resut from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
             
         # Handle single image from base64
         elif base64_decoded:
@@ -61,36 +79,58 @@ class GeminiAgent:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
 
         try:
-            response = chat.send_message(message=parts, config=self.base_config)
-            if response:
-                return response.text
+            if (len(parts) > 0):
+                response = chat.send_message(message=parts, config=self.base_config)
+                if response:
+                    return LLMAgentResponse(response.text, LLMResponseCode.OK)
+                return LLMAgentResponse(f"Couldn't get resut from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
 
         except Exception as e:
             logging.error(f"Error using Gemini: {e}", exc_info=True)
-            return f"Sorry, I couldn't process your request with Gemini: {str(e)}"    
+            return LLMAgentResponse(f"Sorry, I couldn't process your request with Gemini", LLMResponseCode.ERROR_USING_GEMINI_API)
+        
+    def get_mcp_tool_json(self, prompt: str,
+                                 chat: Chat, available_tools):
+        self.base_config[self.CONFIG_RESPONSE_MIME_TYPE] =  mimetypes.types_map['.json']
+        try:
+            tool_response = chat.send_message(message=prompt, config=self.base_config)
+            decision = json.loads(tool_response.model_dump_json())
+            tools_text = decision.get('candidates')[0].get('content').get('parts')[0].get('text')
+            tools_json = json.loads(tools_text)
+            selected_tool = tools_json.get("tool")
+            args = tools_json.get("args", {})
+            if selected_tool and selected_tool in available_tools:
+                logging.debug(f"Gemini decided to use tool: {selected_tool}")
+                return selected_tool, args
+        except Exception as ex:
+            logging.error(f"Error using Gemini", ex, exc_info=True)
+            return {}, {}
+        
 
-    async def get_json_files_content_as_parts(self, file_paths: list[str]) -> list[Part]:
+    async def _get_json_files_content_as_parts(self, file_paths: list[str]) -> list[Part]:
         parts = []
         for file_path in file_paths:
             content = await file_utils.read_text_file(file_path)
-            parts.append(Part(text=content))
+            if not (content == ""):
+                parts.append(Part(text=content))
         return parts
         
     
-    def get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
+    def _get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
         parts = []
         # Upload files
         for file_path in file_paths:            
-            file = self.upload_large_file_to_google_cloud(file_path)            
+            file = self._upload_large_file_to_google_cloud(file_path)            
             if file:
-                file_data = self.get_file_data_from_uploaded_files(file, file_path)
-                parts.append(Part(file_data=file_data))
+                file_data = self._get_file_data_from_uploaded_files(file, file_path)
+                if file_data:
+                    parts.append(Part(file_data=file_data))
             else:
                 logging.warning(f"Skipping file that failed to upload: {file_path}")        
 
         return parts      
 
-    def upload_large_file_to_google_cloud(self, file_path: str) -> File:
+    def _upload_large_file_to_google_cloud(self, file_path: str) -> File:
         logging.debug(f"Uploading file: {file_path}")
         try:
             file: File = self.gemini_client.files.upload(file=file_path)       
@@ -100,7 +140,7 @@ class GeminiAgent:
             logging.error(f"Couldn't upload file {file_path}: {e}", exc_info=True)
             return None
             
-    def get_file_data_from_uploaded_files(self, file: File, file_path: str) -> FileData:        
+    def _get_file_data_from_uploaded_files(self, file: File, file_path: str) -> FileData:        
         mime_type = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
         if file and file.uri:            
             logging.debug(f"Uploaded file '{file.display_name}' as: {file.uri}")
@@ -109,7 +149,7 @@ class GeminiAgent:
         
         return None
     
-    def delete_all_files(self):
+    def _delete_all_files(self):
         """
         WARNING: Deletes ALL files from the Gemini client.
         Use with caution in shared environments.

@@ -4,6 +4,7 @@ import webview
 import sys
 import base64
 
+from commands_automator.llm.llm_agents.mcp_client import MCPResponseCode
 from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
 from commands_automator.scripts_manager.scripts_manager_service import ScriptsManagerService
 from commands_automator.services.configuration_service import ConfigurationService
@@ -50,7 +51,11 @@ class CommandsAutomatorApi:
                 decoded_data = base64.b64decode(encoded)
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
-        return self.run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path)
+        result = self.run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path)
+
+        if result.code == MCPResponseCode.OK:
+            return result.text
+        return "error"
 
     def load_llm_configuration(self):
         return self.run_async_method(self.llm_config.load_configuration_async)

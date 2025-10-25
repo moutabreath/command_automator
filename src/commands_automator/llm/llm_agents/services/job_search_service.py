@@ -3,14 +3,15 @@ import mimetypes
 import os
 from google.genai.chats import Chat
 
-from commands_automator.llm.llm_agents.gemini.gemini_agent import GeminiAgent
+from commands_automator.llm.gemini.gemini_agent import GeminiAgent, LLMResponseCode
+from commands_automator.llm.llm_agents.mcp_client import MCPResponse, MCPResponseCode
 from commands_automator.utils import file_utils
 
 class JobSearchService:
 
     def __init__(self, gemini_utils: GeminiAgent):
-        self.gemini_utils: GeminiAgent = gemini_utils       
-        self.job_search_chat: Chat = self.gemini_utils.init_chat()
+        self.gemini_agent: GeminiAgent = gemini_utils       
+        self.job_search_chat: Chat = self.gemini_agent.init_chat()
         
 
     async def get_unified_jobs(self):
@@ -24,14 +25,17 @@ class JobSearchService:
             prompt = self.phrase_prompt()
 
             # Send to Gemini with file attachments
-            return await self.gemini_utils.get_response_from_gemini(chat=self.job_search_chat,
+            respsonse = await self.gemini_agent.get_response_from_gemini(chat=self.job_search_chat,
                                                                     response_mime_type=mimetypes.types_map['.json'],
                                                                      prompt=prompt,
                                                                      file_paths=file_paths)
+            if respsonse.code == LLMResponseCode.OK:
+                return MCPResponse(respsonse.text, MCPResponseCode.OK)
+            return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
         except Exception as e:
-            logging.error(f"Error processing unified jobs: {e}", exc_info=True)
-            return "Sorry, I couldn't process the job listings."
+            logging.error(f"Error processing unified jobs",e, exc_info=True)
+            return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
     def phrase_prompt(self) -> str:
         """Build the prompt for Gemini to unify and filter job listings.

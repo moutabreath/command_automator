@@ -1,38 +1,32 @@
-import logging
-import os
+from enum import Enum
+import mimetypes
 import json
 import aiohttp
 import logging
-import os
-import json
-from google import genai
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
-from google.genai import types
-from google.genai.types import GenerateContentResponse
 
-from commands_automator.llm.llm_agents.agent_services.job_search_service import JobSearchService
-from commands_automator.llm.llm_agents.agent_services.resume_refiner_service import ResumeRefinerService
-from commands_automator.llm.llm_agents.agent_services.resume_saver_service import ResumeSaverService
-from commands_automator.llm.llm_agents.gemini.gemini_agent import GeminiAgent
+from commands_automator.llm.gemini.gemini_agent import GeminiAgent, LLMAgentResponse, LLMResponseCode
+from commands_automator.llm.llm_agents.mcp_response import MCPResponse, MCPResponseCode
+from commands_automator.llm.llm_agents.services.job_search_service import JobSearchService
+from commands_automator.llm.llm_agents.services.resume_refiner_service import ResumeRefinerService
 
 
 class SmartMCPClient:
-    """An intelligent client that uses Gemini to decide when to use MCP tools."""
+    """An intelligent client that uses LLM to decide when to use MCP tools."""
 
     def __init__(self, mcp_server_url=None, ):
         # MCP server settings
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
-        self.api_key = os.environ.get("GOOGLE_API_KEY")
-        self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
-        self.gemini_utils: GeminiAgent = GeminiAgent(self.gemini_client)
-        self.resume_chat = self.gemini_utils.init_chat()
-        self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_utils)
-        self.job_search_service = JobSearchService(self.gemini_utils)    
+       
+        self.gemini_agent: GeminiAgent = GeminiAgent()
+        self.resume_chat = self.gemini_agent.init_chat()
+        self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_agent)
+        self.job_search_service = JobSearchService(self.gemini_agent)    
 
-    async def decide_tool_usage(self, query, available_tools, session: ClientSession):
+    async def _decide_tool_usage(self, query, available_tools, session: ClientSession):
         """
-        Use Gemini to decide which tool to use based on the query
+        Use LLM to decide which tool to use based on the query
         
         Args:
             query: The user's question
@@ -48,34 +42,22 @@ class SmartMCPClient:
         # If query is just a simple greeting, don't use a tool
         if query.lower() in common_greetings:
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
-            return None, None
-            
-        if not self.api_key:
-            # More selective rule-based logic if no API key
-            relevant_terms = ['resume', 'ATS']
-            
-            # Only use the tool if query has specific relevant keywords
-            if 'get_resume_files' in available_tools and any(term in query.lower() for term in relevant_terms):
-                return 'get_resume_files', {}
-            return None, None
+            return None, None       
             
         try:
             messages = await self.init_messages(query, available_tools, session)
-            self.resume_chat._config["response_mime_type"] = "application/json"
-            generated_response: GenerateContentResponse = self.resume_chat.send_message(messages)
-            decision = json.loads(generated_response.model_dump_json())
-            tools_text = decision.get('candidates')[0].get('content').get('parts')[0].get('text')
-            tools_json = json.loads(tools_text)
-            selected_tool = tools_json.get("tool")
-            args = tools_json.get("args", {})
-            if selected_tool and selected_tool in available_tools:
+            
+            selected_tool, args = self.gemini_agent.get_mcp_tool_json(prompt=messages,
+                                                                chat=self.resume_chat,
+                                                                available_tools=available_tools)
+            if selected_tool != {}:
                 logging.debug(f"Gemini decided to use tool: {selected_tool}")
                 return selected_tool, args
             else:
-                logging.debug("Gemini decided not to use any tools")
+                logging.debug("LLM decided not to use any tools")
                 return None, None
         except Exception as e:
-            logging.error(f"Error using Gemini for tool decision {e}", exc_info=True)
+            logging.error(f"Error using LLM for tool decision {e}", exc_info=True)
             # Fall back to direct tool usage if error occurs
             if 'get_resume_files' in available_tools:
                 return 'get_resume_files', {}
@@ -150,7 +132,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
         query: str,
         base64_decoded: str,
         output_file_path: str,
-    ) -> str:
+    ) -> MCPResponse:
         """
         Process a user query using a combination of Gemini and MCP server.
 
@@ -163,8 +145,11 @@ If no tool should be selected, respond to the query directly. Query: {query}
         """
         try:
             if not await self.is_mcp_server_ready():
-                return await self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-
+                llm_response:LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                if (llm_response.code == MCPResponseCode.OK):
+                    return MCPResponse(llm_response.text, MCPResponseCode.OK)
+                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+                
             logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
 
             async with streamablehttp_client(self.mcp_server_url) as (
@@ -180,52 +165,52 @@ If no tool should be selected, respond to the query directly. Query: {query}
                 available_tools = await self.get_available_tools(session)
 
                 # Use Gemini to decide if a tool should be used
-                selected_tool, tool_args = await self.decide_tool_usage(
+                selected_tool, tool_args = await self._decide_tool_usage(
                     query, available_tools, session
                 )
 
                 # If Gemini decided to use a tool, call it
                 if selected_tool:
-                    return await self.use_tool(
+                    return await self._use_tool(
                         selected_tool,
                         tool_args,
                         session,
                         output_file_path,
                     )
                 else:
-                    return await self.gemini_utils.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                    agent_response = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                    return MCPResponse(agent_response.text, MCPResponseCode.OK) 
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
-            return "An error occurred while processing your request. Please try again."
+            return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_USING_TOOL)
         
-    async def use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
+    async def _use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         try:
             response = await session.call_tool(selected_tool, tool_args)
             
             if response is None:
-                raise Exception(f"Tool execution failed")
+                return MCPResponse(f"Tool execution failed returned no answer", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if response.isError:
                 logging.error(f"Tool execution failed: {response.error}")
                 error_msg = response.content[0].text if response and response.content and len(response.content) > 0  else "Unknown error"
-                raise Exception(f"Tool execution failed: {error_msg}")
+                return MCPResponse(f"Tool execution returned error: {error_msg}", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
 
             tool_result = response.content[0].text
             logging.debug(f"Tool response received ({len(tool_result)} characters)")
 
-            return await self.use_tool_result(selected_tool, tool_result, output_file_path)
+            return await self._use_tool_result(selected_tool, tool_result, output_file_path)
             
         except Exception as e:
             logging.error(f"Error using tool: {e}", exc_info=True)
-            return "Sorry, I couldn't execute tool."
+            return MCPResponse("Sorry, I couldn't execute tool.", MCPResponseCode.ERROR_COMMUNICATING_WITH_TOOL)
     
-    async def use_tool_result(self, selected_tool, tool_result, output_file_path):
+    async def _use_tool_result(self, selected_tool, tool_result, output_file_path) -> MCPResponse:
         if selected_tool == 'get_resume_files':
             return await self.resume_refiner_service.refine_resume(tool_result, output_file_path)
         if selected_tool == 'search_jobs_from_the_internet':
             return await self.job_search_service.get_unified_jobs()
-        return tool_result  
-            
+        return tool_result
 
 
     async def get_available_tools(self, session: ClientSession):
