@@ -140,8 +140,8 @@ class GlassdoorJobsScraper(SharedService):
         """Validate job data against forbidden titles"""
         required_keys = ['title', 'company', 'location', 'description', 'url', 'posted_date']
         if not all(key in job_data for key in required_keys):
-             logging.warning(f"Missing required keys in job_data: {set(required_keys) - set(job_data.keys())}")
-             return None
+            logging.warning(f"Missing required keys in job_data: {set(required_keys) - set(job_data.keys())}")
+            return None
         if any(title.lower() in job_data['title'].lower() for title in forbidden_titles):
             return None
         return Job(

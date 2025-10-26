@@ -19,8 +19,8 @@ SCRIPTS_MANAGER_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-ex
 SCRIPTS_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
 SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
 
-LLM_CONFIG_DIR = LLM_BASE_DIR / 'config' / 'llm-config.json'
-JOB_FILE_DIR = LLM_BASE_DIR /'mcp_servers' / 'job_search' /'results'
+LLM_CONFIG_FILE = LLM_BASE_DIR / 'config' / 'llm-config.json'
+JOB_FILE_DIR = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'results'
 
 T = TypeVar('T', bound=BaseModel)
 
@@ -37,9 +37,11 @@ async def save_file(file_path: str, content: str) -> bool:
         logging.error(f"Error saving file {file_path}: {e}", exc_info=True)
         return False    
     
-def serialize_to_json(text) -> str:
+from typing import Any
+
+def serialize_to_json(obj: Any) -> str:
     try:
-        return json.dumps(text, indent=4)
+        return json.dumps(obj, indent=4)
     except (TypeError, ValueError) as e:
         logging.error(f"Error converting text to JSON: {e}", exc_info=True)
         return "{}"

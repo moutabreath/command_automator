@@ -20,8 +20,7 @@ class JobSearchService:
             file_paths = self.get_job_files_path()         
 
             if not file_paths:
-                return "No job files found in the directory"
-            # Prepare the prompt for Gemini
+                return MCPResponse("No job files found in the directory", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)            # Prepare the prompt for Gemini
             prompt = self.phrase_prompt()
 
             # Send to Gemini with file attachments

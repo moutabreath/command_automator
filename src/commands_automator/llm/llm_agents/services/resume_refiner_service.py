@@ -23,16 +23,16 @@ class ResumeRefinerService:
                 )
                 return MCPResponse(error_msg, MCPResponseCode.ERROR_WITH_TOOL_RESPONSE)
         except (json.JSONDecodeError, TypeError) as exc:
-            error_msg = "Failed to parse tool_result JSON"
-            logging.exception(error_msg, exc,exc_info=True)
+            error_msg = f"Failed to parse tool_result JSON {exc}"
+            logging.exception(error_msg, exc_info=True)
             return MCPResponse(error_msg, MCPResponseCode.ERROR_WITH_TOOL_RESPONSE)
 
         refined_resume_response = await self.get_refined_resume(resume_data_dict)
         
-        if refined_resume_response.code == MCPResponseCode.OK:
+        if refined_resume_response.code == LLMResponseCode.OK:
             return await self.save_resume_and_cover_letter(output_file_path, resume_data_dict, refined_resume_response)
-        return MCPResponse(text="Error while trying to generate resume", Code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-
+        return MCPResponse(text="Error while trying to generate resume", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+    
     async def save_resume_and_cover_letter(self, output_file_path, resume_data_dict, refined_resume_response):
         applicant_name = resume_data_dict.get('applicant_name', '')
         resume_highlighted_sections = resume_data_dict.get('resume_highlighted_sections', '')
@@ -51,21 +51,21 @@ class ResumeRefinerService:
                 )
             
         text = refined_resume_response.text
-        cover_letter_repsonse = await self.get_cover_letter(resume_data_dict)
-        if cover_letter_repsonse.code == MCPResponseCode.OK:
-            self.resume_saver_service.save_file(cover_letter_repsonse.text, output_file_path, applicant_name, resume_file_name +"_Cover_Letter.txt")
-            text = f"{text}\\n\n\n{cover_letter_repsonse.text}"
+        cover_letter_response = await self.get_cover_letter(resume_data_dict)
+        if cover_letter_response.code == MCPResponseCode.OK:
+            self.resume_saver_service.save_file(cover_letter_response.text, output_file_path, applicant_name, resume_file_name +"_Cover_Letter.txt")
+            text = f"{text}\n\n\n{cover_letter_response.text}"
         return MCPResponse(text=text,code=MCPResponseCode.OK)
 
 
     
-    async def get_refined_resume(self, resume_data_dict: dict) -> LLMAgentResponse:
+    async def get_refined_resume(self, resume_data_dict: dict) -> MCPResponse:
         prompt = self.format_prompts_for_resume(resume_data_dict)
         resume_response: LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(prompt=prompt,
                                                                       chat=self.resume_chat)
         if resume_response.code == LLMResponseCode.OK:
             return MCPResponse(resume_response.text, MCPResponseCode.OK)
-        return MCPResponse("Error using LLM for refining resume", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+        return MCPResponse("Error using LLM for refining resume", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)    
     
     def format_prompts_for_resume(self, resume_data_dict: dict) -> str:
         general_guidelines = resume_data_dict.get('general_guidelines', '')
@@ -80,7 +80,7 @@ You have finished using the mcp tool. Now output text according to the following
 {jobs_desc}"""
         return prompt
     
-    async def get_cover_letter(self, resume_data_dict: dict) -> str:
+    async def get_cover_letter(self, resume_data_dict: dict) -> MCPResponse:
         cover_letter_guidelines = resume_data_dict.get('cover_letter_guidelines', '')
         if cover_letter_guidelines:
             cover_letter_response = await self.gemini_agent.get_response_from_gemini(prompt=cover_letter_guidelines, 
@@ -88,5 +88,3 @@ You have finished using the mcp tool. Now output text according to the following
             if cover_letter_response.code == LLMResponseCode.OK:
                 return MCPResponse(cover_letter_response.text, MCPResponseCode.OK)
         return MCPResponse("Error using LLM for drafting cover letter", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-    
-

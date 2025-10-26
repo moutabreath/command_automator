@@ -5,8 +5,6 @@ from docx.shared import Pt
 from docx.shared import RGBColor
 from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import qn
-from docx.oxml import OxmlElement
-from docx.oxml.shared import OxmlElement
 from docx.shared import Inches
 
 def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = []):
