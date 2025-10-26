@@ -144,7 +144,6 @@ class ScriptsManagerService:
             subprocess.run(run_version_command, startupinfo=startupinfo, shell=False, check=True)
         except subprocess.CalledProcessError as e:
             logging.error(f"Command failed: {e}", exc_info=True)
-            raise
 
     def get_string_from_thread_result(self, result, err):
         str_result = ""
@@ -154,7 +153,6 @@ class ScriptsManagerService:
             encoding = encoding_stats['encoding']
             if encoding is not None:
                 str_result = result.decode(encoding)
-                logging.log(logging.DEBUG, f"str_result is {str_result}.")
             else:
                 logging.log(logging.DEBUG, "encoding is None")
                 str_result = ""

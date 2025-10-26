@@ -9,7 +9,7 @@ from commands_automator.llm.mcp_servers.job_applicant_mcp import MCPRunner
 from commands_automator.scripts_manager.scripts_manager_service import ScriptsManagerService
 from commands_automator.services.configuration_service import ConfigurationService
 from commands_automator.llm.llm_service import LLMService
-from commands_automator.utils.file_utils import LLM_CONFIG_DIR, SCRIPTS_MANAGER_CONFIG_FILE
+from commands_automator.utils.file_utils import LLM_CONFIG_FILE, SCRIPTS_MANAGER_CONFIG_FILE
 from commands_automator.utils.logger_config import setup_logging
 
 class CommandsAutomatorApi:
@@ -17,7 +17,7 @@ class CommandsAutomatorApi:
         self.commands_automator_service = ScriptsManagerService()
         self.llm_service: LLMService = LLMService()
         self.commands_automator_config = ConfigurationService(SCRIPTS_MANAGER_CONFIG_FILE)
-        self.llm_config = ConfigurationService(LLM_CONFIG_DIR)
+        self.llm_config = ConfigurationService(LLM_CONFIG_FILE)
 
     def load_scripts(self):
         return self.commands_automator_service.load_scripts()

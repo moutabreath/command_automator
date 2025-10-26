@@ -68,8 +68,7 @@ class GeminiAgent:
             if response:
                 return LLMAgentResponse(response.text, LLMResponseCode.OK)
             else:
-                return LLMAgentResponse(f"Couldn't get resut from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
-            
+                return LLMAgentResponse(f"Couldn't get result from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)            
         # Handle single image from base64
         elif base64_decoded:
             try:
@@ -103,9 +102,8 @@ class GeminiAgent:
                 logging.debug(f"Gemini decided to use tool: {selected_tool}")
                 return selected_tool, args
         except Exception as ex:
-            logging.error(f"Error using Gemini", ex, exc_info=True)
-            return {}, {}
-        
+            logging.error(f"Error using Gemini: {ex}", exc_info=True)
+            return None, None 
 
     async def _get_json_files_content_as_parts(self, file_paths: list[str]) -> list[Part]:
         parts = []
@@ -113,8 +111,7 @@ class GeminiAgent:
             content = await file_utils.read_text_file(file_path)
             if not (content == ""):
                 parts.append(Part(text=content))
-        return parts
-        
+        return parts        
     
     def _get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
         parts = []
