@@ -6,7 +6,7 @@ prefix the resume with: ***applicant_name***_<Company_Name>
 Next, revise my resume according to the job description.
 
 Guidelines regarding the content of the resume:
-- The resume includes a link to my linkedIn profile. Use it for as main source for the professional exprience content.
+- The resume includes a link to my linkedIn profile. Use it as main source for the professional exprience content.
 - Rewrite existing resume bullet points to align with the skills and qualifications mentioned in the job description below.
 - Prioritize and highlight bullet points that demonstrate experience directly related to Software Development.
 - Incorporate keywords from the job description naturally within the revised bullet points.
