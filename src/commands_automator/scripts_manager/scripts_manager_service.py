@@ -4,7 +4,8 @@ import logging
 import os
 import subprocess
 import chardet
-from typing import List, Dict, Optional
+from typing import List, Dict
+import platform
 
 from commands_automator.utils.file_utils import SCRIPTS_CONFIG_FILE, SCRIPTS_DIR
 
@@ -70,9 +71,9 @@ class ScriptsManagerService:
     def get_script_attribute(self, file, attribute):
         script_name = os.path.basename(file)
         if script_name in self.scripts_attributes:
-            return self.scripts_attributes[script_name][attribute]
+            return self.scripts_attributes[script_name].get(attribute, "")
         return ""
-
+    
     def get_name_from_script(self, file):
         return self.get_script_attribute(file, 'short_description')
 
@@ -84,11 +85,11 @@ class ScriptsManagerService:
         args = []
         if script_name.endswith('.py'):
             args.append('python')
-        if script_name.endswith('.sh'):
+        elif script_name.endswith('.sh'):
             args.append('bash')
-        if script_name.endswith('.cmd'):
+        elif script_name.endswith('.cmd'):
             args.append('cmd')
-            args.append('/c')
+            args.append('/c')      
         args.append(script_path)
 
         if additional_text:
@@ -111,31 +112,39 @@ class ScriptsManagerService:
                 logging.warning(f"Script '{other_script_name_as_input}' not found in cleaners directory")
         logging.log(logging.DEBUG, "running " + str(args))
         return args
-    
+       
     @staticmethod
     def get_updated_venv(arg):
         if not ('python' in arg):
             return
-        new_venv = os.environ
+        new_venv = os.environ.copy()
         python_env = new_venv.get("PYTHONPATH", "")
         logging.log(logging.DEBUG, "PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
-        if (len(python_env) != 0) and (python_env[-1] != ';'):
-            new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + ";"
+        sep = ';' if platform.system() == 'Windows' else ':'
+        if (len(python_env) != 0) and (python_env[-1] != sep):
+            new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + sep
         if not (os.getcwd() in python_env):
-            new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + ";"
+            new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + sep
         logging.log(logging.DEBUG, "PYTHONPATH after " + new_venv.get("PYTHONPATH", ""))
         return new_venv
 
     @staticmethod
     def run_app(run_version_command: str):
+        import platform
         """Run a command. Accepts either a list or string (requires shell=True for strings)."""
-        si = subprocess.STARTUPINFO()
-        si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+        startupinfo = None
+        if platform.system() == 'Windows':
+            si = subprocess.STARTUPINFO()
+            si.dwFlags |= subprocess.STARTF_USESHOWWINDOW
+            startupinfo = si
         # Ensure we're using the safe list form
         if isinstance(run_version_command, str):
             logging.warning("run_app received string; consider passing list for safety")
-        subprocess.run(run_version_command, startupinfo=si, shell=False)
-
+        try:
+            subprocess.run(run_version_command, startupinfo=startupinfo, shell=False, check=True)
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Command failed: {e}", exc_info=True)
+            raise
 
     def get_string_from_thread_result(self, result, err):
         str_result = ""
@@ -151,7 +160,7 @@ class ScriptsManagerService:
                 str_result = ""
             if err is not None:
                 if isinstance(err, str):
-                    logging.log(logging.ERROR, str(err), err)
+                    logging.error(f"Error during execution: {err}")
                     str_result = str_result + " " + err
 
         if len(str_result) == 0:
@@ -174,25 +183,35 @@ class ScriptsManagerService:
 
     @staticmethod
     def is_dir_empty(dir_path):
-        return not next(os.scandir(dir_path), None)
+        try:
+            return not next(os.scandir(dir_path), None)
+        except (FileNotFoundError, NotADirectoryError) as e:
+            logging.error(f"Invalid directory path '{dir_path}': {e}")
+            return True
     
 
     def execute_script(self, script_name, additional_text, flags):
         script_path = self.get_name_to_scripts().get(script_name, script_name)
         args = self.get_arguments_for_script(script_path, additional_text, flags)
         if args is None:
-            return {"error": "Missing argument. Please fill the text box for Additional Text"}
+            return "error : Missing argument. Please fill the text box for Additional Text"
         new_venv = self.get_updated_venv(args[0])
         output, err  = self.run_internal(args, new_venv)
         return self.get_string_from_thread_result(output, err)
 
     def run_internal(self, args, venv):
         logging.log(logging.DEBUG, "entered")
-        proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=venv)
-        logging.log(logging.DEBUG, "popen done")
-        output, err = proc.communicate()
-        logging.log(logging.DEBUG, "proc communicate done")
-        return output, err
+        try:
+            proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=venv)
+            logging.log(logging.DEBUG, "popen done")
+            output, err = proc.communicate(timeout=300) # 5 minute timeout
+            logging.log(logging.DEBUG, "proc communicate done")
+            if proc.returncode != 0:
+                logging.warning(f"Process exited with code {proc.returncode}")
+            return output, err
+        except subprocess.TimeoutExpired:
+           proc.kill()
+           logging.error(f"Process timed out and was killed: {args}")
 
 
 
