@@ -1,10 +1,9 @@
 
 import sys
 
-
 def replace_and_remove_parenthesis(text):    
     old_text = text
-    x = text
+    text = text.replace("[", "{")   
     text = text.replace("[", "{")
     text = text.replace("]", "}")
     old_text = old_text.replace("{","[")
