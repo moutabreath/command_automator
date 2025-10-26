@@ -29,7 +29,7 @@ class ResumeRefinerService:
 
         refined_resume_response = await self.get_refined_resume(resume_data_dict)
         
-        if refined_resume_response.code == LLMResponseCode.OK:
+        if refined_resume_response.code == MCPResponseCode.OK:
             return await self.save_resume_and_cover_letter(output_file_path, resume_data_dict, refined_resume_response)
         return MCPResponse(text="Error while trying to generate resume", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     

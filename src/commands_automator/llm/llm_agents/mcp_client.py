@@ -15,7 +15,7 @@ from commands_automator.llm.llm_agents.services.resume_refiner_service import Re
 class SmartMCPClient:
     """An intelligent client that uses LLM to decide when to use MCP tools."""
 
-    def __init__(self, mcp_server_url=None, ):
+    def __init__(self, mcp_server_url=None):
         # MCP server settings
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
        
@@ -40,10 +40,10 @@ class SmartMCPClient:
                            "how are you", "what's up", "howdy"]
         
         # If query is just a simple greeting, don't use a tool
-        if query.lower() in common_greetings:
+        query_lower = query.lower().strip()
+        if any(greeting in query_lower for greeting in common_greetings) and len(query_lower) < 30:
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
-            return None, None       
-            
+            return None, None
         try:
             messages = await self.init_messages(query, available_tools, session)
             
@@ -58,13 +58,10 @@ class SmartMCPClient:
                 return None, None
         except Exception as e:
             logging.error(f"Error using LLM for tool decision {e}", exc_info=True)
-            # Fall back to direct tool usage if error occurs
-            if 'get_resume_files' in available_tools:
-                return 'get_resume_files', {}
             return None, None
-        
+            
     async def init_messages(self, query, available_tools, session: ClientSession):
-    # Get tool schemas from MCP server
+        # Get tool schemas from MCP server
         tools_response = await session.list_tools()
         tool_descriptions = {}
         
@@ -146,11 +143,9 @@ If no tool should be selected, respond to the query directly. Query: {query}
         try:
             if not await self.is_mcp_server_ready():
                 llm_response:LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                if (llm_response.code == MCPResponseCode.OK):
+                if (llm_response.code == LLMResponseCode.OK):
                     return MCPResponse(llm_response.text, MCPResponseCode.OK)
-                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-                
-            logging.debug(f"Connecting to MCP server at {self.mcp_server_url}...")
+                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)        
 
             async with streamablehttp_client(self.mcp_server_url) as (
                 read_stream,
@@ -182,7 +177,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
                     return MCPResponse(agent_response.text, MCPResponseCode.OK) 
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
-            return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_USING_TOOL)
+            return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
     async def _use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
@@ -192,7 +187,6 @@ If no tool should be selected, respond to the query directly. Query: {query}
             if response is None:
                 return MCPResponse(f"Tool execution failed returned no answer", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if response.isError:
-                logging.error(f"Tool execution failed: {response.error}")
                 error_msg = response.content[0].text if response and response.content and len(response.content) > 0  else "Unknown error"
                 return MCPResponse(f"Tool execution returned error: {error_msg}", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
 
@@ -211,7 +205,6 @@ If no tool should be selected, respond to the query directly. Query: {query}
         if selected_tool == 'search_jobs_from_the_internet':
             return await self.job_search_service.get_unified_jobs()
         return tool_result
-
 
     async def get_available_tools(self, session: ClientSession):
         try:
