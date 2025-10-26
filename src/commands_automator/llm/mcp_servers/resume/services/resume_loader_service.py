@@ -57,7 +57,7 @@ class ResumeLoaderService(SharedService):
 
     async def get_highlighted_sections(self) -> List[str]:
         resume_sections_content: Optional[str] = await file_utils.read_text_file(
-            f'{self.ADDITIONAL_FILE_PATH_PREFIX}/resume_sections.txt'
+            self.ADDITIONAL_FILE_PATH_PREFIX / 'resume_sections.txt'
         )
         if not resume_sections_content:
             logging.error(f"No resume_sections file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
@@ -65,18 +65,18 @@ class ResumeLoaderService(SharedService):
         return resume_sections_content.split('\n')
     
     async def get_job_description(self) -> str:
-        job_desc: str = await file_utils.read_text_file(f'{self.ADDITIONAL_FILE_PATH_PREFIX}/job_description.txt')
+        file_path: Path = self.ADDITIONAL_FILE_PATH_PREFIX / 'job_description.txt'
+        job_desc: str = await file_utils.read_text_file(file_path)
         if not job_desc:
-            logging.error(f"No job description file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
+            logging.error(f"No job description file found at {file_path}")
             return ""
         return job_desc
     
     async def get_cover_letter_guide_lines(self) -> str:
-        file_path: str = f'{self.ADDITIONAL_FILE_PATH_PREFIX}/cover_letter_guidelines.txt'  
+        file_path: Path = self.ADDITIONAL_FILE_PATH_PREFIX / 'cover_letter_guidelines.txt'
         file_text: str = await file_utils.read_text_file(file_path)
         if not file_text:
-            logging.error(f"No cover letter file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
+            logging.error(f"No cover letter file found at {file_path}")
             return ""
         return file_text
-
 

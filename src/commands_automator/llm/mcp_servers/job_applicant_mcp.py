@@ -83,10 +83,9 @@ async def get_resume_files() -> ResumeData:
             "job_description": job_description_content or "",
             "cover_letter_guidelines": cover_letter_guide_lines or ""
         }
-        logging.debug(f"Creating ResumeData with: {data_dict}")
         
         resume_data = ResumeData(**data_dict)
-        logging.debug(f"Created ResumeData successfully: {resume_data.model_dump()}")
+        logging.debug(f"Created ResumeData successfully")
         return resume_data
     except Exception as ex:
         logging.error(f"Error fetching resume or related context: {ex}", exc_info=True)
@@ -290,7 +289,8 @@ def main():
     try:
         # Keep the main process running
         logging.info("Main process waiting for MCP subprocess...")
-        mcp_runner.mcp_process.join()
+        while mcp_runner.mcp_process.is_alive():
+            mcp_runner.mcp_process.join(timeout=1.0)
     except KeyboardInterrupt:
         logging.info("Keyboard interrupt received, shutting down...")
     finally:
