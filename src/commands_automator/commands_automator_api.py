@@ -27,10 +27,26 @@ class CommandsAutomatorApi:
         return self.commands_automator_service.get_script_description(script_file)
     
     def load_commands_configuration(self):
-        return self.run_async_method(self.commands_automator_config.load_configuration_async)
+        """Load and serialize commands configuration"""
+        try:
+            config = self.run_async_method(self.commands_automator_config.load_configuration_async)
+            if isinstance(config, dict):
+                return config
+            return {}
+        except Exception as e:
+            logging.error(f"Error loading commands configuration: {e}", exc_info=True)
+            return {}
 
     def save_commands_configuration(self, config):
-        return self.run_async_method(self.commands_automator_config.save_configuration_async, config)
+        """Save commands configuration after ensuring it's serializable"""
+        try:
+            if not isinstance(config, dict):
+                logging.error("Invalid configuration format")
+                return False
+            return self.run_async_method(self.commands_automator_config.save_configuration_async, config)
+        except Exception as e:
+            logging.error(f"Error saving commands configuration: {e}", exc_info=True)
+            return False
 
     def run_async_method(self, async_method, *args, **kwargs):
         try:
@@ -58,15 +74,30 @@ class CommandsAutomatorApi:
         return "error"
 
     def load_llm_configuration(self):
-        return self.run_async_method(self.llm_config.load_configuration_async)
+        """Load and serialize LLM configuration"""
+        try:
+            config = self.run_async_method(self.llm_config.load_configuration_async)
+            if isinstance(config, dict):
+                return config
+            return {}
+        except Exception as e:
+            logging.error(f"Error loading LLM configuration: {e}", exc_info=True)
+            return {}
 
     def save_llm_configuration(self, config):
-        return self.run_async_method(self.llm_config.save_configuration_async, config)
+        """Save LLM configuration after ensuring it's serializable"""
+        try:
+            if not isinstance(config, dict):
+                logging.error("Invalid configuration format")
+                return False
+            return self.run_async_method(self.llm_config.save_configuration_async, config)
+        except Exception as e:
+            logging.error(f"Error saving LLM configuration: {e}", exc_info=True)
+            return False
 	
 
     def select_folder(self):
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
-
 
 def main():
     try:

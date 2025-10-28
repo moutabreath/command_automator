@@ -39,11 +39,23 @@ async def save_file(file_path: str, content: str) -> bool:
     
 from typing import Any
 
+def make_serializable(obj: Any) -> Any:
+    """Recursively convert objects to JSON-serializable format"""
+    if isinstance(obj, Path):
+        return str(obj)
+    elif isinstance(obj, dict):
+        return {k: make_serializable(v) for k, v in obj.items()}
+    elif isinstance(obj, list):
+        return [make_serializable(item) for item in obj]
+    return obj
+
 def serialize_to_json(obj: Any) -> str:
+    """Convert object to JSON string"""
     try:
-        return json.dumps(obj, indent=4)
-    except (TypeError, ValueError) as e:
-        logging.error(f"Error converting text to JSON: {e}", exc_info=True)
+        serializable_obj = make_serializable(obj)
+        return json.dumps(serializable_obj, indent=4)
+    except Exception as e:
+        logging.error(f"Error serializing to JSON: {e}", exc_info=True)
         return "{}"
     
 def serialize_objects(objects: List[T]) -> str:
