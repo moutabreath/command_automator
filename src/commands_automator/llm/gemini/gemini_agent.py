@@ -17,7 +17,9 @@ from commands_automator.utils import file_utils
 class LLMResponseCode(Enum):
     """Enumeration of possible Gemini API operation results"""
     OK = 1
-    ERROR_USING_GEMINI_API = 2
+    ERROR_USING_GEMINI_API = 2,
+    GEMINI_UNAVAILABLE = 3,
+    MODEL_OVERLOADED = 4
 
 class LLMAgentResponse:
     def __init__(self, text: str, code: LLMResponseCode):
@@ -61,10 +63,9 @@ class GeminiAgent:
         self.base_config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
         parts = [Part(text=prompt)]
 
-        if file_paths:            
-            parts.extend(await self._get_json_files_content_as_parts(file_paths))
-            for part in parts:                
-                response = chat.send_message(message=part, config=self.base_config)
+        if file_paths:
+            prompt = f"{prompt} \n\n\n {await self._get_json_files_content_for_prompt(file_paths)}"
+            response = chat.send_message(prompt, config=self.base_config)
             if response:
                 return LLMAgentResponse(response.text, LLMResponseCode.OK)
             else:
@@ -86,6 +87,10 @@ class GeminiAgent:
 
         except Exception as e:
             logging.error(f"Error using Gemini: {e}", exc_info=True)
+            if e.code == 503:
+                if 'overloaded' in e.message:
+                    return LLMAgentResponse(e.message, LLMResponseCode.MODEL_OVERLOADED)
+                return LLMAgentResponse(e.message, LLMResponseCode.GEMINI_UNAVAILABLE)
             return LLMAgentResponse(f"Sorry, I couldn't process your request with Gemini", LLMResponseCode.ERROR_USING_GEMINI_API)
         
     def get_mcp_tool_json(self, prompt: str,
@@ -103,15 +108,15 @@ class GeminiAgent:
                 return selected_tool, args
         except Exception as ex:
             logging.error(f"Error using Gemini: {ex}", exc_info=True)
-            return None, None 
-
-    async def _get_json_files_content_as_parts(self, file_paths: list[str]) -> list[Part]:
-        parts = []
+            return LLMAgentResponse(ex.message, LLMResponseCode.ERROR_USING_GEMINI_API)
+        
+    async def _get_json_files_content_for_prompt(self, file_paths: list[str]) -> str:
+        result = ""
         for file_path in file_paths:
             content = await file_utils.read_text_file(file_path)
             if not (content == ""):
-                parts.append(Part(text=content))
-        return parts        
+                result = f"{result}\\n\n\n{content}"
+        return result        
     
     def _get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
         parts = []
