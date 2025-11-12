@@ -59,26 +59,9 @@ if %errorlevel% neq 0 (
     goto :end
 )
 
-for /f "tokens=3 delims=," %%a in ('openfiles /query /fo csv /v 2^>nul ^| findstr /i "%filename%"') do (
-    set "process=%%a"
-    set "process=!process:"=!"
-    echo Found: !process! using the file
+echo The file is in use, but openfiles cannot identify the specific process.
+echo Please install handle.exe from Sysinternals for accurate process identification.
 
-    for /f "tokens=2" %%p in ('tasklist /v /fo csv /nh ^| findstr /i "!process!"') do (
-        set "pid=%%p"
-        set "pid=!pid:"=!"
-        echo PID: !pid!
-        set /p "confirm=Kill this process? (Y/N): "
-        if /i "!confirm!"=="Y" (
-            taskkill /F /PID !pid!
-            if !errorlevel! equ 0 (
-                echo Successfully killed process
-            ) else (
-                echo Failed to kill process
-            )
-        )
-    )
-)
 :end
 echo.
 echo Done.

@@ -3,7 +3,6 @@ import sys
 
 def replace_and_remove_parenthesis(text):    
     old_text = text
-    text = text.replace("[", "{")   
     text = text.replace("[", "{")
     text = text.replace("]", "}")
     old_text = old_text.replace("{","[")
@@ -24,7 +23,7 @@ def run_remove_parenthesis(text):
 def run_replace_string():
     if len(sys.argv) <= 1:
         print("Usage: python <text> ")
-        sys.exit(1)
+        print("Usage: python replace_parenthesis.py <text>")    
     replace_and_remove_parenthesis(sys.argv[1])
 
 if __name__ == "__main__":

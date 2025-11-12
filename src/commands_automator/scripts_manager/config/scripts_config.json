@@ -63,7 +63,7 @@
     {
       "script_name": "replace_chars.py",
       "short_description": "Replace chars in string",
-      "detailed_description": "Replace any number of pair of chars.",      "free_text_required": true
-    }
+      "detailed_description": "Replace any number of pair of chars.",
+      "free_text_required": true    }
   ]
 }

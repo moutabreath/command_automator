@@ -28,7 +28,9 @@ class ScriptsManagerService:
             logging.warning("No scripts found in scripts_config.json")
             return
         for script in scripts_config:  
-            script_name, tag_name, script_desc = script['script_name'], script['short_description'], script['detailed_description']  
+            script_name = script.get('script_name', '')
+            tag_name = script.get('short_description', '')
+            script_desc = script.get('detailed_description', '')
             if script_name == "" or tag_name == "" or script_desc == "":  
                 continue  
             self.scripts_attributes[script_name] = script
@@ -130,7 +132,6 @@ class ScriptsManagerService:
 
     @staticmethod
     def run_app(run_version_command: str):
-        import platform
         """Run a command. Accepts either a list or string (requires shell=True for strings)."""
         startupinfo = None
         if platform.system() == 'Windows':
@@ -156,15 +157,14 @@ class ScriptsManagerService:
             else:
                 logging.log(logging.DEBUG, "encoding is None")
                 str_result = ""
-            if err is not None:
-                if isinstance(err, str):
-                    logging.error(f"Error during execution: {err}")
-                    str_result = str_result + " " + err
+        if err is not None:
+            if isinstance(err, str):
+                logging.error(f"Error during execution: {err}")
+                str_result = str_result + " " + err
 
         if len(str_result) == 0:
             str_result = "Execution Done"
         return str_result
-
 
     def should_use_free_text(self, script_name):
         if script_name in self.scripts_attributes:
@@ -173,10 +173,9 @@ class ScriptsManagerService:
             
     
     def get_other_script_name_as_input(self, script_name):
-        if 'other_script_name_as_input' in self.scripts_attributes[script_name]:
-            return self.scripts_attributes[script_name]['other_script_name_as_input']
-        else:
-            return None
+        if script_name in self.scripts_attributes:
+            return self.scripts_attributes[script_name].get('other_script_name_as_input')
+        return None
 
 
     @staticmethod
@@ -199,6 +198,7 @@ class ScriptsManagerService:
 
     def run_internal(self, args, venv):
         logging.log(logging.DEBUG, "entered")
+        proc = None
         try:
             proc = subprocess.Popen(args, stdout=subprocess.PIPE, stderr=subprocess.PIPE, env=venv)
             logging.log(logging.DEBUG, "popen done")
@@ -208,8 +208,14 @@ class ScriptsManagerService:
                 logging.warning(f"Process exited with code {proc.returncode}")
             return output, err
         except subprocess.TimeoutExpired:
-           proc.kill()
-           logging.error(f"Process timed out and was killed: {args}")
+            if proc:
+                proc.kill()
+            logging.error(f"Process timed out and was killed: {args}")
+            return b"", b"Process timed out after 300 seconds"
+        except Exception as e:
+            logging.error(f"Failed to run subprocess: {e}", exc_info=True)
+            return b"", str(e).encode()
+
 
 
 

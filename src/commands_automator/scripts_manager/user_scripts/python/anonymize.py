@@ -3,18 +3,17 @@ import sys
 def replace_after_argument(input_string, argument):
     if argument in input_string:
         index = input_string.index(argument) + len(argument)
-        return input_string[:index] + " dummy"
+        return input_string[:index] + " dummy" + input_string[index:]
     else:
         return input_string
 
-
-def write_annonymized_string_to_file(file_name, new_string):
+def write_annonymized_string_to_file(new_string):
     try:
         with open('temp.txt', 'w') as file:
             file.write(new_string)
         
     except FileNotFoundError:
-        print(f"Error: The file '{file_name}' was not found.")
+        print(f"Error: Could not write to 'temp.txt'.")
     except Exception as e:
         print(f"An error occurred: {e}")
 
@@ -45,7 +44,7 @@ def run_annoymize():
     if new_string is None:
         sys.exit(1)
         
-    write_annonymized_string_to_file(file_name, new_string)
+    write_annonymized_string_to_file(new_string)
 
 if __name__ == '__main__':
     run_annoymize()
