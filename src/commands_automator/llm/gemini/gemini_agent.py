@@ -17,10 +17,10 @@ from commands_automator.utils import file_utils
 class LLMResponseCode(Enum):
     """Enumeration of possible Gemini API operation results"""
     OK = 1
-    ERROR_USING_GEMINI_API = 2,
-    GEMINI_UNAVAILABLE = 3,
+    ERROR_USING_GEMINI_API = 2
+    GEMINI_UNAVAILABLE = 3
     MODEL_OVERLOADED = 4
-
+    
 class LLMAgentResponse:
     def __init__(self, text: str, code: LLMResponseCode):
         self.text = text
@@ -34,6 +34,8 @@ class GeminiAgent:
 
     def __init__(self):
         self.api_key = os.environ.get("GOOGLE_API_KEY")
+        if not self.api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is required")
         self.gemini_client: genai.Client = genai.Client(api_key=self.api_key)
         self._delete_all_files()
 
@@ -60,12 +62,13 @@ class GeminiAgent:
                                  file_paths: list[str] = None,
                                  ) -> LLMAgentResponse:
 
-        self.base_config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
+        config = self.base_config.copy()
+        config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
         parts = [Part(text=prompt)]
 
         if file_paths:
             prompt = f"{prompt} \n\n\n {await self._get_json_files_content_for_prompt(file_paths)}"
-            response = chat.send_message(prompt, config=self.base_config)
+            response = chat.send_message(prompt, config=config)
             if response:
                 return LLMAgentResponse(response.text, LLMResponseCode.OK)
             else:
@@ -79,25 +82,27 @@ class GeminiAgent:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
 
         try:
-            if (len(parts) > 0):
-                response = chat.send_message(message=parts, config=self.base_config)
-                if response:
-                    return LLMAgentResponse(response.text, LLMResponseCode.OK)
-                return LLMAgentResponse(f"Couldn't get resut from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
-
+            response = chat.send_message(message=parts, config=config)
+            if response:
+                return LLMAgentResponse(response.text, LLMResponseCode.OK)
+            return LLMAgentResponse(f"Couldn't get result from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
         except Exception as e:
             logging.error(f"Error using Gemini: {e}", exc_info=True)
-            if e.code == 503:
-                if 'overloaded' in e.message:
-                    return LLMAgentResponse(e.message, LLMResponseCode.MODEL_OVERLOADED)
-                return LLMAgentResponse(e.message, LLMResponseCode.GEMINI_UNAVAILABLE)
+        except Exception as e:
+            logging.error(f"Error using Gemini: {e}", exc_info=True)
+            if hasattr(e, 'code') and e.code == 503:
+                message = getattr(e, 'message', str(e))
+                if 'overloaded' in message.lower():
+                    return LLMAgentResponse(message, LLMResponseCode.MODEL_OVERLOADED)
+                return LLMAgentResponse(message, LLMResponseCode.GEMINI_UNAVAILABLE)
             return LLMAgentResponse(f"Sorry, I couldn't process your request with Gemini", LLMResponseCode.ERROR_USING_GEMINI_API)
         
     def get_mcp_tool_json(self, prompt: str,
                                  chat: Chat, available_tools):
-        self.base_config[self.CONFIG_RESPONSE_MIME_TYPE] =  mimetypes.types_map['.json']
+        config = self.base_config.copy()
+        config[self.CONFIG_RESPONSE_MIME_TYPE] = mimetypes.types_map['.json']
         try:
-            tool_response = chat.send_message(message=prompt, config=self.base_config)
+            tool_response = chat.send_message(message=prompt, config=config)
             decision = json.loads(tool_response.model_dump_json())
             tools_text = decision.get('candidates')[0].get('content').get('parts')[0].get('text')
             tools_json = json.loads(tools_text)
@@ -108,13 +113,13 @@ class GeminiAgent:
                 return selected_tool, args
         except Exception as ex:
             logging.error(f"Error using Gemini: {ex}", exc_info=True)
-            return LLMAgentResponse(ex.message, LLMResponseCode.ERROR_USING_GEMINI_API)
+            return None, None
         
     async def _get_json_files_content_for_prompt(self, file_paths: list[str]) -> str:
         result = ""
         for file_path in file_paths:
             content = await file_utils.read_text_file(file_path)
-            if not (content == ""):
+            if content:
                 result = f"{result}\\n\n\n{content}"
         return result        
     
@@ -166,5 +171,3 @@ class GeminiAgent:
                         logging.error(f"Error deleting file {f.name}: {ex}", exc_info=True)
             except Exception as e:
                 logging.error(f"Error listing files: {e}", exc_info=True)
-
-
