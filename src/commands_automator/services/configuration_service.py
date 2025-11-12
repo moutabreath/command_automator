@@ -17,6 +17,11 @@ class ConfigurationService:
             'config': self._config
         }
 
+    def __setstate__(self, state: Dict[str, Any]) -> None:
+        """Custom deserialization for the class"""
+        self.config_path = state['config_path']
+        self._config = state['config']
+        
     async def load_configuration_async(self) -> Dict[str, Any]:
         """Load configuration from JSON file"""    
         try:

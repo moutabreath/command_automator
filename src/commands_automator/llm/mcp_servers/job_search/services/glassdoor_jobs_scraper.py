@@ -244,51 +244,45 @@ class GlassdoorJobsScraper(SharedService):
                           max_pages: int, max_jobs_per_page: int) -> List[Job] :
         """Main scraping method"""
         logging.info(f"Starting scrape for '{job_title}' jobs in '{location}'")        
+        jobs = []
+        for page_num in range(1, max_pages + 1):
+            logging.info(f"=== Scraping Page {page_num} ===")
+            
+            url = self._build_search_url(job_title, location, page_num)
+            page_jobs = await self._scrape_job_page(url, forbidden_titles, max_jobs_per_page)
+            jobs.extend(page_jobs)
+            
+            if len(page_jobs) == 0:
+                logging.info("No jobs found on this page, stopping...")
+                break
+            
+            # Longer delay between pages
+            await self.random_delay(5, 10)
         
-        try:
-            jobs = []
+        logging.info("=== Scraping Complete ===")
+        logging.info(f"Total jobs scraped: {len(jobs)}")
             
-            for page_num in range(1, max_pages + 1):
-                logging.info(f"=== Scraping Page {page_num} ===")
-                
-                url = self._build_search_url(job_title, location, page_num)
-                page_jobs = await self._scrape_job_page(url, forbidden_titles, max_jobs_per_page)
-                jobs.extend(page_jobs)
-                
-                if len(page_jobs) == 0:
-                    logging.info("No jobs found on this page, stopping...")
-                    break
-                
-                # Longer delay between pages
-                await self.random_delay(5, 10)
-            
-            logging.info("=== Scraping Complete ===")
-            logging.info(f"Total jobs scraped: {len(jobs)}")
-            
-        except Exception as e:
-            logging.error(f"Error during scraping: {e}", exc_info=True)
-        
-        finally:
-            await self.cleanup()
-            return jobs    
- 
+    
     async def run_scraper(self, job_title: str, location: str, forbidden_titles: list[str], 
                           max_pages: int, max_jobs_per_page: int) -> List[Job]:
         
-        await self.setup_browser()
-        jobs = await self._scrape_jobs(
-            job_title=job_title,
-            location=location, 
-            forbidden_titles=forbidden_titles,
-            max_pages=max_pages,
-            max_jobs_per_page=max_jobs_per_page
-        )
-        
-        # Filter for center region
-        center_jobs = self._filter_israel_center(jobs)
+        try:
+            await self.setup_browser()
+            jobs = await self._scrape_jobs(
+                job_title=job_title,
+                location=location, 
+                forbidden_titles=forbidden_titles,
+                max_pages=max_pages,
+                max_jobs_per_page=max_jobs_per_page
+            )
             
-        # Print summary
-        logging.info(f"Total jobs found: {len(jobs)}")
-        logging.info(f"Total filtered jobs: {len(center_jobs)}")
+            # Filter for center region
+            center_jobs = self._filter_israel_center(jobs)
+                
+            # Print summary
+            logging.info(f"Total jobs found: {len(jobs)}")
+            logging.info(f"Total filtered jobs: {len(center_jobs)}")
 
-        return center_jobs
+            return center_jobs
+        finally:
+            await self.cleanup()

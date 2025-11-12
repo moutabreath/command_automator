@@ -68,11 +68,11 @@ class CommandsAutomatorApi:
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
         result = self.run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path)
-
-        if result.code == MCPResponseCode.OK:
+        
+        if not isinstance(result, str) and hasattr(result, 'code') and result.code == MCPResponseCode.OK:
             return result.text
         return "error"
-
+    
     def load_llm_configuration(self):
         """Load and serialize LLM configuration"""
         try:

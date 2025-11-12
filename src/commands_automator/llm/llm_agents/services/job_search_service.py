@@ -10,9 +10,8 @@ from commands_automator.utils import file_utils
 class JobSearchService:
 
     def __init__(self, gemini_utils: GeminiAgent):
-        self.gemini_agent: GeminiAgent = gemini_utils       
-        self.job_search_chat: Chat = self.gemini_agent.init_chat()
-        
+        self.gemini_agent: GeminiAgent = gemini_utils
+        self.job_search_chat: Chat = self.gemini_agent.init_chat()        
 
     async def get_unified_jobs(self):
         try:
@@ -20,16 +19,18 @@ class JobSearchService:
             file_paths = self.get_job_files_path()         
 
             if not file_paths:
-                return MCPResponse("No job files found in the directory", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)            # Prepare the prompt for Gemini
+                return MCPResponse("No job files found in the directory", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+            
+            # Prepare the prompt for Gemini
             prompt = self.phrase_prompt()
 
             # Send to Gemini with file attachments
-            respsonse = await self.gemini_agent.get_response_from_gemini(chat=self.job_search_chat,
+            response = await self.gemini_agent.get_response_from_gemini(chat=self.job_search_chat,
                                                                     response_mime_type=mimetypes.types_map['.json'],
                                                                      prompt=prompt,
                                                                      file_paths=file_paths)
-            if respsonse.code == LLMResponseCode.OK:
-                return MCPResponse(respsonse.text, MCPResponseCode.OK)
+            if response.code == LLMResponseCode.OK:
+                return MCPResponse(response.text, MCPResponseCode.OK)
             return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
         except Exception as e:

@@ -1,8 +1,7 @@
 import json
 import logging
-import os
 from pathlib import Path
-from typing import List, TypeVar
+from typing import List, Any, TypeVar
 import aiofiles
 from pydantic import BaseModel
 
@@ -37,7 +36,6 @@ async def save_file(file_path: str, content: str) -> bool:
         logging.error(f"Error saving file {file_path}: {e}", exc_info=True)
         return False    
     
-from typing import Any
 
 def make_serializable(obj: Any) -> Any:
     """Recursively convert objects to JSON-serializable format"""
