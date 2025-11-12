@@ -2,6 +2,8 @@ import logging
 import multiprocessing
 from multiprocessing import freeze_support
 from typing import List
+from typing import TypeVar
+
 from mcp.server.fastmcp import FastMCP
 
 from commands_automator.llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
@@ -26,7 +28,7 @@ class ServiceNames:
     LINKEDIN_SCRAPER = 'linkedin_job_scraper'
     GLASSDOOR_SCRAPER = 'glassdoor_jobs_scraper'
     JOB_SAVER = 'job_saver'
-from typing import TypeVar
+
 
 T = TypeVar('T', ResumeLoaderService, LinkedInJobScraper, GlassdoorJobsScraper, JobsSaver)
 
@@ -60,35 +62,9 @@ async def get_resume_files() -> ResumeData:
     Fetch resume file, applicant name, job description and guidelines
     """    
     resume_loader_service: ResumeLoaderService = get_shared_service(ServiceNames.RESUME_LOADER)
-    try:
-        resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
-        if resume_content is None or applicant_name is None:
-            raise ValueError("Resume content or applicant name is missing")
-
-        guide_lines = await resume_loader_service.get_main_part_guide_lines()
-        if guide_lines:
-            guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
-        highlighted_sections = await resume_loader_service.get_highlighted_sections()
-
-        job_description_content = await resume_loader_service.get_job_description()
-
-        cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
-
-        # Create dictionary first to validate data
-        data_dict = {
-            "applicant_name": applicant_name or "",
-            "general_guidelines": guide_lines or "",
-            "resume": resume_content or "",
-            "resume_highlighted_sections": highlighted_sections or [],
-            "job_description": job_description_content or "",
-            "cover_letter_guidelines": cover_letter_guide_lines or ""
-        }
-        
-        resume_data = ResumeData(**data_dict)
-        logging.debug(f"Created ResumeData successfully")
-        return resume_data
-    except Exception as ex:
-        logging.error(f"Error fetching resume or related context: {ex}", exc_info=True)
+    resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
+    if resume_content is None:
+        logging.error("Couldn't parse resume content")
         return ResumeData(
             applicant_name="",
             general_guidelines="",
@@ -97,6 +73,32 @@ async def get_resume_files() -> ResumeData:
             job_description="",
             cover_letter_guidelines=""
         )
+
+    if applicant_name is None:
+        applicant_name = "John Doe"
+
+    guide_lines = await resume_loader_service.get_main_part_guide_lines()
+    if guide_lines:
+        guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
+    highlighted_sections = await resume_loader_service.get_highlighted_sections()
+
+    job_description_content = await resume_loader_service.get_job_description()
+
+    cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
+
+    # Create dictionary first to validate data
+    data_dict = {
+        "applicant_name": applicant_name or "",
+        "general_guidelines": guide_lines or "",
+        "resume": resume_content or "",
+        "resume_highlighted_sections": highlighted_sections or [],
+        "job_description": job_description_content or "",
+        "cover_letter_guidelines": cover_letter_guide_lines or ""
+    }
+    
+    resume_data = ResumeData(**data_dict)
+    logging.debug(f"Created ResumeData successfully")
+    return resume_data
 
 
 @mcp.tool()

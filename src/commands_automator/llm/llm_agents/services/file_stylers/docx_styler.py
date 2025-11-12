@@ -91,9 +91,9 @@ def add_applicant_name(doc, applicant_name:str, line: str):
 
 def add_line_with_link(doc, line, url, p = None):
     link_name = "link"
-    if 'linkedin' in line:
+    if 'linkedin' in line.lower():
         link_name = "LinkedIn"
-    if 'github' in line:
+    if 'github' in line.lower():
         link_name = get_github_project_name(url)
     line = line.replace(url, "")
     if p is None:
@@ -164,7 +164,6 @@ def get_or_create_hyperlink_style(d):
         hs = d.styles.add_style("Hyperlink",
                                 docx.enum.style.WD_STYLE_TYPE.CHARACTER,
                                 True)
-        hs.base_style 
 
 def add_header(doc, keywords, line: str):
     text = line.lower() 
@@ -177,7 +176,7 @@ def add_header(doc, keywords, line: str):
             
             
             index = text.find(keyword)
-            line_keyword = line[index:len(keyword) + 1] # +1 for space character
+            line_keyword = line[index:index + len(keyword) + 1] # +1 for space character
             line = line.replace(line_keyword, "", 1).strip()
             run = p.add_run(line_keyword)
             run.bold = True 

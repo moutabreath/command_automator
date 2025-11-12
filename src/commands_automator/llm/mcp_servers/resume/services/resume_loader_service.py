@@ -62,7 +62,7 @@ class ResumeLoaderService(SharedService):
         if not resume_sections_content:
             logging.error(f"No resume_sections file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
             return []
-        return resume_sections_content.split('\n')
+        return [line for line in resume_sections_content.splitlines() if line.strip()]
     
     async def get_job_description(self) -> str:
         file_path: Path = self.ADDITIONAL_FILE_PATH_PREFIX / 'job_description.txt'

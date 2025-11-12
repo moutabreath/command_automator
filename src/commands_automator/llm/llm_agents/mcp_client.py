@@ -89,14 +89,6 @@ If you have already used a tool before, infer if you should use it again. For ex
 used just before this query.
 
 
-For general greetings, chitchat, or questions unrelated to resume content, 
-DO NOT use any tools. Examples where NO tool should be used:
-- "Hello"
-- "How are you?"
-- "What's the weather like?"
-- "Tell me about Python"
-- "What time is it?"
-
 If a tool should be used, respond in JSON format:
 {{
   "tool": "tool_name",
@@ -104,7 +96,7 @@ If a tool should be used, respond in JSON format:
     "query": "user query or relevant part"
   }}
 }}
-If the tool definition has no paramters respond in JSON fomrat:
+If the tool definition has no parameters respond in JSON format:
 {{
   "tool": "tool_name",
   "args": {{}}
@@ -119,7 +111,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
             async with aiohttp.ClientSession() as session, \
                        session.get(self.mcp_server_url, timeout=timeout) as resp:
                 # You can check for a specific status code if needed
-                return resp.status == 406 # (= NOt Accepatable) Server is probably reacheable.
+                return resp.status == 406 # (= Not Accepatable) Server is probably reacheable.
         except Exception as e:
             logging.error(f"MCP server not ready {e}", exc_info=True)
             return False
@@ -174,7 +166,9 @@ If no tool should be selected, respond to the query directly. Query: {query}
                     )
                 else:
                     agent_response = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                    return MCPResponse(agent_response.text, MCPResponseCode.OK) 
+                    if agent_response.code == LLMResponseCode.OK:
+                        return MCPResponse(agent_response.text, MCPResponseCode.OK)
+                    return MCPResponse(agent_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
@@ -198,13 +192,13 @@ If no tool should be selected, respond to the query directly. Query: {query}
         except Exception as e:
             logging.error(f"Error using tool: {e}", exc_info=True)
             return MCPResponse("Sorry, I couldn't execute tool.", MCPResponseCode.ERROR_COMMUNICATING_WITH_TOOL)
-    
+        
     async def _use_tool_result(self, selected_tool, tool_result, output_file_path) -> MCPResponse:
         if selected_tool == 'get_resume_files':
             return await self.resume_refiner_service.refine_resume(tool_result, output_file_path)
         if selected_tool == 'search_jobs_from_the_internet':
             return await self.job_search_service.get_unified_jobs()
-        return tool_result
+        return MCPResponse(tool_result, MCPResponseCode.OK)
 
     async def get_available_tools(self, session: ClientSession):
         try:
