@@ -1,7 +1,10 @@
 async function loadLLMConfig() {
     try {
         let llmConfig = await window.pywebview.api.load_llm_configuration();
-        document.getElementById('output-file-path').value = llmConfig.outputFilePath || '';
+        const outputPath = document.getElementById('output-file-path');
+        if (outputPath) {
+            outputPath.value = llmConfig.outputFilePath || '';
+        }
     } catch (error) {
         console.log('Error loading config:', error);
     }
@@ -10,17 +13,20 @@ async function loadLLMConfig() {
 async function saveLLMConfig() {
     let config = {};
     try {
-        const folderValue = document.getElementById('output-file-path').value;
-
-        config.outputFilePath = folderValue;
-        await window.pywebview.api.save_llm_configuration(config);
-    } catch (error) {
-        console.log('Error saving config:', error);
-    }
+        const outputPathElement = document.getElementById('output-file-path').value;
+        if (outputPathElement) {
+            config.outputFilePath = outputPathElement.value;
+            await window.pywebview.api.save_llm_configuration(config);
+        }
+        } catch (error) {
+            console.log('Error saving config:', error);
+        }
 }
 
 function init_basic_llm_dom_elements() {
     const queryBox = document.getElementById('query-box');
+    if (!queryBox) return;
+
     queryBox.addEventListener('input', autoResize);
     autoResize();
 }
@@ -74,9 +80,16 @@ async function initLLMEventListeners() {
 }
 
 async function initFolderUploadEvent() {
-    const result = await window.pywebview.api.select_folder();
-    if (result && result.length > 0) {
-        document.getElementById('output-file-path').value = result[0];
+    try {
+        const result = await window.pywebview.api.select_folder();
+        if (result && result.length > 0) {
+            const outputPath = document.getElementById('output-file-path');
+            if (outputPath) {
+                outputPath.value = result[0];
+            }
+        }
+    } catch (error) {
+        console.error('Error selecting folder:', error);
     }
 }
 
@@ -91,33 +104,54 @@ async function initImageUploadEvent() {
 function handleImageUpload(event) {
     const file = event.target.files[0];
     if (file) {
+        // Validate file size (e.g., 10MB limit)
+        const maxSize = 10 * 1024 * 1024; // 10MB
+        if (file.size > maxSize) {
+            alert('Image file is too large. Please select an image under 10MB.');
+            return;
+        }
+        
+        // Validate file type
+        if (!file.type.startsWith('image/')) {
+            alert('Please select a valid image file.');
+            return;
+        }
+        
         const reader = new FileReader();
         reader.onload = function (e) {
             displayImageThumbnail(e.target.result);
         };
+        reader.onerror = function (e) {
+            console.error('Error reading file:', e);
+            alert('Failed to read the image file.');
+        };
         reader.readAsDataURL(file);
     }
 }
-
 function removeImageThumbnail() {
     const imagePreviewDiv = document.getElementById('image-preview');
+    if (!imagePreviewDiv) return;
     imagePreviewDiv.innerHTML = '';
     imagePreviewDiv.style.display = 'none';
 }
 
 function displayImageThumbnail(imageData) {
     const imagePreviewDiv = document.getElementById('image-preview');
+    if (!imagePreviewDiv) return;
+
     imagePreviewDiv.innerHTML = ''; // Clear previous thumbnail
 
     if (imageData) {
         imagePreviewDiv.style.display = 'block';
 
         const queryBox = document.getElementById('query-box');
-        const queryBoxWidth = queryBox.offsetWidth;
-        const thumbnailSize = queryBoxWidth / 4;
+        if (queryBox){
+            const queryBoxWidth = queryBox.offsetWidth;
+            const thumbnailSize = queryBoxWidth / 4;
 
-        imagePreviewDiv.style.width = `${thumbnailSize}px`;
-        imagePreviewDiv.style.height = `${thumbnailSize}px`;
+            imagePreviewDiv.style.width = `${thumbnailSize}px`;
+            imagePreviewDiv.style.height = `${thumbnailSize}px`;
+        }
 
         const img = document.createElement('img');
         img.src = imageData;
@@ -134,21 +168,31 @@ function displayImageThumbnail(imageData) {
         imagePreviewDiv.style.display = 'none';
     }
 }
+
 function autoResize() {
     const queryBox = document.getElementById('query-box');
+    if (!queryBox) return;
+
+    const MIN_HEIGHT = 24;
     queryBox.style.height = 'auto';
-    queryBox.style.height = Math.max(24, queryBox.scrollHeight) + 'px';
+    queryBox.style.height = Math.max(MIN_HEIGHT, queryBox.scrollHeight) + 'px';
 }
 
 async function callLLM() {
     const query = document.getElementById('query-box').value.trim();
     const folderInput = document.getElementById('output-file-path').value;
     if (!query) return;
-    document.getElementById('send-btn').disabled = true;
-    document.getElementById('query-box').disabled = true;
 
-    // Append query and response to the response box
+    const sendBtn = document.getElementById('send-btn');
+    const queryBox = document.getElementById('query-box');
     const responseBox = document.getElementById('response-box');
+    const spinner = document.getElementById('spinner');
+    const imagePreview = document.getElementById('image-preview');
+    
+    if (!sendBtn || !queryBox || !responseBox || !spinner) {
+        console.error('Required DOM elements not found');
+        return;
+    }
 
     // Create query element
     const queryElem = document.createElement('div');
@@ -160,10 +204,8 @@ async function callLLM() {
     document.getElementById('query-box').value = '';
     let response = '';
 
-    const imagePreview = document.getElementById('image-preview');
     const img = imagePreview.querySelector('img');
     const imageData = img ? img.src : '';
-    const spinner = document.getElementById('spinner');
     spinner.style.visibility = 'visible';
 
     try {
