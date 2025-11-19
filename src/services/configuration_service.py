@@ -29,14 +29,16 @@ class ConfigurationService:
             return self._config
         except Exception as e:
             logging.error(f"Error loading configuration: {e}", exc_info=True)
-            return {}
+            return None
 
     async def save_configuration_async(self, config: Dict[str, Any]) -> bool:
         """Save configuration to JSON file"""
         try:
-            self._config = config
-            return await file_utils.save_file(self.config_path, 
+            success = await file_utils.save_file(self.config_path, 
                                            file_utils.serialize_to_json(config))
+            if success:
+                self._config = config
+            return success
         except Exception as e:
             logging.error(f"Error saving configuration: {e}", exc_info=True)
             return False
