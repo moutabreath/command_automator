@@ -80,7 +80,10 @@ class GeminiAgent:
                 parts.append(Part(inline_data=image))
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
-
+                return LLMAgentResponse(
+                f"Failed to process image: {str(e)}", 
+                LLMResponseCode.ERROR_USING_GEMINI_API
+            )
         try:
             response = chat.send_message(message=parts, config=config)
             if response:
@@ -88,7 +91,8 @@ class GeminiAgent:
             return LLMAgentResponse(f"Couldn't get result from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
         except Exception as e:
             logging.error(f"Error using Gemini: {e}", exc_info=True)
-            if hasattr(e, 'code') and e.code == 503:
+            status = getattr(e, 'status_code', None) or (e.args[0] if e.args else None)
+            if status == 503:
                 message = getattr(e, 'message', str(e))
                 if 'overloaded' in message.lower():
                     return LLMAgentResponse(message, LLMResponseCode.MODEL_OVERLOADED)
@@ -102,8 +106,17 @@ class GeminiAgent:
         try:
             tool_response = chat.send_message(message=prompt, config=config)
             decision = json.loads(tool_response.model_dump_json())
-            tools_text = decision.get('candidates')[0].get('content').get('parts')[0].get('text')
-            tools_json = json.loads(tools_text)
+            candidates = decision.get('candidates', [])
+            if not candidates:
+                return None, None
+            content = candidates[0].get('content', {})
+            parts = content.get('parts', [])
+            if not parts:
+                return None, None
+            tools_text = parts[0].get('text')
+            if not tools_text:
+                return None, None
+            tools_json = json.loads(tools_text)    
             selected_tool = tools_json.get("tool")
             args = tools_json.get("args", {})
             if selected_tool and selected_tool in available_tools:
@@ -118,8 +131,8 @@ class GeminiAgent:
         for file_path in file_paths:
             content = await file_utils.read_text_file(file_path)
             if content:
-                result = f"{result}\\n\n\n{content}"
-        return result        
+                result = f"{result}\n\n\n{content}"
+        return result
     
     def _get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
         parts = []

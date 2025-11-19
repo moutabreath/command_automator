@@ -29,7 +29,7 @@ def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = 
             continue
         url = extract_link(line)
         if url is not None:                    
-            line = add_line_with_link(doc, line, url)            
+            add_line_with_link(doc, line, url)       
             continue           
 
         if "**" in line:
@@ -176,7 +176,9 @@ def add_header(doc, keywords, line: str):
             
             
             index = text.find(keyword)
-            line_keyword = line[index:index + len(keyword) + 1] # +1 for space character
+            line_keyword = line[index:index + len(keyword)]
+            if index + len(keyword) < len(line) and line[index + len(keyword)] == ' ':
+                line_keyword += ' '
             line = line.replace(line_keyword, "", 1).strip()
             run = p.add_run(line_keyword)
             run.bold = True 

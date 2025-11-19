@@ -86,6 +86,8 @@ You have finished using the mcp tool. Now output text according to the following
                                                                                  chat=self.resume_chat)         
             if cover_letter_response.code == LLMResponseCode.OK:
                 return MCPResponse(cover_letter_response.text, MCPResponseCode.OK)
+            if cover_letter_response.code == LLMResponseCode.MODEL_OVERLOADED:
+                return MCPResponse(cover_letter_response.text, MCPResponseCode.ERROR_MODEL_OVERLOADED)
             return MCPResponse(cover_letter_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         # No cover letter guidelines provided - not an error
         return MCPResponse("No cover letter guidelines provided", MCPResponseCode.OK)

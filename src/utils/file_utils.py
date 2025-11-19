@@ -19,11 +19,13 @@ def find_project_root(marker_filename: str) -> Path:
     
     # Fallback/error if marker not found
     logging.error(f"Error: Could not find project root marker '{marker_filename}'")
-    # Using parents[3] as a temporary, less-safe fallback or raise an error
-    return current_dir.parents[3] 
+    raise FileNotFoundError(
+        f"Could not find project root marker '{marker_filename}' "
+        f"starting from {current_dir}"
+    )
 
 # Use a known file like 'pyproject.toml' or 'README.md'
-PROJECT_ROOT = find_project_root('Readme.md')
+PROJECT_ROOT = find_project_root('README.md')
 
 # Define base directories using proper path joining
 BASE_DIR = PROJECT_ROOT / 'src' 
@@ -71,39 +73,36 @@ def serialize_to_json(obj: Any) -> str:
         return json.dumps(serializable_obj, indent=4)
     except Exception as e:
         logging.error(f"Error serializing to JSON: {e}", exc_info=True)
-        return "{}"
-    
-def serialize_objects(objects: List[T]) -> str:
+def serialize_objects(objects: List[T]) -> str | None:
     """
     Serialize a list of Pydantic models to JSON string
     Args:
         objects: List of any Pydantic model objects
     Returns:
-        JSON string representation of the objects
+        JSON string representation of the objects, or None on error
     """
     try:
         return json.dumps([obj.model_dump(mode='json') for obj in objects], indent=4)
-    except (TypeError, ValueError) as e:
+    except Exception as e:
         logging.error(f"Error converting list to JSON: {e}", exc_info=True)
-        return "[]"
+        return None
     
-async def read_json_file(file_path: str) -> dict:
+async def read_json_file(file_path: str) -> dict | None:
     try:
         async with aiofiles.open(file_path, "r", encoding='utf-8') as f:
             data = await f.read()
         return json.loads(data)
     except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:
         logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
-        return {}
+        return None
     
-async def read_text_file(file_path: str | Path) -> str:
+async def read_text_file(file_path: str | Path) -> str | None:
     content: str = ""
-    logging.info(f"Reading file: {file_path}")
+    logging.debug(f"Reading file: {file_path}")
     try:
         async with aiofiles.open(file_path, 'r', encoding="utf-8") as file:
             content = await file.read()
-    except UnicodeDecodeError as e:
-        logging.error(f"Error reading file: {file_path} {e}", exc_info=True)
-    except IOError as ioError:
-        logging.error(f"Error reading file: {file_path} - {ioError}", exc_info=True)  
-    return content
+        return content
+    except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
+        logging.error(f"Error reading file: {file_path} - {e}", exc_info=True)
+        return None

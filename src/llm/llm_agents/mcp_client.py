@@ -178,6 +178,8 @@ If no tool should be selected, respond to the query directly. Query: {query}
             
             if response is None:
                 return MCPResponse(f"Tool execution failed returned no answer", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
+            if not response.content or len(response.content) == 0:
+                return MCPResponse("Tool execution returned empty response", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if response.isError:
                 error_msg = response.content[0].text if response and response.content and len(response.content) > 0  else "Unknown error"
                 return MCPResponse(f"Tool execution returned error: {error_msg}", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)

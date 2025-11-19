@@ -59,7 +59,11 @@ class CommandsAutomatorApi:
             return False 
         
     def execute_script(self, script_name, additional_text, flags):
-        return self.commands_automator_service.execute_script(script_name, additional_text, flags)
+        try:
+            return self.commands_automator_service.execute_script(script_name, additional_text, flags)
+        except Exception as e:
+            logging.error(f"Error executing script {script_name}: {e}", exc_info=True)
+            return None
         
     def call_llm(self, prompt: str, image_data: str, output_file_path: str):
         return self.llm_api.call_llm(prompt, image_data, output_file_path)

@@ -1,6 +1,6 @@
 
 from enum import Enum
-
+from dataclasses import dataclass
 
 class MCPResponseCode(Enum):
     """Enumeration of possible MCP operation results"""
@@ -11,7 +11,7 @@ class MCPResponseCode(Enum):
     ERROR_COMMUNICATING_WITH_LLM = 5
     ERROR_MODEL_OVERLOADED = 6
 
+@dataclass(frozen=True)
 class MCPResponse:
-    def __init__(self, text: str, code: MCPResponseCode):
-        self.text = text
-        self.code = code
+   text: str
+   code: MCPResponseCode

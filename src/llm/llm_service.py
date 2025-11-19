@@ -4,7 +4,7 @@ from llm.llm_agents.mcp_client import SmartMCPClient
 from llm.llm_agents.mcp_response import MCPResponse
 from llm.llm_agents.mcp_response import MCPResponseCode
 
-class LLMService():
+class LLMService:
 
     def __init__(self):
         self.mcp_client = SmartMCPClient()
@@ -25,17 +25,16 @@ class LLMService():
             output_file_path: Optional path for output file
             
         Returns:
-            The processed response as a string
+           MCPResponse: The processed response from the MCP client
             
-        Raises:
-            Exception: If the MCP client fails to process the query
+        Note:
+            Exceptions are caught and returned as error responses rather than raised.
         """
         try:
             return await self.mcp_client.process_query(
                 prompt, image_path, output_file_path
             )
-        except Exception as e:
-            # Log the error and re-raise with context
+        except (Exception) as e:
             logging.error(f"Error processing LLM query: {e}", exc_info=True)
-            return MCPResponse("Uknown error occured", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+            return MCPResponse("Uknown error occurred", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
