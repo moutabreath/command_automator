@@ -3,7 +3,7 @@ import sys
 def replace_after_argument(input_string, argument):
     if argument in input_string:
         index = input_string.index(argument) + len(argument)
-        return input_string[:index] + " dummy"
+        return input_string[:index] + " dummy" + input_string[index:]
     else:
         return input_string
 
@@ -15,16 +15,18 @@ def write_annonymized_string_to_file(file_name, new_string):
         
     except FileNotFoundError:
         print(f"Error: The file '{file_name}' was not found.")
+        return ""
     except Exception as e:
         print(f"An error occurred: {e}")
-
+        return ""
+    
 def get_annonymized_string(file_name, argument):
     try:
         new_string = ""
         with open(file_name, 'r') as file:
           for line_number, line in enumerate(file, start=1):
               new_line = replace_after_argument(line, argument)
-              new_string += new_line + "\n"
+              new_string += new_line
         return new_string
     except FileNotFoundError:
         print(f"Error: The file '{file_name}' was not found.")

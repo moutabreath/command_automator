@@ -99,13 +99,12 @@ class ScriptsManagerService:
         if self.should_use_free_text(script_name):
             if additional_text == "" or additional_text is None:
                 return None
-            free_text_args = flags.split(" ")
-            split_arr = list(filter(None, ' '.join(free_text_args).split()))
-            args.extend(split_arr)
-            
+            # Split flags and filter empty strings
+            args.extend(flags.split())    
         other_script_name_as_input = self.get_other_script_name_as_input(script_name)
         if other_script_name_as_input is not None:
-            cleaners_path = os.path.join(os.getcwd(), 'cleaners')
+            base_dir = os.path.dirname(os.path.dirname(SCRIPTS_DIR))
+            cleaners_path = os.path.join(base_dir, 'cleaners')
             files = glob.glob(f'{cleaners_path}/**/{other_script_name_as_input}', recursive=True)
             if files:
                 f_drive_cleaner_path = files[0]
@@ -117,7 +116,7 @@ class ScriptsManagerService:
        
     @staticmethod
     def get_updated_venv(arg):
-        if not ('python' in arg):
+        if not (arg and arg.lower().startswith('python')):
             return
         new_venv = os.environ.copy()
         python_env = new_venv.get("PYTHONPATH", "")
@@ -132,7 +131,7 @@ class ScriptsManagerService:
 
     @staticmethod
     def run_app(run_version_command: str):
-        """Run a command. Accepts either a list or string (requires shell=True for strings)."""
+        """Run a command."""
         startupinfo = None
         if platform.system() == 'Windows':
             si = subprocess.STARTUPINFO()
