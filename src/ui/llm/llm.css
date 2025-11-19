@@ -14,7 +14,6 @@
       color: #fff;
       font-family: monospace;
       box-sizing: border-box;
-      /* Add this */
   }
 
   .query-box-wrapper {
@@ -26,9 +25,7 @@
       flex-direction: column;
       gap: 8px;
       width: 100%;
-      /* Keep this */
       box-sizing: border-box;
-      /* Add this */
   }
 
   .input-container {
@@ -61,7 +58,7 @@
   .query-input-section label input[type="checkbox"] {
       margin: 0;
       vertical-align: middle;
-  }
+  }  
 
   #query-box {
       width: 100%;
@@ -75,6 +72,11 @@
       font-size: inherit;
       overflow: hidden;
       color: #fff;
+  }
+
+  #query-box:focus {
+    outline: 2px solid #9EA3F5;
+    outline-offset: 2px;
   }
 
   #image-preview {
@@ -164,7 +166,7 @@
   }
 
   #select-folder-btn:hover {
-      background-color: #9EA3F5;
+      background-color: #8792da;
   }
 
   #send-btn {

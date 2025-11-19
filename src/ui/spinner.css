@@ -10,6 +10,11 @@
     align-items: center;
     z-index: 1000;
     visibility: hidden; /* Initially hidden */
+    pointer-events: none; 
+}
+#spinner.visible {
+    visibility: visible;
+    pointer-events: auto; /* Re-enable interactions with the overlay when shown */
 }
 
 .spinner-inner {
@@ -19,6 +24,7 @@
     width: 60px;
     height: 60px;
     animation: spin 1.5s linear infinite;
+    will-change: transform;
 }
 
 @keyframes spin {

@@ -11,6 +11,15 @@
     color: #fff;
 }
 
+.tab:hover {
+    background: #444;
+}
+
+.tab:focus-visible {
+    outline: 2px solid #9EA3F5;
+    outline-offset: 2px;
+}
+
 .tab.selected {
     background: #9EA3F5;
     color: #222;
@@ -24,9 +33,20 @@
     display: block;
 }
 
-iframe {
-    min-height: 400px;
-    height: 80vh;
-    border: none;
-    background: #222;
+root {
+    --iframe-min-height: 400px;
+    --iframe-height: 80vh;
+}
+
+.tab-content iframe {
+     border: none;
+     background: #222;
+    min-height: var(--iframe-min-height);
+    height: var(--iframe-height);
+ }
+
+@media (max-width: 768px) {
+    :root {
+        --iframe-height: 60vh;
+    }
 }
