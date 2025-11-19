@@ -38,12 +38,11 @@ class GlassdoorJobsScraper(SharedService):
             await self.cleanup()
         self.playwright = await async_playwright().start()
         self.browser = await self.playwright.chromium.launch(
-            headless=False,  # Set to True for headless mode
+            headless=True,
             args=[
                 '--no-sandbox',
                 '--disable-blink-features=AutomationControlled',
                 '--disable-dev-shm-usage',
-                '--disable-web-security',
                 '--disable-features=VizDisplayCompositor'
             ]
         )
@@ -260,12 +259,11 @@ class GlassdoorJobsScraper(SharedService):
             await self.random_delay(5, 10)
         
         logging.info("=== Scraping Complete ===")
-        logging.info(f"Total jobs scraped: {len(jobs)}")
-            
+        logging.info(f"Total jobs scraped: {len(jobs)}")        
+        return jobs
     
     async def run_scraper(self, job_title: str, location: str, forbidden_titles: list[str], 
                           max_pages: int, max_jobs_per_page: int) -> List[Job]:
-        
         try:
             await self.setup_browser()
             jobs = await self._scrape_jobs(

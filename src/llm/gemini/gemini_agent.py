@@ -68,11 +68,7 @@ class GeminiAgent:
 
         if file_paths:
             prompt = f"{prompt} \n\n\n {await self._get_json_files_content_for_prompt(file_paths)}"
-            response = chat.send_message(prompt, config=config)
-            if response:
-                return LLMAgentResponse(response.text, LLMResponseCode.OK)
-            else:
-                return LLMAgentResponse(f"Couldn't get result from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)            
+            parts = [Part(text=prompt)]
         # Handle single image from base64
         elif base64_decoded:
             try:
@@ -81,9 +77,9 @@ class GeminiAgent:
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
                 return LLMAgentResponse(
-                f"Failed to process image: {str(e)}", 
-                LLMResponseCode.ERROR_USING_GEMINI_API
-            )
+                    f"Failed to process image: {str(e)}", 
+                    LLMResponseCode.ERROR_USING_GEMINI_API
+                )
         try:
             response = chat.send_message(message=parts, config=config)
             if response:

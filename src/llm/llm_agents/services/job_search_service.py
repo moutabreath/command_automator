@@ -31,6 +31,8 @@ class JobSearchService:
                                                                      file_paths=file_paths)
             if response.code == LLMResponseCode.OK:
                 return MCPResponse(response.text, MCPResponseCode.OK)
+            if response.code == LLMResponseCode.MODEL_OVERLOADED:
+                return MCPResponse("LLM Model is overloaded. try again later", MCPResponseCode.ERROR_MODEL_OVERLOADED)
             return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
         except Exception as e:
