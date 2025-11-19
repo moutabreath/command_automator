@@ -22,3 +22,4 @@ src/llm/mcp_servers/job_search/results/*
 src/llm/mcp_servers/resume/resources/additional_files/job_description.txt
 src/scripts_manager/config/commands-executor-config.json
 src/llm/config/llm-config.json
+src/llm/mcp_servers/resume/resources/Tal_Druckmann.txt
