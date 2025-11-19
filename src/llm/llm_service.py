@@ -1,6 +1,8 @@
 import logging
 
 from llm.llm_agents.mcp_client import SmartMCPClient
+from llm.llm_agents.mcp_response import MCPResponse
+from llm.llm_agents.mcp_response import MCPResponseCode
 
 class LLMService():
 
@@ -13,7 +15,7 @@ class LLMService():
         prompt: str,
         image_path: str | None,
         output_file_path: str | None
-    ) -> str:
+    ) -> MCPResponse:
         """
         Process a chat query using the MCP client.
         
@@ -35,4 +37,5 @@ class LLMService():
         except Exception as e:
             # Log the error and re-raise with context
             logging.error(f"Error processing LLM query: {e}", exc_info=True)
-            raise
+            return MCPResponse("Uknown error occured", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+        

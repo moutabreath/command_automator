@@ -208,13 +208,8 @@ async function callLLM() {
     const imageData = img ? img.src : '';
     spinner.style.visibility = 'visible';
 
-    try {
-        response = await window.pywebview.api.call_llm(query, imageData, folderInput);
-    } catch (e) {
-        response = `Error: ${e.message || 'Failed to call LLM'}`;
-    } finally {
-        spinner.style.visibility = 'hidden';
-    }
+    response = await getMessageFromLLMResponse(query, imageData, folderInput);
+    spinner.style.visibility = 'hidden';
 
     // Create response element
     const responseElem = document.createElement('div');
@@ -230,4 +225,47 @@ async function callLLM() {
     document.getElementById('send-btn').disabled = false;
     document.getElementById('query-box').disabled = false;
     document.getElementById('query-box').focus();
+}
+
+async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
+    try {
+        // call backend
+        let resp = await window.pywebview.api.call_llm(prompt, imageData, outputPath);
+
+        // backend may return a JSON string or an object; normalize to object
+        if (typeof resp === 'string') {
+            try {
+                resp = JSON.parse(resp);
+            } catch (e) {
+                console.error('call_llm returned non-JSON string', resp);
+                throw e;
+            }
+        }
+
+        if (!resp || typeof resp !== 'object') {
+            console.error('Unexpected call_llm response:', resp);
+            return { ok: false, message: 'Invalid response from LLM' };
+        }
+
+        const { text = '', code = '' } = resp;
+
+        // handle result codes (adjust strings to match enum names)
+        message = text;
+        switch (code) {
+            case 'ERROR_MODEL_OVERLOADED':
+              message = 'Model overloaded. Please try again later.' ;
+            case 'ERROR_LOADING_IMAGE_TO_MODEL':
+                message = 'Failed loading image for model.';
+            case 'ERROR_COMMUNICATING_WITH_LLM':
+            default:
+                message = text || 'Error communicating with LLM';
+        }
+        
+    } catch (err) {
+        console.error('callLLM failed:', err);
+        message = 'Unkown error occurred';
+    }
+    finally{
+        return message;
+    }
 }
