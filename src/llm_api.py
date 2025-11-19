@@ -93,27 +93,3 @@ class LLMApi:
             return resp.to_dict()
         resp = LLMApiResponse("Error communicating with LLM", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         return resp.to_dict()
-    
-    def load_llm_configuration(self):
-        """Load and serialize LLM configuration"""
-        try:
-            config = api_utils.run_async_method(self.llm_config.load_configuration_async)
-            if isinstance(config, dict):
-                return config
-            return {}
-        except Exception as e:
-            logging.error(f"Error loading LLM configuration: {e}", exc_info=True)
-            return {}
-
-    def save_llm_configuration(self, config):
-        """Save LLM configuration after ensuring it's serializable"""
-        try:
-            if not isinstance(config, dict):
-                logging.error("Invalid configuration format")
-                return False
-            result = api_utils.run_async_method(self.llm_config.save_configuration_async, config)
-            return result if isinstance(result, bool) else False
-        except Exception as e:
-            logging.error(f"Error saving LLM configuration: {e}", exc_info=True)
-            return False
-
