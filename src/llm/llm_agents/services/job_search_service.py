@@ -34,7 +34,7 @@ class JobSearchService:
             return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
         except Exception as e:
-            logging.error(f"Error processing unified jobs",e, exc_info=True)
+            logging.error(f"Error processing unified jobs: {e}", exc_info=True)
             return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
     def phrase_prompt(self) -> str:

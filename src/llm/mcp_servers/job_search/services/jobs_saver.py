@@ -17,10 +17,6 @@ class JobsSaver(SharedService):
 
         Returns:
             bool: True if jobs were successfully saved, False otherwise
-
-        Raises:
-            ValueError: If filename is invalid or jobs list is empty
-            IOError: If file cannot be written
         """
         if not jobs:
             raise ValueError("Cannot save empty jobs list")
