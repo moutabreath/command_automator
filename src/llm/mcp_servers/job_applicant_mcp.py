@@ -13,6 +13,7 @@ from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderSe
 from llm.mcp_servers.resume.models import ResumeData
 from llm.mcp_servers.services.shared_service import SharedService
 from utils.logger_config import setup_logging
+from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
 
 # Initialize FastMCP
@@ -100,17 +101,55 @@ async def get_resume_files() -> ResumeData:
     logging.debug(f"Created ResumeData successfully")
     return resume_data
 
+async def _get_search_params_from_config(job_title: str | None = None,
+    location: str | None = None,
+    remote: bool | None = None,
+    forbidden_titles: list | None = None) :
+     # If any parameter is None, try loading defaults from llm-config.json
+    try:
+        llm_conf = await read_json_file(JOB_SEARCH_CONFIG_FILE)
+        logging.debug(f"LLM config loaded for job search defaults: {llm_conf}")
+    except Exception as e:
+        logging.debug(f"Could not load LLM config for defaults: {e}")
+        llm_conf = {}
+
+    # Use values from config when provided, otherwise use hardcoded defaults
+    if job_title is None:
+        job_title = llm_conf.get('job_search', {}).get('job_title') if llm_conf else None
+    if location is None:
+        location = llm_conf.get('job_search', {}).get('location') if llm_conf else None
+    if remote is None:
+        # store boolean default; allow string like 'true' or bool
+        remote_val = llm_conf.get('job_search', {}).get('remote') if llm_conf else None
+        remote = bool(remote_val) if remote_val is not None else True
+
+    # forbidden_titles: try to load from job_keywords.json if not provided
+    if forbidden_titles is None:
+        try:
+            forbidden_titles = llm_conf.get('forbidden_titles', ['QA', 'Devops', 'Junior', 'Graduate', 'Front End'])
+            logging.debug(f"Loaded forbidden_titles from config: {forbidden_titles}")
+        except Exception as e:
+            logging.debug(f"Could not load forbidden_titles from config: {e}")
+            forbidden_titles = ['QA', 'Devops', 'Junior', 'Graduate', 'Front End']
+
+    # Final defaults if nothing found
+    job_title = job_title or "Software Engineer"
+    location = location or "Tel Aviv, Israel"
+    return job_title, location, remote, forbidden_titles
+
 
 @mcp.tool()
-async def search_jobs_from_the_internet(job_title: str = "Software Engineer",
-    location: str = "Tel Aviv, Israel",
-    remote: bool = True) -> list:
+async def search_jobs_from_the_internet(job_title: str | None = None,
+    location: str | None = None,
+    remote: bool | None = None) -> list:
     """
     Search for jobs from multiple sources (LinkedIn and Glassdoor).
     
     Returns:
         List of Job objects from all sources
     """
+    job_title, location, remote, forbidden_titles = await _get_search_params_from_config(job_title, location, remote)
+
     jobs = []
     try:
         linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
@@ -118,9 +157,9 @@ async def search_jobs_from_the_internet(job_title: str = "Software Engineer",
             jobs.extend(linkedin_jobs)
     except Exception as ex:
         logging.error(f"LinkedIn scraper failed: {ex}")
-    
+
     try:
-        glassdoor_jobs = await _run_glassdoor_scraper(job_title=job_title, location=location)
+        glassdoor_jobs = await _run_glassdoor_scraper(job_title=job_title, location=location, forbidden_titles=forbidden_titles)
         if glassdoor_jobs and len(glassdoor_jobs) > 0:
             jobs.extend(glassdoor_jobs)
     except Exception as ex:
@@ -130,9 +169,9 @@ async def search_jobs_from_the_internet(job_title: str = "Software Engineer",
 
     
 @mcp.tool()
-async def get_jobs_from_linkedin(job_title: str = "Software Engineer",
-    location: str = "Tel Aviv, Israel",
-    remote: bool = True) -> list:
+async def get_jobs_from_linkedin(job_title: str | None = None,
+    location: str | None = None,
+    remote: bool | None = None)  -> list:
     """
     Search for jobs on LinkedIn.    
     
@@ -140,7 +179,6 @@ async def get_jobs_from_linkedin(job_title: str = "Software Engineer",
         List of Job objects
     """ 
     return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
-
 
 async def _run_linkedin_scraper(job_title: str,
     location: str,
@@ -152,16 +190,14 @@ async def _run_linkedin_scraper(job_title: str,
     
     max_pages: int = 2
     logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
+
+    job_title,location, remote, forbidden_titles = await _get_search_params_from_config(job_title, location, None)
     
-    search_url = linkedin_scraper.build_search_url(
-        job_title=job_title,
+    jobs = linkedin_scraper.run_scraper(job_title=job_title,
         location=location,
-        remote=remote
-    )
-    
-    logging.debug(f"Search URL: {search_url}")
-    
-    jobs = linkedin_scraper.scrape_job_listings(search_url=search_url, max_pages=max_pages)
+        remote=remote,
+        forbidden_titles = forbidden_titles,
+        max_pages=max_pages)
     
     logging.info(f"Found {len(jobs)} jobs")
     logging.debug("=" * 60)
@@ -177,25 +213,28 @@ async def _run_linkedin_scraper(job_title: str,
     return jobs
 
 @mcp.tool()
-async def get_jobs_from_glassdoor(job_title: str = "Software Engineer",
-    location: str = "Tel Aviv, Israel") -> List:
+async def get_jobs_from_glassdoor(job_title: str | None = None,
+    location: str | None = None,
+    remote: bool | None = None) -> List:
     """
     Search for jobs on Glassdoor.
 
     Returns:
         List of Job objects
     """
-    return await _run_glassdoor_scraper(job_title, location)
+    # Load forbidden_titles from config
+    job_title,location, _, forbidden_titles = await _get_search_params_from_config(job_title, location, None)
+    return await _run_glassdoor_scraper(job_title, location, forbidden_titles)
 
 
-async def _run_glassdoor_scraper(job_title:str, location: str) -> List:
+async def _run_glassdoor_scraper(job_title: str, location: str, forbidden_titles: list) -> List:
     """Run the Glassdoor job scraper"""
     max_pages: int = 3
     max_jobs_per_page: int = 20
     glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
     job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
 
-    forbidden_titles = ['QA', 'Devops', 'Junior', 'Graduate', 'Front End']
+    job_title,location, _, forbidden_titles = await _get_search_params_from_config(job_title, location, None)
 
     jobs = await glassdoor_scraper.run_scraper(
         job_title=job_title,
@@ -203,12 +242,12 @@ async def _run_glassdoor_scraper(job_title:str, location: str) -> List:
         forbidden_titles=forbidden_titles,
         max_pages=max_pages,
         max_jobs_per_page=max_jobs_per_page)
-    
+
     if jobs and len(jobs) > 0:
         await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')
     else:
         logging.warning("No jobs found from Glassdoor scraper")
-    
+
     return jobs
 
 

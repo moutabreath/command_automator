@@ -1,0 +1,14 @@
+{
+  "job_search": {
+    "job_title": "Software Engineer",
+    "location": "Tel Aviv, Israel",
+    "remote": true,
+    "forbidden_titles": [
+      "QA",
+      "Devops",
+      "Junior",
+      "Graduate",
+      "Front End"
+    ]
+  }
+}

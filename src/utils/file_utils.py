@@ -38,7 +38,12 @@ SCRIPTS_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json
 SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
 
 LLM_CONFIG_FILE = LLM_BASE_DIR / 'config' / 'llm-config.json'
+
 JOB_FILE_DIR = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'results'
+JOB_SEARCH_CONFIG_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
+GLASSDOOR_SELECTORS_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'glassdoor_selectors.json'
+
+
 
 T = TypeVar('T', bound=BaseModel)
 
