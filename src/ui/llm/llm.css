@@ -74,11 +74,6 @@
       color: #fff;
   }
 
-  #query-box:focus {
-    outline: 2px solid #9EA3F5;
-    outline-offset: 2px;
-  }
-
   #image-preview {
       display: none;
       overflow: hidden;
