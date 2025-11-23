@@ -60,5 +60,18 @@
       "detailed_description": "Replace any number of pair of chars.",
       "free_text_required": true    
     }
+    ,
+    {
+      "script_name": "kill_app_with_name.cmd",
+      "short_description": "Kill application by process name",
+      "detailed_description": "Terminate a running process by name (pass process name as argument). If no argument given, defaults to 'commands_automator_api.exe'.",
+      "free_text_required": true
+    },
+    {
+      "script_name": "kill_app_holding_port.cmd",
+      "short_description": "Kill process holding port",
+      "detailed_description": "Find and terminate the process holding the specified TCP port. Pass the port number as argument.",
+      "free_text_required": true
+    }
   ]
 }
