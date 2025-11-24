@@ -25,7 +25,10 @@ if errorlevel 1 (
 
 echo Terminating %EXE% ...
 taskkill /IM "%NAME%" /F >nul 2>&1
-
+if errorlevel 1 (
+    echo Failed to terminate %EXE%. Check permissions or if process is protected.
+    exit /b 1
+)
 REM wait up to 10 seconds for processes to disappear
 set /a COUNT=0
 :waitloop

@@ -17,6 +17,15 @@ if errorlevel 1 (
     exit /b 1
 )
 
+:: Validate port range
+if %PORT% LSS 1 (
+    echo Error: Port must be between 1 and 65535
+    exit /b 1
+)
+if %PORT% GTR 65535 (
+    echo Error: Port must be between 1 and 65535
+    exit /b 1
+)
 echo Searching for process using port %PORT%...
 
 :: Find the PID using the port
@@ -34,6 +43,10 @@ for /f "tokens=1" %%a in ('tasklist /fi "PID eq %PID%" /fo table /nh') do (
     set PROCESS_NAME=%%a
 )
 
+if "!PROCESS_NAME!"=="" (
+    echo Error: Could not retrieve process name for PID %PID%
+    exit /b 1
+)
 echo Found process: %PROCESS_NAME% (PID: %PID%)
 echo Killing process...
 

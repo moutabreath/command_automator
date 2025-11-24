@@ -58,9 +58,8 @@
       "script_name": "replace_chars.py",
       "short_description": "Replace chars in string",
       "detailed_description": "Replace any number of pair of chars.",
-      "free_text_required": true    
-    }
-    ,
+      "free_text_required": true
+    },
     {
       "script_name": "kill_app_with_name.cmd",
       "short_description": "Kill application by process name",

@@ -15,7 +15,6 @@ commands_automator.log
 commands_automator_api.spec
 commands_automator_api.exe
 uv.lock
-llm/config/llm-config.json
 llm/resources/resume/Tal_Druckmann.txt
 src/commandautomator.egg-info/
 src/llm/mcp_servers/job_search/results/*

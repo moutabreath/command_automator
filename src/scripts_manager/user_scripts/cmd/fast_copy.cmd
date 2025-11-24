@@ -7,11 +7,11 @@ if "%~2"=="" (
     exit /b 1
 )
 set source=%~1
-set destination=%~2if not exist "%source%" (
+set destination=%~2
+if not exist "%source%" (
     echo Error: Source path does not exist
     exit /b 1
 )
-
 if exist "%source%\*" (
     robocopy "%source%" "%destination%" /S /E /MT:16 /NFL /NDL /NJH /NJS
     if %ERRORLEVEL% LSS 8 exit /b 0
