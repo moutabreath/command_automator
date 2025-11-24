@@ -15,12 +15,8 @@ def replace_and_remove_parenthesis(text):
     print(f'{text}\n')
     print(f'{x}\n')
 
-def run_remove_parenthesis(text):
-    x = text.replace("{", "")
-    x = x.replace("}", "")
-    x = x.replace("[", "")
-    x = x.replace("]", "")
-    return x
+def run_remove_parenthesis(text: str):
+    return text.translate(str.maketrans('', '', '{}[]'))
 
 def run_replace_string():
     if len(sys.argv) <= 3:
