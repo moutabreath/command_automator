@@ -1,5 +1,6 @@
 import json
 import logging
+import sys
 from pathlib import Path
 from typing import List, Any, TypeVar
 import aiofiles
@@ -24,20 +25,45 @@ def find_project_root(marker_filename: str) -> Path:
         f"starting from {current_dir}"
     )
 
-# Use a known file like 'pyproject.toml' or 'README.md'
-PROJECT_ROOT = find_project_root('README.md')
+# Determine project root in both dev and frozen (pyinstaller) modes.
+try:
+    if getattr(sys, 'frozen', False):
+        # When frozen by PyInstaller, resources are extracted to _MEIPASS
+        meipass = getattr(sys, '_MEIPASS', None)
+        if meipass:
+            PROJECT_ROOT = Path(meipass)
+        else:
+            # Fallback to directory of the executable
+            PROJECT_ROOT = Path(sys.executable).resolve().parent
+    else:
+        # Use a known file like 'README.md' to find repo root in dev
+        try:
+            PROJECT_ROOT = find_project_root('README.md')
+        except FileNotFoundError:
+            # Fallback to two levels up from this file if marker not present
+            PROJECT_ROOT = Path(__file__).resolve().parents[2]
+except Exception as e:
+    logging.error(f"Error determining PROJECT_ROOT: {e}")
+    PROJECT_ROOT = Path(__file__).resolve().parent
 
-# Define base directories using proper path joining
-BASE_DIR = PROJECT_ROOT / 'src' 
+if (PROJECT_ROOT / 'src').exists():
+    BASE_DIR = PROJECT_ROOT / 'src'
+else:
+    BASE_DIR = PROJECT_ROOT / 'app'
+
 SCRIPTS_MANAGER_BASE_DIR = BASE_DIR / 'scripts_manager'
-LLM_BASE_DIR = BASE_DIR / 'llm'
 
-# Define specific directories
 SCRIPTS_MANAGER_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-executor-config.json'
 SCRIPTS_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
 SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
 
+LLM_BASE_DIR = BASE_DIR / 'llm'
+
 LLM_CONFIG_FILE = LLM_BASE_DIR / 'config' / 'llm-config.json'
+
+RESUME_RESOURCES_DIR =  LLM_BASE_DIR / 'mcp_servers' /  'resume' / 'resources'
+RESUME_ADDITIONAL_FILES_DIR = RESUME_RESOURCES_DIR / 'additional_files'
+
 
 JOB_FILE_DIR = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'results'
 JOB_SEARCH_CONFIG_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
@@ -93,11 +119,12 @@ def serialize_objects(objects: List[T]) -> str | None:
         return None
     
 async def read_json_file(file_path: str) -> dict | None:
+    data = await read_text_file(file_path)
+    if (data == None):
+        return None
     try:
-        async with aiofiles.open(file_path, "r", encoding='utf-8') as f:
-            data = await f.read()
         return json.loads(data)
-    except (FileNotFoundError, PermissionError, json.JSONDecodeError, OSError) as e:
+    except (json.JSONDecodeError, OSError) as e:
         logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
         return None
     
