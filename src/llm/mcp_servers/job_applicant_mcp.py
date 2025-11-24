@@ -203,10 +203,6 @@ async def _run_linkedin_scraper(job_title: str,
     logging.debug("=" * 60)
     if jobs and len(jobs) > 0:    
         await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
-        logging.info(f"Getting detailed description for: {jobs[0].title}")
-        description = linkedin_scraper.get_job_description(jobs[0].link)
-        if description:
-            logging.debug(f"Description: {description[:300]}...")
     else:
         logging.warning("No jobs found from LinkedIn scraper")
    

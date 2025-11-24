@@ -146,7 +146,7 @@ class LinkedInJobScraper(AbstractJobScraper):
         """Get detailed job description from individual job page"""
         try:
             response = self.session.get(job_url, timeout=30)
-            response.raise_for_status()            
+            response.raise_for_status()
             soup = BeautifulSoup(response.content, 'lxml')
             
             # Look for job description
