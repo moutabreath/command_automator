@@ -1,4 +1,4 @@
-Now draft a cover letter based on the job description given in the previous prompt and follow these guidelines:- Assume the job description came from LinkedIn.
-- Address the Hiring Manager.
+Now draft a cover letter based on the job description given in the previous prompt and follow these guidelines:
+- Assume the job description came from LinkedIn.- Address the Hiring Manager.
 - The address of the company is not known.
 - If the role involves designing large-scale systems, emphasize that I have a solid understanding of software systems in general and that I have completed a workshop on designing large-scale systems.

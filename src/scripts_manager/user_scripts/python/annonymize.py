@@ -8,7 +8,7 @@ def replace_after_argument(input_string, argument):
         return input_string
 
 
-def write_annonymized_string_to_file(file_name, new_string):
+def write_anonymized_string_to_file(file_name, new_string):
     try:
         with open('temp.txt', 'w') as file:
             file.write(new_string)
@@ -20,21 +20,22 @@ def write_annonymized_string_to_file(file_name, new_string):
         print(f"An error occurred: {e}")
         return ""
     
-def get_annonymized_string(file_name, argument):
+def get_anonymized_string(file_name, argument):
     try:
         new_string = ""
         with open(file_name, 'r') as file:
-          for line_number, line in enumerate(file, start=1):
-              new_line = replace_after_argument(line, argument)
-              new_string += new_line
+            for line_number, line in enumerate(file, start=1):
+                new_line = replace_after_argument(line, argument)
+                new_string += new_line
         return new_string
     except FileNotFoundError:
         print(f"Error: The file '{file_name}' was not found.")
+        return ""
     except Exception as e:
         print(f"An error occurred: {e}")
+        return ""
 
-
-def run_annoymize():
+def run_anonymize():
     if len(sys.argv) != 3:
         print("Usage: python script.py <file_name> <argument>")
         sys.exit(1)
@@ -42,10 +43,10 @@ def run_annoymize():
     file_name = sys.argv[1]
     argument = sys.argv[2]
 
-    new_string = get_annonymized_string(file_name, argument)
+    new_string = get_anonymized_string(file_name, argument)
         
-    write_annonymized_string_to_file(file_name, new_string)
+    write_anonymized_string_to_file(file_name, new_string)
 
 
 if __name__ == '__main__':
-    run_annoymize()
+    run_anonymize()
