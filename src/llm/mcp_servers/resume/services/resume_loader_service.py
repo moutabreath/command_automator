@@ -46,7 +46,7 @@ class ResumeLoaderService(SharedService):
             file_utils.RESUME_ADDITIONAL_FILES_DIR  / 'resume_sections.txt'
         )
         if not resume_sections_content:
-            logging.error(f"No resume_sections file found in {self.ADDITIONAL_FILE_PATH_PREFIX}")
+            logging.error(f"No resume_sections file found in {file_utils.RESUME_ADDITIONAL_FILES_DIR}")
             return []
         return [line for line in resume_sections_content.splitlines() if line.strip()]
     

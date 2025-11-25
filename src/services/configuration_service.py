@@ -22,7 +22,7 @@ class ConfigurationService:
         self.config_path = state['config_path']
         self._config = state['config']
         
-    async def load_configuration_async(self) -> Dict[str, Any]:
+    async def load_configuration_async(self) -> Dict[str, Any] | None:
         """Load configuration from JSON file"""    
         try:
             self._config = await file_utils.read_json_file(self.config_path)
@@ -30,7 +30,7 @@ class ConfigurationService:
         except Exception as e:
             logging.error(f"Error loading configuration: {e}", exc_info=True)
             return None
-
+        
     async def save_configuration_async(self, config: Dict[str, Any]) -> bool:
         """Save configuration to JSON file"""
         try:

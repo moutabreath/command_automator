@@ -31,10 +31,8 @@ class LLMService:
             Exceptions are caught and returned as error responses rather than raised.
         """
         try:
-            return await self.mcp_client.process_query(
-                prompt, image_path, output_file_path
-            )
-        except (Exception) as e:
+            return await self.mcp_client.process_query(prompt, image_path, output_file_path)
+        except Exception as e:
             logging.error(f"Error processing LLM query: {e}", exc_info=True)
-            return MCPResponse("Uknown error occurred", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+            return MCPResponse("Unknown error occurred", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         

@@ -12,9 +12,12 @@ def setup_logging():
     """   
     # Force UTF-8 encoding for stdout/stderr on Windows
     if sys.platform.startswith('win'):
-        sys.stdout.reconfigure(encoding='utf-8')
-        sys.stderr.reconfigure(encoding='utf-8')
-
+        try:
+            sys.stdout.reconfigure(encoding='utf-8')
+            sys.stderr.reconfigure(encoding='utf-8')
+        except (AttributeError, ValueError):
+            # stdout/stderr may not support reconfigure in some environments
+            pass
     log_file = os.environ.get("LOGFILE", "commands_automator.log")
     log_dir = os.path.dirname(log_file)
     if log_dir and not os.path.exists(log_dir):

@@ -6,6 +6,6 @@ class ResumeData(BaseModel):
     applicant_name: str = Field(..., min_length=1, description="Name of the job applicant")
     general_guidelines: str = Field(..., min_length=1, description="General guidelines for the application")
     resume: str = Field(..., min_length=1, description="Resume content")
-    resume_highlighted_sections: list[str] = Field(..., min_items=1, description="Key sections to highlight from the resume")
+    resume_highlighted_sections: list[str] = Field(..., min_length=1, description="Key sections to highlight from the resume")
     job_description: str = Field(..., min_length=1, description="Job description to tailor the application to")
     cover_letter_guidelines: str = Field(..., min_length=1, description="Guidelines for cover letter generation")

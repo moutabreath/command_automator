@@ -97,13 +97,15 @@ def make_serializable(obj: Any) -> Any:
         return [make_serializable(item) for item in obj]
     return obj
 
-def serialize_to_json(obj: Any) -> str:
+def serialize_to_json(obj: Any) -> str | None:
     """Convert object to JSON string"""
     try:
         serializable_obj = make_serializable(obj)
         return json.dumps(serializable_obj, indent=4)
     except Exception as e:
         logging.error(f"Error serializing to JSON: {e}", exc_info=True)
+        return None
+
 def serialize_objects(objects: List[T]) -> str | None:
     """
     Serialize a list of Pydantic models to JSON string
