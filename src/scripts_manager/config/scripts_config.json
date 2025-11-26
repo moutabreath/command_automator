@@ -1,0 +1,76 @@
+{
+  "scripts": [
+    {
+      "script_name": "convert.sh",
+      "short_description": "Convert Slashes to Windows and UNIX Style",
+      "detailed_description": "Display input from additional text box as windows and unix style Slashes",
+      "free_text_required": true
+    },
+    {
+      "script_name": "show_free_space_drive_c.cmd",
+      "short_description": "Show free space on drive C:",
+      "detailed_description": "Show free space on drive C: in GB",
+      "free_text_required": false
+    },
+    {
+      "script_name": "fast_copy.cmd",
+      "short_description": "fast copy",
+      "detailed_description": "Copy with cmd",
+      "free_text_required": false
+    },
+    {
+      "script_name": "kill_process_holding_file.cmd",
+      "short_description": "Kill process locking file",
+      "detailed_description": "Kill the process that is holding the file specified in the argument",
+      "free_text_required": true
+    },
+    {
+      "script_name": "kill_process_on_port.cmd",
+      "short_description": "Kill process holding port",
+      "detailed_description": "Kill the process that is holding the port from the argument",
+      "free_text_required": true
+    },
+    {
+      "script_name": "anonymize.py",
+      "short_description": "Anonymize",
+      "detailed_description": "Given a file and a list of tokens, replace the value after the tokens with 'dummy'",
+      "free_text_required": true
+    },
+    {
+      "script_name": "convert_win_2_unix.py",
+      "short_description": "PY Convert Slashes to Win and UNIX Style",
+      "detailed_description": "Display input from additional text box as windows and unix style Slashes",
+      "free_text_required": true
+    },
+    {
+      "script_name": "replace_parenthesis.py",
+      "short_description": "Replace parenthesis",
+      "detailed_description": "Replace '[' with '{' and  ']' with '}'",
+      "free_text_required": false
+    },
+    {
+      "script_name": "remove_parenthesis.py",
+      "short_description": "Remove parenthesis",
+      "detailed_description": "Remove '{' and  '}' from input",
+      "free_text_required": false
+    },
+    {
+      "script_name": "replace_chars.py",
+      "short_description": "Replace chars in string",
+      "detailed_description": "Replace any number of pair of chars.",
+      "free_text_required": true
+    },
+    {
+      "script_name": "kill_app_with_name.cmd",
+      "short_description": "Kill application by process name",
+      "detailed_description": "Terminate a running process by name (pass process name as argument). If no argument given, defaults to 'commands_automator_api.exe'.",
+      "free_text_required": true
+    },
+    {
+      "script_name": "kill_app_holding_port.cmd",
+      "short_description": "Kill process holding port",
+      "detailed_description": "Find and terminate the process holding the specified TCP port. Pass the port number as argument.",
+      "free_text_required": true
+    }
+  ]
+}

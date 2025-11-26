@@ -1,0 +1,51 @@
+.tab-bar {
+    display: flex;
+    border-bottom: 1px solid #9EA3F5;
+}
+
+.tab {
+    padding: 8px 20px;
+    cursor: pointer;
+    border: none;
+    background: #222;
+    color: #fff;
+}
+
+.tab:hover {
+    background: #444;
+}
+
+.tab:focus-visible {
+    outline: 2px solid #9EA3F5;
+    outline-offset: 2px;
+}
+
+.tab.selected {
+    background: #9EA3F5;
+    color: #222;
+}
+
+.tab-content {
+    display: none;
+}
+
+.tab-content.active {
+    display: block;
+}
+
+:root {
+    --iframe-min-height: 400px;
+    --iframe-height: 80vh;
+}
+.tab-content iframe {
+     border: none;
+     background: #222;
+    min-height: var(--iframe-min-height);
+    height: var(--iframe-height);
+ }
+
+@media (max-width: 768px) {
+    :root {
+        --iframe-height: 60vh;
+    }
+}
