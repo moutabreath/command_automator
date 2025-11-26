@@ -3,6 +3,7 @@ import aiohttp
 import logging
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
+from mcp import types
 
 from llm.gemini.gemini_agent import GeminiAgent, LLMAgentResponse, LLMResponseCode
 from llm.llm_agents.mcp_response import MCPResponse, MCPResponseCode
@@ -20,15 +21,87 @@ class SmartMCPClient:
         self.gemini_agent: GeminiAgent = GeminiAgent()
         self.resume_chat = self.gemini_agent.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_agent)
-        self.job_search_service = JobSearchService(self.gemini_agent)    
+        self.job_search_service = JobSearchService(self.gemini_agent)
+        
+        self.session_tools = None
+        self.available_tools = [] 
 
-    async def _decide_tool_usage(self, query, available_tools, session: ClientSession):
+    async def process_query( self,  query: str, base64_decoded: str, output_file_path: str) -> MCPResponse:
+        """
+        Process a user query using a combination of Gemini and MCP server.
+
+        Args:
+            query: The user's question or request
+            base64_decoded: Base64 encoded image data (optional)
+            output_file_path: Path to save output files
+        Returns:
+            The response as a MCPResponse
+        """
+        try:
+            if not await self._is_mcp_server_ready():
+                llm_response:LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                if (llm_response.code == LLMResponseCode.OK):
+                    return MCPResponse(llm_response.text, MCPResponseCode.OK)
+                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)        
+
+            async with streamablehttp_client(self.mcp_server_url) as (
+                read_stream,
+                write_stream,
+                _,
+            ), ClientSession(read_stream, write_stream) as session:
+                logging.debug("Established streamable_http and Created MCP client session")
+
+                await session.initialize()
+                logging.debug("Successfully initialized MCP session")
+
+                if not 'session_tools' in vars(self) or self.session_tools is None:
+                   await self._init_session_tools(session)
+                   self._init_available_tools()
+
+                # Use Gemini to decide if a tool should be used
+                selected_tool, tool_args = await self._decide_tool_usage(query)
+
+                # If Gemini decided to use a tool, call it
+                if selected_tool:
+                    return await self._use_tool(selected_tool, tool_args, session, output_file_path)
+                else:
+                    agent_response = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                    if agent_response.code == LLMResponseCode.OK:
+                        return MCPResponse(agent_response.text, MCPResponseCode.OK)
+                    return MCPResponse(agent_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+        except Exception as e:
+            logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
+            return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+        
+    async def _is_mcp_server_ready(self, timeout=2):
+        try:
+            async with aiohttp.ClientSession() as session, \
+                       session.get(self.mcp_server_url, timeout=timeout) as resp:
+                # You can check for a specific status code if needed
+                return resp.status == 406 # (= Not Accepatable) Server is probably reacheable.
+        except Exception as e:
+            logging.error(f"MCP server not ready {e}", exc_info=True)
+            return False
+        
+    async def _init_session_tools(self, session: ClientSession):
+        try:
+            self.session_tools = await session.list_tools()        
+        except Exception as e:
+            logging.debug(f"Could not list tools: {e}")
+            return None
+        
+    def _init_available_tools(self):
+        if (self.session_tools == None):
+            return []
+        self.available_tools = [tool.name for tool in self.session_tools.tools]
+        logging.debug(f"Available tools: {self.available_tools}")
+        
+    async def _decide_tool_usage(self, query:str):
         """
         Use LLM to decide which tool to use based on the query
         
         Args:
             query: The user's question
-            available_tools: List of available tools from the MCP server
             
         Returns:
             tuple: (tool_name, tool_args) or (None, None) if no tool should be used
@@ -43,11 +116,11 @@ class SmartMCPClient:
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
             return None, None
         try:
-            messages = await self.init_messages(query, available_tools, session)
+            messages = self._init_messages(query)
             
             selected_tool, args = self.gemini_agent.get_mcp_tool_json(prompt=messages,
                                                                 chat=self.resume_chat,
-                                                                available_tools=available_tools)
+                                                                available_tools=self.available_tools)
             if selected_tool != {}:
                 logging.debug(f"Gemini decided to use tool: {selected_tool}")
                 return selected_tool, args
@@ -58,23 +131,21 @@ class SmartMCPClient:
             logging.error(f"Error using LLM for tool decision {e}", exc_info=True)
             return None, None
             
-    async def init_messages(self, query, available_tools, session: ClientSession):
-        # Get tool schemas from MCP server
-        tools_response = await session.list_tools()
+    def _init_messages(self, query: str):
         tool_descriptions = {}
         
-        for tool in tools_response.tools:
-            if tool.name in available_tools:
+        for tool in self.session_tools.tools:
+            if tool.name in self.available_tools:
                 # Include parameter info in description
                 params = tool.inputSchema.get('properties', {}) if tool.inputSchema else {}
                 param_info = f" (Parameters: {list(params.keys())})" if params else " (No parameters)"
                 tool_descriptions[tool.name] = f"{tool.description}{param_info}"
         
         available_descriptions = tool_descriptions
-        system_prompt = self.init_system_prompt(available_descriptions, query)
+        system_prompt = self._init_system_prompt(available_descriptions, query)
         return system_prompt
     
-    def init_system_prompt(self, available_descriptions, query):
+    def _init_system_prompt(self, available_descriptions, query):
         return f"""You are a tool selection assistant. 
 Based on the user's query, determine if any of these available tools should be used:
 {json.dumps(available_descriptions, indent=2)}
@@ -103,73 +174,6 @@ If the tool definition has no parameters respond in JSON format:
 Be selective and conservative with tool usage. Be concise. Only output valid JSON.
 If no tool should be selected, respond to the query directly. Query: {query}
 """
-
-    async def is_mcp_server_ready(self, timeout=2):
-        try:
-            async with aiohttp.ClientSession() as session, \
-                       session.get(self.mcp_server_url, timeout=timeout) as resp:
-                # You can check for a specific status code if needed
-                return resp.status == 406 # (= Not Accepatable) Server is probably reacheable.
-        except Exception as e:
-            logging.error(f"MCP server not ready {e}", exc_info=True)
-            return False
-    
-    async def process_query(
-        self,
-        query: str,
-        base64_decoded: str,
-        output_file_path: str,
-    ) -> MCPResponse:
-        """
-        Process a user query using a combination of Gemini and MCP server.
-
-        Args:
-            query: The user's question or request
-            base64_decoded: Base64 encoded image data (optional)
-            output_file_path: Path to save output files
-        Returns:
-            The response as a string
-        """
-        try:
-            if not await self.is_mcp_server_ready():
-                llm_response:LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                if (llm_response.code == LLMResponseCode.OK):
-                    return MCPResponse(llm_response.text, MCPResponseCode.OK)
-                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)        
-
-            async with streamablehttp_client(self.mcp_server_url) as (
-                read_stream,
-                write_stream,
-                _,
-            ), ClientSession(read_stream, write_stream) as session:
-                logging.debug("Established streamable_http and Created MCP client session")
-
-                await session.initialize()
-                logging.debug("Successfully initialized MCP session")
-
-                available_tools = await self.get_available_tools(session)
-
-                # Use Gemini to decide if a tool should be used
-                selected_tool, tool_args = await self._decide_tool_usage(
-                    query, available_tools, session
-                )
-
-                # If Gemini decided to use a tool, call it
-                if selected_tool:
-                    return await self._use_tool(
-                        selected_tool,
-                        tool_args,
-                        session,
-                        output_file_path,
-                    )
-                else:
-                    agent_response = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                    if agent_response.code == LLMResponseCode.OK:
-                        return MCPResponse(agent_response.text, MCPResponseCode.OK)
-                    return MCPResponse(agent_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-        except Exception as e:
-            logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
-            return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
     async def _use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
@@ -199,14 +203,3 @@ If no tool should be selected, respond to the query directly. Query: {query}
         if selected_tool == 'search_jobs_from_the_internet':
             return await self.job_search_service.get_unified_jobs()
         return MCPResponse(tool_result, MCPResponseCode.OK)
-
-    async def get_available_tools(self, session: ClientSession):
-        try:
-            tools_response = await session.list_tools()
-            available_tools = [tool.name for tool in tools_response.tools]
-            logging.debug(f"Available tools: {available_tools}")
-        except Exception as e:
-            logging.debug(f"Could not list tools: {e}")
-            available_tools = []
-        return available_tools
-
