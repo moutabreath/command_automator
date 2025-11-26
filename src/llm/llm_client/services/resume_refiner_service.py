@@ -3,8 +3,8 @@ import logging
 from google.genai.chats import Chat
 
 from llm.gemini.gemini_agent import GeminiAgent, LLMAgentResponse, LLMResponseCode
-from llm.llm_agents.mcp_client import MCPResponse, MCPResponseCode
-from llm.llm_agents.services.resume_saver_service import ResumeSaverService
+from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
+from llm.llm_client.services.resume_saver_service import ResumeSaverService
 
 class ResumeRefinerService:
     def __init__(self, resume_chat: Chat, gemini_utils: GeminiAgent):

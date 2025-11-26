@@ -2,7 +2,7 @@ import logging
 import re
 from pathlib import Path
 
-from llm.llm_agents.services.file_stylers import docx_styler
+from llm.llm_client.services.file_stylers import docx_styler
 
 
 

@@ -6,9 +6,9 @@ from mcp import ClientSession
 from mcp import types
 
 from llm.gemini.gemini_agent import GeminiAgent, LLMAgentResponse, LLMResponseCode
-from llm.llm_agents.mcp_response import MCPResponse, MCPResponseCode
-from llm.llm_agents.services.job_search_service import JobSearchService
-from llm.llm_agents.services.resume_refiner_service import ResumeRefinerService
+from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
+from llm.llm_client.services.job_search_service import JobSearchService
+from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
 
 
 class SmartMCPClient:

@@ -4,7 +4,7 @@ import os
 from google.genai.chats import Chat
 
 from llm.gemini.gemini_agent import GeminiAgent, LLMResponseCode
-from llm.llm_agents.mcp_client import MCPResponse, MCPResponseCode
+from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
 from utils import file_utils
 
 class JobSearchService:

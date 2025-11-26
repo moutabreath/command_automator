@@ -1,8 +1,8 @@
 import logging
 
-from llm.llm_agents.mcp_client import SmartMCPClient
-from llm.llm_agents.mcp_response import MCPResponse
-from llm.llm_agents.mcp_response import MCPResponseCode
+from llm.llm_client.mcp_client import SmartMCPClient
+from llm.llm_client.mcp_response import MCPResponse
+from llm.llm_client.mcp_response import MCPResponseCode
 
 class LLMService:
 

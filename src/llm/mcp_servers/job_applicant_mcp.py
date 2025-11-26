@@ -1,7 +1,7 @@
 import logging
 import multiprocessing
 from multiprocessing import freeze_support
-from typing import List
+from typing import Dict, List, Type, cast
 from typing import TypeVar
 
 from mcp.server.fastmcp import FastMCP
@@ -30,31 +30,92 @@ class ServiceNames:
     GLASSDOOR_SCRAPER = 'glassdoor_jobs_scraper'
     JOB_SAVER = 'job_saver'
 
+# Define a TypeVar that can be any service type
+ServiceT = TypeVar('ServiceT')
 
-T = TypeVar('T', ResumeLoaderService, LinkedInJobScraper, GlassdoorJobsScraper, JobsSaver)
+class ServiceRegistry:
+    """Type-safe service registry using generics"""
+    
+    def __init__(self):
+        self._services: Dict[str, object] = {}
+    
+    def register(self, name: str, service: object) -> None:
+        """Register a service with a name"""
+        self._services[name] = service
+        logging.debug(f"Registered service: {name} -> {type(service).__name__}")
+    
+    def get(self, name: str, service_type: Type[ServiceT]) -> ServiceT:
+        """
+        Get a service by name with type safety.
+        
+        Args:
+            name: The service name
+            service_type: The expected type of the service (for type checking)
+            
+        Returns:
+            The service instance, typed as ServiceT
+            
+        Example:
+            resume_service = registry.get(ServiceNames.RESUME_LOADER, ResumeLoaderService)
+            # resume_service is now typed as ResumeLoaderService
+        """
+        service = self._services.get(name)
+        if service is None:
+            raise ValueError(f"Service '{name}' not found in registry")
+        
+        # Runtime type check (optional but recommended)
+        if not isinstance(service, service_type):
+            raise TypeError(
+                f"Service '{name}' is {type(service).__name__}, "
+                f"expected {service_type.__name__}"
+            )
+        
+        return cast(ServiceT, service)
+    
+    def has(self, name: str) -> bool:
+        """Check if a service is registered"""
+        return name in self._services
+    
+    def clear(self) -> None:
+        """Clear all registered services"""
+        self._services.clear()
 
-def get_shared_service(shared_service_name: str) -> T:
-    """Get a service from the shared services dict"""
-    global _shared_services
-    if _shared_services is None:
-        raise RuntimeError("Shared services not initialized. This should only be called in the MCP subprocess.")
-    service = _shared_services.get(shared_service_name)
-    if service is None:
-        raise ValueError(f"Service '{shared_service_name}' not found in shared services")
-    return service
+
+# Global service registry instance
+_service_registry: ServiceRegistry | None = None
 
 
-def init_shared_services():
-    """Initialize services in the child process. Returns a dict of services."""
+def get_service_registry() -> ServiceRegistry:
+    """Get the global service registry instance"""
+    global _service_registry
+    if _service_registry is None:
+        raise RuntimeError(
+            "Service registry not initialized. "
+            "This should only be called in the MCP subprocess."
+        )
+    return _service_registry
+
+
+def init_shared_services() -> ServiceRegistry:
+    """Initialize services in the child process. Returns the service registry."""
+    global _service_registry
+    
     logging.info("Initializing shared services in MCP subprocess")
-    services = {
-        ServiceNames.RESUME_LOADER: ResumeLoaderService(),
-        ServiceNames.LINKEDIN_SCRAPER: LinkedInJobScraper(),
-        ServiceNames.GLASSDOOR_SCRAPER: GlassdoorJobsScraper(),
-        ServiceNames.JOB_SAVER: JobsSaver()
-    }
+    
+    # Create the registry
+    registry = ServiceRegistry()
+    
+    # Register all services
+    registry.register(ServiceNames.RESUME_LOADER, ResumeLoaderService())
+    registry.register(ServiceNames.LINKEDIN_SCRAPER, LinkedInJobScraper())
+    registry.register(ServiceNames.GLASSDOOR_SCRAPER, GlassdoorJobsScraper())
+    registry.register(ServiceNames.JOB_SAVER, JobsSaver())
+    
+    # Store globally
+    _service_registry = registry
+    
     logging.info("Shared services initialized successfully")
-    return services
+    return registry
 
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
@@ -62,7 +123,13 @@ async def get_resume_files() -> ResumeData:
     Fetch resume file, applicant name, job description and guidelines
     """    
     try:
-        resume_loader_service: ResumeLoaderService = get_shared_service(ServiceNames.RESUME_LOADER)
+        registry = get_service_registry()
+        
+        # Type-safe service retrieval - IDE will know this is ResumeLoaderService
+        resume_loader_service = registry.get(
+            ServiceNames.RESUME_LOADER, 
+            ResumeLoaderService
+        )
         resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
         if resume_content is None:
             logging.error("Couldn't parse resume content")
@@ -149,8 +216,17 @@ async def get_jobs_from_linkedin(job_title: str | None = None,
 
 async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
     """Run the LinkedIn job scraper"""
-    linkedin_scraper: LinkedInJobScraper = get_shared_service(ServiceNames.LINKEDIN_SCRAPER)
-    jobs_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
+    registry = get_service_registry()
+    
+    # Type-safe retrieval
+    linkedin_scraper = registry.get(
+        ServiceNames.LINKEDIN_SCRAPER, 
+        LinkedInJobScraper
+    )
+    jobs_saver = registry.get(
+        ServiceNames.JOB_SAVER, 
+        JobsSaver
+    )
     
     max_pages: int = 2
     logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
@@ -193,8 +269,16 @@ async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, fo
     """Run the Glassdoor job scraper"""
     max_pages: int = 3
     max_jobs_per_page: int = 20
-    glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
-    job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
+    registry = get_service_registry()
+    
+    glassdoor_scraper = registry.get(
+        ServiceNames.GLASSDOOR_SCRAPER, 
+        GlassdoorJobsScraper
+    )
+    job_saver = registry.get(
+        ServiceNames.JOB_SAVER, 
+        JobsSaver
+    )
 
     job_title,location, _, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote, forbidden_titles)
     try:

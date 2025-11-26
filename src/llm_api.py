@@ -2,7 +2,7 @@ import base64
 from enum import Enum
 import logging
 import api_utils
-from llm.llm_agents.mcp_response import MCPResponse, MCPResponseCode
+from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
 from llm.llm_service import LLMService
 from llm.mcp_servers.job_applicant_mcp import MCPRunner
 from utils.file_utils import LLM_CONFIG_FILE
