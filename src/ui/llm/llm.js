@@ -254,6 +254,11 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
         // handle result codes (adjust strings to match enum names)
         message = text;
         switch (code) {
+            case 'OK':
+                if (message == undefined || message == ""){
+                    return "LLLM Returned empty message";
+                }
+                return message;
             case 'ERROR_MODEL_OVERLOADED':
                 message = 'Model overloaded. Please try again later.';
                 break;
@@ -263,10 +268,7 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
             case 'ERROR_COMMUNICATING_WITH_LLM':
                 message = text || 'Error communicating with LLM';
                 break;
-            default:
-                if (text == None || text == ""){
-                    return "LLLM Returned empty message";
-                }
+            default:               
                 message = text || 'Error communicating with LLM';
                 break;
         }

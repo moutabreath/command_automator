@@ -13,3 +13,4 @@ Guidelines regarding the content of the resume:
 - The output should be a rewritten version of my resume using the same section headers (e.g., 'About me', 'Experience', 'Education') as the original resume.
 - Wherever possible, add metrics, but do not fabricate metrics; include only numbers explicitly provided in the resume or job materials. If none are available, keep statements qualitative.
 - Only mention Cygwin if the job description explicitly requires Linux/UNIX experience—and only if such experience exists in the original resume.
+- If the document contains links, keep them. Put them as much as possible within the original order of the resume.
