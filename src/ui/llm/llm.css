@@ -58,8 +58,8 @@
   .query-input-section label input[type="checkbox"] {
       margin: 0;
       vertical-align: middle;
-  }  
-
+  }
+  
   #query-box {
       width: 100%;
       min-height: 24px;
@@ -101,16 +101,19 @@
       border: none;
       border-radius: 50%;
       cursor: pointer;
-      display: none;
+      display: flex;
       align-items: center;
       justify-content: center;
       padding: 0;
+      opacity: 0.5;
+      transition: opacity 0.2s;
   }
   
-  #image-preview:hover .remove-image-btn {
-      display: flex;
+  #image-preview:hover .remove-image-btn,
+  .remove-image-btn:focus-visible {
+      opacity: 1;
+      outline: 1px solid white;
   }
-
   #select-image-btn {
       background-color: #4a4a4a;
       color: white;

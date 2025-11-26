@@ -33,11 +33,10 @@
     display: block;
 }
 
-root {
+:root {
     --iframe-min-height: 400px;
     --iframe-height: 80vh;
 }
-
 .tab-content iframe {
      border: none;
      background: #222;
