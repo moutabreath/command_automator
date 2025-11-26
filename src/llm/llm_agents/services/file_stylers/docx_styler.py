@@ -7,7 +7,9 @@ from docx.enum.text import WD_PARAGRAPH_ALIGNMENT
 from docx.oxml.ns import qn
 from docx.shared import Inches
 
-def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = []):
+def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = None):
+    if resume_sections is None:
+        resume_sections = []
     applicant_name = applicant_name.replace("_", " ")
     # Create a Word document
     doc = Document()
@@ -25,7 +27,6 @@ def save_text_as_word(file_path, applicant_name, resume_text, resume_sections = 
             continue
         is_header = add_header(doc, resume_sections, line)
         if is_header:
-            is_header = False
             continue
         url = extract_link(line)
         if url is not None:                    
@@ -141,29 +142,6 @@ def add_link(link_name, url, paragraph):
     # Join all the xml elements together
     hyperlink.append(new_run._element)
     paragraph._p.append(hyperlink)
-
-#This is only needed if you're using the builtin style above
-def get_or_create_hyperlink_style(d):
-    """If this document had no hyperlinks so far, the builtin
-       Hyperlink style will likely be missing and we need to add it.
-       There's no predefined value, different Word versions
-       define it differently.
-       This version is how Word 2019 defines it in the
-       default theme, excluding a theme reference.
-    """
-    if "Hyperlink" not in d.styles:
-        if "Default Character Font" not in d.styles:
-            ds = d.styles.add_style("Default Character Font",
-                                    docx.enum.style.WD_STYLE_TYPE.CHARACTER,
-                                    True)
-            ds.element.set(docx.oxml.shared.qn('w:default'), "1")
-            ds.priority = 1
-            ds.hidden = True
-            ds.unhide_when_used = True
-            del ds
-        hs = d.styles.add_style("Hyperlink",
-                                docx.enum.style.WD_STYLE_TYPE.CHARACTER,
-                                True)
 
 def add_header(doc, keywords, line: str):
     text = line.lower() 

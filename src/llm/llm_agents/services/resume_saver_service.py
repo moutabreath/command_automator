@@ -12,9 +12,9 @@ class ResumeSaverService:
         if resume_highlighted_sections is None:
             resume_highlighted_sections = []        
         try:
-           file_path = Path(output_file_path) / f'{file_name}.docx'
-           docx_styler.save_text_as_word(str(file_path), applicant_name, text, resume_highlighted_sections)
-           return True
+            file_path = Path(output_file_path) / f'{file_name}.docx'
+            docx_styler.save_text_as_word(str(file_path), applicant_name, text, resume_highlighted_sections)
+            return True
         except Exception as ex:
             logging.error(f"error saving word file {ex}", exc_info=True)
             return False
