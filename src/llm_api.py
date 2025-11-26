@@ -76,8 +76,11 @@ class LLMApi:
         decoded_data = None
         if image_data and image_data != '':
             try:
-                _, encoded = image_data.split(',', 1)
-                decoded_data = base64.b64decode(encoded)
+                parts = image_data.split(',', 1)
+                if len(parts) != 2:
+                    raise ValueError("Invalid image data format: expected 'prefix,base64data'")
+                _, encoded = parts
+                decoded_data = base64.b64decode(encoded)   
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
                 resp = LLMApiResponse("Error loading image", LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)

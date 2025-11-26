@@ -59,11 +59,7 @@ class CommandsAutomatorApi:
             return False 
         
     def execute_script(self, script_name, additional_text, flags):
-        try:
-            return self.commands_automator_service.execute_script(script_name, additional_text, flags)
-        except Exception as e:
-            logging.error(f"Error executing script {script_name}: {e}", exc_info=True)
-            return None
+        return self.commands_automator_service.execute_script(script_name, additional_text, flags)
         
     def call_llm(self, prompt: str, image_data: str, output_file_path: str):
         return self.llm_api.call_llm(prompt, image_data, output_file_path)
@@ -75,14 +71,10 @@ class CommandsAutomatorApi:
         return self.llm_api.save_llm_configuration(config)	
 
     def select_folder(self):
-        try:
-            if not webview.windows:
-                logging.error("No webview windows available")
-                return None
-            return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
-        except Exception as e:
-            logging.error(f"Error selecting folder: {e}", exc_info=True)
+        if not webview.windows:
+            logging.error("No webview windows available")
             return None
+        return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
         
 def main():
     try:

@@ -20,8 +20,11 @@ class ScriptsManagerService:
         try:  
             with open(f'{SCRIPTS_CONFIG_FILE}') as f:  
                 data = json.load(f)  
-        except IOError:  
+        except (FileNotFoundError, OSError) as e:
             logging.error("Error loading scripts_config.json", exc_info=True)  
+            return
+        except json.JSONDecodeError as e:
+            logging.error(f"Invalid JSON in scripts_config.json: {e}", exc_info=True)
             return  
         scripts_config = data.get('scripts', [])
         if not scripts_config:
@@ -122,13 +125,13 @@ class ScriptsManagerService:
         python_env = new_venv.get("PYTHONPATH", "")
         logging.log(logging.DEBUG, "PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
         sep = ';' if platform.system() == 'Windows' else ':'
+        paths = python_env.split(sep) if python_env else []
+        cwd = os.getcwd()
         if (len(python_env) != 0) and (python_env[-1] != sep):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + sep
-        if not (os.getcwd() in python_env):
-            new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + os.getcwd() + sep
-        logging.log(logging.DEBUG, "PYTHONPATH after " + new_venv.get("PYTHONPATH", ""))
+        if cwd not in paths:
+            new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + cwd + sep
         return new_venv
-
     @staticmethod
     def run_app(run_version_command: str):
         """Run a command."""
@@ -139,9 +142,12 @@ class ScriptsManagerService:
             startupinfo = si
         # Ensure we're using the safe list form
         if isinstance(run_version_command, str):
-            logging.warning("run_app received string; consider passing list for safety")
+            logging.error("run_app requires list form for safety, not string")
+            raise TypeError("run_version_command must be a list, not string")
         try:
             subprocess.run(run_version_command, startupinfo=startupinfo, shell=False, check=True)
+        except subprocess.CalledProcessError as e:
+            logging.error(f"Command failed: {e}", exc_info=True)
         except subprocess.CalledProcessError as e:
             logging.error(f"Command failed: {e}", exc_info=True)
 

@@ -21,7 +21,7 @@ def run_remove_parenthesis(text: str):
 def run_replace_string():
     if len(sys.argv) <= 3:
         print("Usage: python <text>  <original char> <replace with> <original char> <replace with> ...")
-        sys.exit(1)
+        return
     old_text = sys.argv[1]
     text = sys.argv[1]
   
