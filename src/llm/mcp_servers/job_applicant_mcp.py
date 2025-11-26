@@ -56,16 +56,52 @@ def init_shared_services():
     logging.info("Shared services initialized successfully")
     return services
 
-
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
     """
     Fetch resume file, applicant name, job description and guidelines
     """    
-    resume_loader_service: ResumeLoaderService = get_shared_service(ServiceNames.RESUME_LOADER)
-    resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
-    if resume_content is None:
-        logging.error("Couldn't parse resume content")
+    try:
+        resume_loader_service: ResumeLoaderService = get_shared_service(ServiceNames.RESUME_LOADER)
+        resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
+        if resume_content is None:
+            logging.error("Couldn't parse resume content")
+            return ResumeData(
+                applicant_name="",
+                general_guidelines="",
+                resume="",
+                resume_highlighted_sections=[],
+                job_description="",
+                cover_letter_guidelines=""
+            )
+
+        if applicant_name is None:
+            applicant_name = "John Doe"
+
+        guide_lines = await resume_loader_service.get_main_part_guide_lines()
+        if guide_lines:
+            guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
+        highlighted_sections = await resume_loader_service.get_highlighted_sections()
+
+        job_description_content = await resume_loader_service.get_job_description()
+
+        cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
+
+        # Create dictionary first to validate data
+        data_dict = {
+            "applicant_name": applicant_name or "",
+            "general_guidelines": guide_lines or "",
+            "resume": resume_content or "",
+            "resume_highlighted_sections": highlighted_sections or [],
+            "job_description": job_description_content or "",
+            "cover_letter_guidelines": cover_letter_guide_lines or ""
+        }
+        
+        resume_data = ResumeData(**data_dict)
+        logging.debug(f"Created ResumeData successfully")
+        return resume_data
+    except Exception as e:
+        logging.error(f"Unhandled error in get_resume_files: {e}", exc_info=True)
         return ResumeData(
             applicant_name="",
             general_guidelines="",
@@ -75,36 +111,112 @@ async def get_resume_files() -> ResumeData:
             cover_letter_guidelines=""
         )
 
-    if applicant_name is None:
-        applicant_name = "John Doe"
 
-    guide_lines = await resume_loader_service.get_main_part_guide_lines()
-    if guide_lines:
-        guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
-    highlighted_sections = await resume_loader_service.get_highlighted_sections()
 
-    job_description_content = await resume_loader_service.get_job_description()
-
-    cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
-
-    # Create dictionary first to validate data
-    data_dict = {
-        "applicant_name": applicant_name or "",
-        "general_guidelines": guide_lines or "",
-        "resume": resume_content or "",
-        "resume_highlighted_sections": highlighted_sections or [],
-        "job_description": job_description_content or "",
-        "cover_letter_guidelines": cover_letter_guide_lines or ""
-    }
+@mcp.tool()
+async def search_jobs_from_the_internet(job_title: str | None = None, location:str | None = None, 
+                                        remote: bool | None = None) -> list:
+    """
+    Search for jobs from multiple sources (LinkedIn and Glassdoor).
     
-    resume_data = ResumeData(**data_dict)
-    logging.debug(f"Created ResumeData successfully")
-    return resume_data
+    Returns:
+        List of Job objects from all sources
+    """
 
-async def _get_search_params_from_config(job_title: str | None = None,
+    jobs = []
+    linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
+    if linkedin_jobs and len(linkedin_jobs) > 0:
+        jobs.extend(linkedin_jobs)
+
+    glassdoor_jobs = await _run_glassdoor_scraper(job_title=job_title, location=location, remote=remote, forbidden_titles=None)
+    if glassdoor_jobs and len(glassdoor_jobs) > 0:
+        jobs.extend(glassdoor_jobs)
+
+    return jobs
+    
+@mcp.tool()
+async def get_jobs_from_linkedin(job_title: str | None = None,
     location: str | None = None,
-    remote: bool | None = None,
-    forbidden_titles: list | None = None) :
+    remote: bool | None = None)  -> list:
+    """
+    Search for jobs on LinkedIn.    
+    
+    Returns:
+        List of Job objects
+    """ 
+    return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
+    
+
+async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
+    """Run the LinkedIn job scraper"""
+    linkedin_scraper: LinkedInJobScraper = get_shared_service(ServiceNames.LINKEDIN_SCRAPER)
+    jobs_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
+    
+    max_pages: int = 2
+    logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
+
+    job_title,location, remote, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote)
+    jobs = []
+    try:
+        jobs = linkedin_scraper.run_scraper(job_title=job_title,
+            location=location,
+            remote=remote,
+            forbidden_titles = forbidden_titles,
+            max_pages=max_pages)
+    
+    except Exception as e:
+        logging.error(f"Error finding jobs from linkedin {e}", exc_info=True)
+        return []
+    
+    logging.info(f"Found {len(jobs)} jobs")
+    logging.debug("=" * 60)
+    if jobs and len(jobs) > 0:    
+        await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
+    else:
+        logging.warning("No jobs found from LinkedIn scraper")
+   
+    return jobs
+
+@mcp.tool()
+async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
+                                  remote: bool | None = None) -> List:
+    """
+    Search for jobs on Glassdoor.
+
+    Returns:
+        List of Job objects
+    """
+    return await _run_glassdoor_scraper(job_title, location, remote)
+
+
+async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, forbidden_titles: list = None) -> List:
+    """Run the Glassdoor job scraper"""
+    max_pages: int = 3
+    max_jobs_per_page: int = 20
+    glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
+    job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
+
+    job_title,location, _, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote, forbidden_titles)
+    try:
+        jobs = await glassdoor_scraper.run_scraper(
+            job_title=job_title,
+            location=location,
+            forbidden_titles=forbidden_titles,
+            max_pages=max_pages,
+            max_jobs_per_page=max_jobs_per_page)
+
+        if jobs and len(jobs) > 0:
+            await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')
+        else:
+            logging.warning("No jobs found from Glassdoor scraper")
+
+        return jobs
+    except Exception as e:
+        logging.error("Error finding jobs from glassdoor")
+        return []
+
+async def _get_search_params_from_config_or_default(job_title: str | None = None, location: str | None = None,
+    remote: bool | None = None, forbidden_titles: list | None = None) :
      # If any parameter is None, try loading defaults from llm-config.json
     try:
         llm_conf = await read_json_file(JOB_SEARCH_CONFIG_FILE)
@@ -136,116 +248,6 @@ async def _get_search_params_from_config(job_title: str | None = None,
     job_title = job_title or "Software Engineer"
     location = location or "Tel Aviv, Israel"
     return job_title, location, remote, forbidden_titles
-
-
-@mcp.tool()
-async def search_jobs_from_the_internet(job_title: str | None = None,
-    location: str | None = None,
-    remote: bool | None = None) -> list:
-    """
-    Search for jobs from multiple sources (LinkedIn and Glassdoor).
-    
-    Returns:
-        List of Job objects from all sources
-    """
-    job_title, location, remote, forbidden_titles = await _get_search_params_from_config(job_title, location, remote)
-
-    jobs = []
-    try:
-        linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
-        if linkedin_jobs and len(linkedin_jobs) > 0:
-            jobs.extend(linkedin_jobs)
-    except Exception as ex:
-        logging.error(f"LinkedIn scraper failed: {ex}")
-
-    try:
-        glassdoor_jobs = await _run_glassdoor_scraper(job_title=job_title, location=location, forbidden_titles=forbidden_titles)
-        if glassdoor_jobs and len(glassdoor_jobs) > 0:
-            jobs.extend(glassdoor_jobs)
-    except Exception as ex:
-        logging.error(f"Glassdoor scraper failed: {ex}")
-
-    return jobs
-
-    
-@mcp.tool()
-async def get_jobs_from_linkedin(job_title: str | None = None,
-    location: str | None = None,
-    remote: bool | None = None)  -> list:
-    """
-    Search for jobs on LinkedIn.    
-    
-    Returns:
-        List of Job objects
-    """ 
-    return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
-
-async def _run_linkedin_scraper(job_title: str,
-    location: str,
-    remote: bool
-    ) -> list:
-    """Run the LinkedIn job scraper"""
-    linkedin_scraper: LinkedInJobScraper = get_shared_service(ServiceNames.LINKEDIN_SCRAPER)
-    jobs_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
-    
-    max_pages: int = 2
-    logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
-
-    job_title,location, remote, forbidden_titles = await _get_search_params_from_config(job_title, location, None)
-    
-    jobs = linkedin_scraper.run_scraper(job_title=job_title,
-        location=location,
-        remote=remote,
-        forbidden_titles = forbidden_titles,
-        max_pages=max_pages)
-    
-    logging.info(f"Found {len(jobs)} jobs")
-    logging.debug("=" * 60)
-    if jobs and len(jobs) > 0:    
-        await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
-    else:
-        logging.warning("No jobs found from LinkedIn scraper")
-   
-    return jobs
-
-@mcp.tool()
-async def get_jobs_from_glassdoor(job_title: str | None = None,
-    location: str | None = None,
-    remote: bool | None = None) -> List:
-    """
-    Search for jobs on Glassdoor.
-
-    Returns:
-        List of Job objects
-    """
-    # Load forbidden_titles from config
-    job_title,location, _, forbidden_titles = await _get_search_params_from_config(job_title, location, None)
-    return await _run_glassdoor_scraper(job_title, location, forbidden_titles)
-
-
-async def _run_glassdoor_scraper(job_title: str, location: str, forbidden_titles: list) -> List:
-    """Run the Glassdoor job scraper"""
-    max_pages: int = 3
-    max_jobs_per_page: int = 20
-    glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
-    job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
-
-    job_title,location, _, forbidden_titles = await _get_search_params_from_config(job_title, location, None)
-
-    jobs = await glassdoor_scraper.run_scraper(
-        job_title=job_title,
-        location=location,
-        forbidden_titles=forbidden_titles,
-        max_pages=max_pages,
-        max_jobs_per_page=max_jobs_per_page)
-
-    if jobs and len(jobs) > 0:
-        await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')
-    else:
-        logging.warning("No jobs found from Glassdoor scraper")
-
-    return jobs
-
 
 class MCPRunner:
     """Manages the MCP server subprocess"""

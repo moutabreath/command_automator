@@ -15,8 +15,39 @@ class LinkedInJobScraper(AbstractJobScraper):
         super().__init__()
         self.session = requests.Session()
         self.session.headers.update(self.headers)
+
+       
+    def run_scraper(self, job_title: str, location: str = "", remote: bool = False, 
+                    forbidden_titles: List[str] = None, max_pages: int = 3,
+                    job_type: str = "", experience_level: str = "") -> List[Job]:
+        """Run the LinkedIn job scraper with specified parameters
         
-    def build_search_url(self, job_title: str, location: str = "", job_type: str = "", 
+        Args:
+            job_title: Job title or search keywords
+            location: Job location
+            remote: Whether to filter for remote jobs
+            forbidden_titles: List of job titles to exclude
+            max_pages: Maximum number of pages to scrape
+            job_type: Job type filter (F, P, C, etc.)
+            experience_level: Experience level filter (1, 2, 3, etc.)
+            
+        Returns:
+            List of Job objects
+        """
+        if forbidden_titles is None:
+            forbidden_titles = []
+        
+        search_url = self._build_search_url(
+            job_title=job_title,
+            location=location,
+            remote=remote
+        )
+    
+        logging.debug(f"Search URL: {search_url}")
+        
+        return self._scrape_job_listings(search_url=search_url, forbidden_titles=forbidden_titles, max_pages=max_pages)
+        
+    def _build_search_url(self, job_title: str, location: str = "", job_type: str = "", 
                     experience_level: str = "", remote: bool = False) -> str:
         """Build LinkedIn job search URL with parameters
     
@@ -55,7 +86,7 @@ class LinkedInJobScraper(AbstractJobScraper):
         
         return base_url + "?" + urllib.parse.urlencode(params)
     
-    def scrape_job_listings(self, search_url: str, forbidden_titles: List[str], max_pages: int = 3) -> List[Job]:
+    def _scrape_job_listings(self, search_url: str, forbidden_titles: List[str], max_pages: int = 3) -> List[Job]:
         """Scrape job listings from LinkedIn search results"""
         jobs = []
         
@@ -78,7 +109,7 @@ class LinkedInJobScraper(AbstractJobScraper):
                     break
                 
                 for card in job_cards:
-                    job = self.parse_job_card(card, forbidden_titles)
+                    job = self._parse_job_card(card, forbidden_titles)
                     if job:
                         jobs.append(job)
                 
@@ -90,7 +121,7 @@ class LinkedInJobScraper(AbstractJobScraper):
          
         return jobs
 
-    def parse_job_card(self, card, forbidden_titles) -> Optional[Job]:
+    def _parse_job_card(self, card, forbidden_titles) -> Optional[Job]:
         """Parse individual job card to extract job information"""
         # Create a dictionary to collect all fields first
         job_data = {}
@@ -98,6 +129,9 @@ class LinkedInJobScraper(AbstractJobScraper):
             # Extract job title and link
             title_element = card.find('h3', class_='base-search-card__title')
             job_data['title'] = title_element.text.strip() if title_element else "N/A"
+            if any(forbidden_title.lower() in  job_data['title'].lower() for forbidden_title in (forbidden_titles or [])):
+                logging.info(f"Skipping forbidden job title: {job_data['title']}")
+                return None
     
             # Extract company name
             company_element = card.find('h4', class_='base-search-card__subtitle')
@@ -114,13 +148,11 @@ class LinkedInJobScraper(AbstractJobScraper):
             
             # Log the collected data before creating Job object
             logging.debug(f"Attempting to create Job with data: {job_data}")
-            
-            # Create the Job object with all required fields
-            job = Job(**job_data)
-            
+                        
             # Add optional fields after creation
             link_element = card.find('a', class_='base-card__full-link')
-            job.link = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
+            job_data['link'] = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
+ 
 
             # Extract posted date
             date_element = card.find('time', class_='job-search-card__listdate')
@@ -129,12 +161,14 @@ class LinkedInJobScraper(AbstractJobScraper):
                 posted_date_str = date_element['datetime']
             
             try:
-                job.posted_date = datetime.fromisoformat(posted_date_str).date() if posted_date_str else date.today()
+               job_data['posted_date'] = datetime.fromisoformat(posted_date_str).date() if posted_date_str else date.today()
+          
             except (ValueError, TypeError):
                 logging.warning(f"Could not parse date '{posted_date_str}'. Using today's date.")
-                job.posted_date = date.today()
-                
-            job = self.validate_job(job_data, forbidden_titles)
+                job_data['posted_date'] = date.today()
+
+            logging.debug(f"Attempting to create Job with data: {job_data}")    
+            job = Job(**job_data)
             return job
             
         except Exception as e:
@@ -142,7 +176,7 @@ class LinkedInJobScraper(AbstractJobScraper):
             logging.error(f"Job data collected so far: {job_data}")
             return None
     
-    def get_job_description(self, job_url: str) -> str:
+    def _get_job_description(self, job_url: str) -> str:
         """Get detailed job description from individual job page"""
         try:
             response = self.session.get(job_url, timeout=30)
@@ -159,14 +193,4 @@ class LinkedInJobScraper(AbstractJobScraper):
         except Exception as e:
             logging.error(f"Error fetching job description: {e}", exc_info=True)
             return "Description not available"        
-    
-    def run_scraper(self, job_title, location, remote, forbidden_titles, max_pages):
-        search_url = self.build_search_url(
-            job_title=job_title,
-            location=location,
-            remote=remote
-        )
-    
-        logging.debug(f"Search URL: {search_url}")
-        
-        return self.scrape_job_listings(search_url=search_url, forbidden_titles=forbidden_titles, max_pages=max_pages)
+ 

@@ -20,8 +20,8 @@ def parse_time_expression(time_expr: str) -> date:
         today = date.today()
 
         if not match:
-             logging.warning(f"Invalid time expression '{time_expr}', missing number or unit")
-             return today
+            logging.warning(f"Invalid time expression '{time_expr}', missing number or unit")
+            return today
 
         # Extract number and unit
         number = int(match.group(1))

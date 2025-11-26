@@ -13,7 +13,7 @@ async function loadLLMConfig() {
 async function saveLLMConfig() {
     let config = {};
     try {
-        const outputPathElement = document.getElementById('output-file-path').value;
+        const outputPathElement = document.getElementById('output-file-path');
         if (outputPathElement) {
             config.outputFilePath = outputPathElement.value;
             await window.pywebview.api.save_llm_configuration(config);
@@ -86,6 +86,7 @@ async function initFolderUploadEvent() {
             const outputPath = document.getElementById('output-file-path');
             if (outputPath) {
                 outputPath.value = result[0];
+                await saveLLMConfig();
             }
         }
     } catch (error) {
@@ -228,6 +229,7 @@ async function callLLM() {
 }
 
 async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
+    let message = 'Unknown error occurred';
     try {
         // call backend
         let resp = await window.pywebview.api.call_llm(prompt, imageData, outputPath);
@@ -244,7 +246,7 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
 
         if (!resp || typeof resp !== 'object') {
             console.error('Unexpected call_llm response:', resp);
-            return { ok: false, message: 'Invalid response from LLM' };
+            return 'Invalid response from LLM';
         }
 
         const { text = '', code = '' } = resp;
@@ -253,19 +255,26 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
         message = text;
         switch (code) {
             case 'ERROR_MODEL_OVERLOADED':
-              message = 'Model overloaded. Please try again later.' ;
+                message = 'Model overloaded. Please try again later.';
+                break;
             case 'ERROR_LOADING_IMAGE_TO_MODEL':
                 message = 'Failed loading image for model.';
+                break;
             case 'ERROR_COMMUNICATING_WITH_LLM':
-            default:
                 message = text || 'Error communicating with LLM';
+                break;
+            default:
+                if (text == None || text == ""){
+                    return "LLLM Returned empty message";
+                }
+                message = text || 'Error communicating with LLM';
+                break;
         }
         
     } catch (err) {
         console.error('callLLM failed:', err);
-        message = 'Unkown error occurred';
+        message = 'Unknown error occurred';
     }
-    finally{
-        return message;
-    }
+    
+    return message;
 }
