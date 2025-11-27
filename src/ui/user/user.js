@@ -8,7 +8,7 @@ async function initUser() {
     }
 
     await loadUserConfig();
-    await initUserventListeners();
+    await initUserEventListeners();
 }
 
 async function loadUserConfig() {
@@ -18,19 +18,19 @@ async function loadUserConfig() {
         if (userEmail) {
             userEmail.value = userConfig.email || '';
         }
-        user_email = userConfig.userEmail;
     } catch (error) {
         console.log('Error loading config:', error);
     }
 }
 
 
-async function initUserventListeners() {
+async function initUserEventListeners() {
     document.getElementById('login-btn').addEventListener('click', async () => {
         await registerOrLogin();
     });
 }
 
+userId = undefined;
 
 async function registerOrLogin(){
     const emailInput = document.getElementById('user-email');
@@ -42,7 +42,7 @@ async function registerOrLogin(){
 
     try {
         response = await window.pywebview.api.login_or_register(user_email);
-        if (response.code == "OK") {
+        if (response.code === "OK") {
             user_id = response.text;
         }
         if (user_id) {

@@ -90,13 +90,13 @@ def main():
         setup_logging()  # Set up logging at the application entry point
         logging.info("Starting Commands Automator application...")
         
-        lLMApi = LLMApi()
-        lLMApi.run_mcp_server()
+        llm_api = LLMApi()
+        llm_api.run_mcp_server()
 
         user_api = UserApi()
         
         # Initialize API and create window
-        api = CommandsAutomatorApi(lLMApi, user_api)
+        api = CommandsAutomatorApi(llm_api, user_api)
         window = webview.create_window(
             'Commands Automator',
             'ui/commands_automator.html',

@@ -13,13 +13,12 @@ class UserMongoPersist(AbstractMongoPersist):
     def create_or_update_user(self, email: str) -> str:
         """Create a new user or return existing user
         
-        MongoDB generates the GUID ID on insert.
+        Generates a UUID as the user ID on insert.
         If email exists, returns existing user record.
         If email doesn't exist, creates new user with GUID ID.
         
         Returns:
-            {"user_id": str, "created": bool}
-        """
+            str: The user_id of the existing or newly created user, or empty string on error        """
         existing_user = self.get_user_by_email(email)
         
         if existing_user:

@@ -22,9 +22,10 @@ class ConfigurationService:
         self.config_path = state['config_path']
         self._config = state['config']
 
-    def load_configuration(self):
-         return utils.run_async_method(self.load_configuration_async)
-        
+    def load_configuration(self) -> Dict[str, Any] | None:
+        """Load configuration from JSON file (synchronous wrapper)"""
+        return utils.run_async_method(self.load_configuration_async)
+          
     async def load_configuration_async(self) -> Dict[str, Any] | None:
         """Load configuration from JSON file"""    
         self._config = await file_utils.read_json_file(self.config_path)

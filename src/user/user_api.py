@@ -7,7 +7,7 @@ from user.services.user_registry_service import UserRegistryResponseCode, UserRe
 from utils.file_utils import USER_CONFIG_FILE
 
 class UserApiResponseCode(Enum):
-    OK = 1,
+    OK = 1
     ERROR = 2
 
 class UserApiResponse(ApiResponse):
@@ -30,6 +30,7 @@ class UserApi:
     def login_or_register(self, user_email:str) -> Dict[str, Any]:
         response = self.user_registry_service.login_or_register_user(user_email=user_email)
         if response.code == UserRegistryResponseCode.OK:
-              return UserApiResponse(response.user_id, UserApiResponseCode.OK).to_dict()
+              if response.code == UserRegistryResponseCode.OK:
+                return UserApiResponse(response.user_id, UserApiResponseCode.OK).to_dict()        
         return UserApiResponse(f"Error registering or logging in {user_email}", UserApiResponseCode.ERROR).to_dict()
 
