@@ -1,20 +1,22 @@
 import logging
 import api_utils
-from llm_api import LLMApi
+from llm.llm_api import LLMApi
+from user.user_api import UserApi
 import webview
 import sys
 
-from llm.mcp_servers.job_applicant_mcp import MCPRunner
 from scripts_manager.scripts_manager_service import ScriptsManagerService
 from services.configuration_service import ConfigurationService
 from utils.file_utils import SCRIPTS_MANAGER_CONFIG_FILE
 from utils.logger_config import setup_logging
 
 class CommandsAutomatorApi:
-    def __init__(self, llm_api: LLMApi):
+    def __init__(self, llm_api: LLMApi, user_api: UserApi):
         self.commands_automator_service = ScriptsManagerService()
         self.commands_automator_config = ConfigurationService(SCRIPTS_MANAGER_CONFIG_FILE)
         self.llm_api = llm_api
+        self.user_api = user_api
+        
 
     def load_scripts(self):
         try:
@@ -61,8 +63,8 @@ class CommandsAutomatorApi:
     def execute_script(self, script_name, additional_text, flags):
         return self.commands_automator_service.execute_script(script_name, additional_text, flags)
         
-    def call_llm(self, prompt: str, image_data: str, output_file_path: str):
-        return self.llm_api.call_llm(prompt, image_data, output_file_path)
+    def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None):
+        return self.llm_api.call_llm(prompt, image_data, output_file_path, user_id)
     
     def load_llm_configuration(self):
        return self.llm_api.load_llm_configuration()
@@ -75,6 +77,13 @@ class CommandsAutomatorApi:
             logging.error("No webview windows available")
             return None
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
+    
+    def load_user_config(self):
+        return self.user_api.load_configuration()
+    
+    def login_or_register(self, email:str):
+        return self.user_api.login_or_register(email)
+
         
 def main():
     try:
@@ -83,9 +92,11 @@ def main():
         
         lLMApi = LLMApi()
         lLMApi.run_mcp_server()
+
+        user_api = UserApi()
         
         # Initialize API and create window
-        api = CommandsAutomatorApi(lLMApi)
+        api = CommandsAutomatorApi(lLMApi, user_api)
         window = webview.create_window(
             'Commands Automator',
             'ui/commands_automator.html',
@@ -95,7 +106,7 @@ def main():
         )
         
         logging.info("Starting webview...")
-        webview.start(icon='ui/resources/Commands_Automator.ico')
+        webview.start(icon='ui/resources/Commands_Automator.ico', debug=True)
     except Exception as ex:
         logging.error(f"Fatal error in main: {ex}", exc_info=True)
         raise

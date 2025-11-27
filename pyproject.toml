@@ -23,6 +23,7 @@ dependencies = [
     "beautifulsoup4>=4.13.5,<5.0.0",
     "lxml>=6.0.1,<7.0.0",
     "playwright>=1.55.1,<2.0.0",
+    "pymongo>=4.15.4",
 ]
 
 [tool.setuptools]

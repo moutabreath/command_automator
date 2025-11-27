@@ -7,8 +7,10 @@
     <link rel="stylesheet" href="commands_automator/commands_automator.css">
     <link rel="stylesheet" href="tabs.css">
     <link rel="stylesheet" href="llm/llm.css">
+    <link rel="stylesheet" href="user/user.css">
     <script src="commands_automator/commands_automator.js" defer></script>
     <script src="llm/llm.js" defer></script>
+    <script src="user/user.js" defer></script>
     <script src="tabs.js" defer></script>
     <link rel="stylesheet" href="spinner.css">
 
@@ -42,29 +44,47 @@
         <textarea id="result" readonly rows="6" cols="80"></textarea>
     </div>
     <div id="tab-llm" class="tab-content">
-        <div class="llm-response-container">
-            <div id="response-box" class="response-box"></div>
-            <div class="query-box-wrapper">
-                <div class="input-container">
-                    <textarea id="query-box" rows="2" placeholder="Message LLM"></textarea>
+        <div id="llm-main-content">
+            <div class="llm-response-container">
+                <div id="response-box" class="response-box"></div>
+                <div class="query-box-wrapper">
+                    <div class="input-container">
+                        <textarea id="query-box" rows="2" placeholder="Message LLM"></textarea>
+                    </div>
+                    <div class="query-buttons-section">
+                        <button id="send-btn" title="Send">
+                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMTJMMjIgMk0yMiAyTDE1IDIyTDEwIDEyTDIgMTJMMjIgMloiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+"
+                                alt="Send" />
+                        </button>
+                        <button id="select-image-btn">+</button>
+                    </div>
+                    <div id="image-preview"></div>
                 </div>
-                <div class="query-buttons-section">
-                    <button id="send-btn" title="Send">
-                        <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMTJMMjIgMk0yMiAyTDE1IDIyTDEwIDEyTDIgMTJMMjIgMloiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+"
-                            alt="Send" />
-                    </button>
-                    <button id="select-image-btn">+</button>
-                </div>
-                <div id="image-preview"></div>
+            </div>
+            <div class="query-input-section">
+                <label for="output-file-path">Output File Path</label>
+                <input type="text" id="output-file-path">
+                <button id="select-folder-btn">Browse...</button>
+                <input type="file" id="folder-input" webkitdirectory style="display:none;">
             </div>
         </div>
-        <div class="query-input-section">
-            <label for="output-file-path">Output File Path</label>
-            <input type="text" id="output-file-path">
-            <button id="select-folder-btn">Browse...</button>
-            <input type="file" id="folder-input" webkitdirectory style="display:none;">
+        <div id="llm-login-container">
+            <div class="login-row">
+                <label for="user-email">Email</label>
+                <input type="text" id="user-email">
+                <button id="login-btn">Login</button>
+            </div>
+        </div>
+        <div id="job-info-row" class="info-row" style="display: none;">
+            <label for="company-name">Company Name</label>
+            <input type="text" id="company-name">
+            <label for="position-url">Position URL</label>
+            <input type="text" id="position-url">
+            <label for="contact-person">Contact</label>
+            <input type="text" id="contact-person">
         </div>
     </div>
 
 </body>
+
 </html>

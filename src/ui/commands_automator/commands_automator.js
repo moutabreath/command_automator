@@ -130,6 +130,7 @@ async function initCommandsAutomatorEventHandlers() {
 async function initApp() {
     await initCommandsAutomator();
     await initLLM();
+    await initUser();
 }
 
 
