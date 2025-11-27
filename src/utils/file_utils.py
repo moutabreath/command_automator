@@ -69,7 +69,8 @@ JOB_FILE_DIR = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'results'
 JOB_SEARCH_CONFIG_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
 GLASSDOOR_SELECTORS_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'glassdoor_selectors.json'
 
-
+USER_BASE_DIR = BASE_DIR / 'user'
+USER_CONFIG_FILE  = USER_BASE_DIR / 'config'/ 'user-config.json'
 
 T = TypeVar('T', bound=BaseModel)
 
