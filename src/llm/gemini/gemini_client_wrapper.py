@@ -32,13 +32,14 @@ class GeminiClientWrapper:
 
     CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"
 
-    def __init__(self):
+    def __init__(self, cleanup_files: bool = False):
         api_key = os.environ.get("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
         self.gemini_client: genai.Client = genai.Client(api_key=api_key)
-        self._delete_all_files()
-
+        if cleanup_files:
+            self._delete_all_files()
+            
     def init_chat(self) -> Chat:
         self.base_config = {
             "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
