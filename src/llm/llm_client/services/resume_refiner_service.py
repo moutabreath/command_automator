@@ -2,15 +2,15 @@ import json
 import logging
 from google.genai.chats import Chat
 
-from llm.gemini.gemini_agent import GeminiAgent, LLMAgentResponse, LLMResponseCode
+from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMAgentResponse, LLMResponseCode
 from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
 from llm.llm_client.services.resume_saver_service import ResumeSaverService
 
 class ResumeRefinerService:
-    def __init__(self, resume_chat: Chat, gemini_utils: GeminiAgent):
+    def __init__(self, resume_chat: Chat, gemini_utils: GeminiClientWrapper):
         self.resume_saver_service: ResumeSaverService = ResumeSaverService()
         self.resume_chat: Chat = resume_chat
-        self.gemini_agent: GeminiAgent = gemini_utils
+        self.gemini_agent: GeminiClientWrapper = gemini_utils
 
 
     async def refine_resume(self, tool_result: str, output_file_path: str) -> MCPResponse:

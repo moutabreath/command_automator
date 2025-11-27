@@ -10,12 +10,7 @@ class LLMService:
         self.mcp_client = SmartMCPClient()
 
  
-    async def chat_with_bot(
-        self,
-        prompt: str,
-        image_path: str | None,
-        output_file_path: str | None
-    ) -> MCPResponse:
+    async def chat_with_bot(self, prompt: str, image_path: str | None,output_file_path: str | None, user_id: str) -> MCPResponse:
         """
         Process a chat query using the MCP client.
         
@@ -31,7 +26,7 @@ class LLMService:
             Exceptions are caught and returned as error responses rather than raised.
         """
         try:
-            return await self.mcp_client.process_query(prompt, image_path, output_file_path)
+            return await self.mcp_client.process_query(prompt, image_path, output_file_path, user_id)
         except Exception as e:
             logging.error(f"Error processing LLM query: {e}", exc_info=True)
             return MCPResponse("Unknown error occurred", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)

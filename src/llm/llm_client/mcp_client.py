@@ -3,9 +3,8 @@ import aiohttp
 import logging
 from mcp.client.streamable_http import streamablehttp_client
 from mcp import ClientSession
-from mcp import types
 
-from llm.gemini.gemini_agent import GeminiAgent, LLMAgentResponse, LLMResponseCode
+from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMAgentResponse, LLMResponseCode
 from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
 from llm.llm_client.services.job_search_service import JobSearchService
 from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
@@ -18,7 +17,7 @@ class SmartMCPClient:
         # MCP server settings
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
        
-        self.gemini_agent: GeminiAgent = GeminiAgent()
+        self.gemini_agent: GeminiClientWrapper = GeminiClientWrapper()
         self.resume_chat = self.gemini_agent.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_agent)
         self.job_search_service = JobSearchService(self.gemini_agent)
@@ -26,7 +25,7 @@ class SmartMCPClient:
         self.session_tools = None
         self.available_tools = [] 
 
-    async def process_query( self,  query: str, base64_decoded: str, output_file_path: str) -> MCPResponse:
+    async def process_query( self,  query: str, base64_decoded: str = None, output_file_path: str = None, user_id: str = None) -> MCPResponse:
         """
         Process a user query using a combination of Gemini and MCP server.
 
@@ -59,7 +58,7 @@ class SmartMCPClient:
                    self._init_available_tools()
 
                 # Use Gemini to decide if a tool should be used
-                selected_tool, tool_args = await self._decide_tool_usage(query)
+                selected_tool, tool_args = await self._decide_tool_usage(query, user_id)
 
                 # If Gemini decided to use a tool, call it
                 if selected_tool:
@@ -96,7 +95,7 @@ class SmartMCPClient:
         self.available_tools = [tool.name for tool in self.session_tools.tools]
         logging.debug(f"Available tools: {self.available_tools}")
         
-    async def _decide_tool_usage(self, query:str):
+    async def _decide_tool_usage(self, query:str, user_id:str):
         """
         Use LLM to decide which tool to use based on the query
         
@@ -152,7 +151,7 @@ Based on the user's query, determine if any of these available tools should be u
 
 IMPORTANT: Only use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
- 2. Searching jobs from the internet.
+ 2. Searching jobs from the internet. 
 If you have already used a tool before, infer if you should use it again. For example if the user query is
 'again', and you have used a tool in the previous query, you may decide to use the tool you previously
 used just before this query.
@@ -161,9 +160,8 @@ used just before this query.
 If a tool should be used, respond in JSON format:
 {{
   "tool": "tool_name",
-  "args": {{
-    "query": "user query or relevant part"
-  }}
+  "args": [list  of argumemts]
+  
 }}
 If the tool definition has no parameters respond in JSON format:
 {{
@@ -174,7 +172,7 @@ If the tool definition has no parameters respond in JSON format:
 Be selective and conservative with tool usage. Be concise. Only output valid JSON.
 If no tool should be selected, respond to the query directly. Query: {query}
 """
-        
+    
     async def _use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         try:

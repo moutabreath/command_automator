@@ -3,14 +3,14 @@ import mimetypes
 import os
 from google.genai.chats import Chat
 
-from llm.gemini.gemini_agent import GeminiAgent, LLMResponseCode
+from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponseCode
 from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
 from utils import file_utils
 
 class JobSearchService:
 
-    def __init__(self, gemini_utils: GeminiAgent):
-        self.gemini_agent: GeminiAgent = gemini_utils
+    def __init__(self, gemini_utils: GeminiClientWrapper):
+        self.gemini_agent: GeminiClientWrapper = gemini_utils
         self.job_search_chat: Chat = self.gemini_agent.init_chat()        
 
     async def get_unified_jobs(self):

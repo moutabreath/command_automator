@@ -1,8 +1,7 @@
 import logging
 import multiprocessing
 from multiprocessing import freeze_support
-from typing import Dict, List, Type, cast
-from typing import TypeVar
+from typing import Any, Dict, List, Optional, Type, cast, TypeVar
 
 from mcp.server.fastmcp import FastMCP
 
@@ -125,7 +124,6 @@ async def get_resume_files() -> ResumeData:
     try:
         registry = get_service_registry()
         
-        # Type-safe service retrieval - IDE will know this is ResumeLoaderService
         resume_loader_service = registry.get(
             ServiceNames.RESUME_LOADER, 
             ResumeLoaderService
@@ -178,8 +176,6 @@ async def get_resume_files() -> ResumeData:
             cover_letter_guidelines=""
         )
 
-
-
 @mcp.tool()
 async def search_jobs_from_the_internet(job_title: str | None = None, location:str | None = None, 
                                         remote: bool | None = None) -> list:
@@ -212,7 +208,18 @@ async def get_jobs_from_linkedin(job_title: str | None = None,
         List of Job objects
     """ 
     return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
-    
+
+@mcp.tool()
+async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
+                                  remote: bool | None = None) -> List:
+    """
+    Search for jobs on Glassdoor.
+
+    Returns:
+        List of Job objects
+    """
+    return await _run_glassdoor_scraper(job_title, location, remote)
+
 
 async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
     """Run the LinkedIn job scraper"""
@@ -252,18 +259,6 @@ async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> 
         logging.warning("No jobs found from LinkedIn scraper")
    
     return jobs
-
-@mcp.tool()
-async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
-                                  remote: bool | None = None) -> List:
-    """
-    Search for jobs on Glassdoor.
-
-    Returns:
-        List of Job objects
-    """
-    return await _run_glassdoor_scraper(job_title, location, remote)
-
 
 async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, forbidden_titles: list = None) -> List:
     """Run the Glassdoor job scraper"""

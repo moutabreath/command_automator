@@ -208,7 +208,7 @@ async function callLLM() {
     const img = imagePreview.querySelector('img');
     const imageData = img ? img.src : '';
     spinner.style.visibility = 'visible';
-
+    
     response = await getMessageFromLLMResponse(query, imageData, folderInput);
     spinner.style.visibility = 'hidden';
 
@@ -232,7 +232,7 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
     let message = 'Unknown error occurred';
     try {
         // call backend
-        let resp = await window.pywebview.api.call_llm(prompt, imageData, outputPath);
+        let resp = await window.pywebview.api.call_llm(prompt, imageData, outputPath, userId);
 
         // backend may return a JSON string or an object; normalize to object
         if (typeof resp === 'string') {

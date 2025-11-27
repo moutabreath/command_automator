@@ -27,7 +27,7 @@ class LLMAgentResponse:
         self.code = code
         
 
-class GeminiAgent:
+class GeminiClientWrapper:
     GEMINI_MODEL = "gemini-2.5-flash"
 
     CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"
