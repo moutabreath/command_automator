@@ -4,6 +4,13 @@ from enum import Enum
 import logging
 from typing import Any
 
+class ApiResponseCode(Enum):
+    OK = 1
+    ERROR_RUNNIG_ASYNC_METHOD = 2
+
+
+
+
 class ApiResponse:
     def __init__(self, text: str, code: Enum):
         self.text = text
@@ -26,5 +33,5 @@ def run_async_method(async_method, *args, **kwargs):
     try:
         return asyncio.run(async_method(*args, **kwargs))
     except Exception as e:
-        logging.error(f"Error running async method {e}", exc_info=True)
-        return None
+        logging.exception(f"Error running async method {e}")
+        return ApiResponse("Error running async method", ApiResponseCode.ERROR_RUNNIG_ASYNC_METHOD)
