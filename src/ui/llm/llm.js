@@ -255,8 +255,8 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
         message = text;
         switch (code) {
             case 'OK':
-                if (message == undefined || message == ""){
-                    return "LLLM Returned empty message";
+                if (message === undefined || message === ""){
+                    return "LLM returned empty message";
                 }
                 return message;
             case 'ERROR_MODEL_OVERLOADED':
