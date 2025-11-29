@@ -12,8 +12,8 @@ class CompanyMongoPersist(AbstractMongoPersist):
 
     def __init__(self, connection_string: str = "mongodb://localhost:27017/", db_name: str = "job_tracker"):
         """Initialize MongoDB connection"""
-        super().__init__(connection_string=connection_string, db_name=db_name)
-
+        super().__init__(connection_string=connection_string, db_name=db_name)        
+      
     def create_index(self):
         try:
             self.job_applications = self.db.job_applications
@@ -35,11 +35,11 @@ class CompanyMongoPersist(AbstractMongoPersist):
                     data=result,
                     code=PersistenceErrorCode.SUCCESS
                 )
-            logging.error(f"Document not found {id}, {company_name}")
+            logging.error(f"Document not found {user_id}, {company_name}")
             return PersistenceResponse(
                 data=None,
                 code=PersistenceErrorCode.NOT_FOUND,
-                error_message=f"Document with id {id} and company name {company_name} not found"
+                error_message=f"Document with id {user_id} and company name {company_name} not found"
             )
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
@@ -78,7 +78,7 @@ class CompanyMongoPersist(AbstractMongoPersist):
                 error_message=f"MongoDB connection failed: {e}"
             )
         except Exception as e:
-            logging.exception(f"MongoDB encountered an unkown error: {e}")
+            logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(
                 data=None,
                 code=PersistenceErrorCode.UNKNOWN_ERROR,

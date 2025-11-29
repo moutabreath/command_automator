@@ -6,9 +6,7 @@ from typing import Any
 
 class ApiResponseCode(Enum):
     OK = 1
-    ERROR_RUNNIG_ASYNC_METHOD = 2
-
-
+    ERROR_RUNNING_ASYNC_METHOD = 2
 
 
 class ApiResponse:
@@ -33,5 +31,5 @@ def run_async_method(async_method, *args, **kwargs):
     try:
         return asyncio.run(async_method(*args, **kwargs))
     except Exception as e:
-        logging.exception(f"Error running async method {e}")
+        logging.exception("Error running async method")      
         return ApiResponse("Error running async method", ApiResponseCode.ERROR_RUNNIG_ASYNC_METHOD)

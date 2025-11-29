@@ -51,8 +51,8 @@ class CommandsAutomatorApi(AbstractApi):
         
     def execute_script(self, script_name, additional_text, flags):
         return self.commands_automator_service.execute_script(script_name, additional_text, flags)
-    
-       
+
+
         
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None):
         return self.llm_api.call_llm(prompt, image_data, output_file_path, user_id)
@@ -61,8 +61,8 @@ class CommandsAutomatorApi(AbstractApi):
        return self.llm_api.load_configuration()
 
     def save_llm_configuration(self, config):
-        return self.llm_api.save_configuration(config)	
-
+        return self.llm_api.save_configuration(config)
+    
     def select_folder(self):
         if not webview.windows:
             logging.error("No webview windows available")

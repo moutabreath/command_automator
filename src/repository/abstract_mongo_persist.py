@@ -4,10 +4,7 @@ import logging
 from pymongo import MongoClient
 from abc import ABC
 
-from dataclasses import dataclass
 from typing import Generic, TypeVar, Optional
-from enum import Enum
-
 class PersistenceErrorCode(Enum):
     SUCCESS = "SUCCESS"
     NOT_FOUND = "NOT_FOUND",
@@ -44,15 +41,15 @@ class AbstractMongoPersist(ABC):
    
 
   def _disable_debug_logging(self):
-       # Suppress all MongoDB debug logs
+      # Suppress all MongoDB debug logs
       logging.getLogger("pymongo").setLevel(logging.ERROR)
       logging.getLogger("pymongo.connection").setLevel(logging.ERROR)
       logging.getLogger("pymongo.pool").setLevel(logging.ERROR)
-
+      
   def initialize_connection(self):
-     self.connect()
-     self.create_index()
-  
+      self.connect()
+      self.create_index()
+      
   def connect(self):
       self.client = MongoClient(self.connection_string)
       self.client._serializable = False  # Prevent webview introspection

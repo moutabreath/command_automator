@@ -1,11 +1,9 @@
-from enum import Enum
-from typing import Optional
+import logging
+from typing import Optional, Dict
 from urllib.parse import urlparse
 from jobs_tracking.models import JobApplicationState
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
 from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
-
-from typing import Optional, Dict
 
 class JobTrackingService:
 
@@ -26,8 +24,6 @@ class JobTrackingService:
         """
         company_name = company_name.lower()
         job_url = urlparse(job_url).geturl()
-        job_title = job_title
-
         mongoResult:  PersistenceResponse[Dict[str, bool]] = self.application_persist.add_job(
             user_id=user_id,
             company_name=company_name,
@@ -39,4 +35,5 @@ class JobTrackingService:
         if mongoResult.code == PersistenceErrorCode.SUCCESS:
             return mongoResult.data
         else:
+            logging.error(f"Failed to add job for user {user_id}, company {company_name}: {mongoResult.code}")
             return {"created": False, "updated": False}

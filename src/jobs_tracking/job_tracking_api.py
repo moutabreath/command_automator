@@ -14,7 +14,7 @@ class JobTrackingApi(AbstractApi):
     def get_job_application_states(self) -> List[str]:
         """Get list of available job application states"""
         try:
-            return [state.name for state in JobApplicationState if not state==JobApplicationState.UKNOWN ]
+            return [state.name for state in JobApplicationState if not state==JobApplicationState.UNKNOWN ]
         except Exception as e:
             logging.exception(f"Error getting job application states: {e}")
             return []       
@@ -25,9 +25,9 @@ class JobTrackingApi(AbstractApi):
                            contact: Optional[str] = None) -> Dict[str, bool]:
         # Convert string to enum
         try:
-            job_state = JobApplicationState[state.upper()] if state else JobApplicationState.UKNOWN
+            job_state = JobApplicationState[state.upper()] if state else JobApplicationState.UNKNOWN
         except KeyError:
-            job_state = JobApplicationState.UKNOWN
+            job_state = JobApplicationState.UNKNOWN
         
         return self.job_tracking_service.add_job_to_company(user_id=user_id, company_name=company_name, job_url=job_url,
                                                             job_title=job_title, state=job_state, contact=contact)

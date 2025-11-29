@@ -49,8 +49,7 @@ async function registerOrLogin(){
             document.getElementById('llm-login-container').style.display = 'none';
             document.getElementById('job-info-row').style.display = 'flex';
         }
-        loadJobApplicationStates()
-        loadJobTrackingConfig()
+        await initJobTracking();
     } catch (error) {
         console.error('Login failed:', error);
         alert('Login failed. Please check the console for details.');

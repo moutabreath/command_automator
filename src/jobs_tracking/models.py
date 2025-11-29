@@ -6,4 +6,4 @@ class JobApplicationState(Enum):
     MESSAGE_SENT = 2
     EMAIL_SENT = 3
     APPLIED = 4
-    UKNOWN = 5
+    UNKNOWN = 5
