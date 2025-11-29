@@ -2,6 +2,7 @@ import base64
 from enum import Enum
 import logging
 from api_utils import ApiResponse
+from llm.abstract_api import AbstractApi
 from utils.utils import run_async_method
 from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
 from llm.llm_service import LLMService
@@ -20,13 +21,12 @@ class LLMApiResponseCode(Enum):
 
 class LLMApiResponse(ApiResponse):
     def __init__(self, text: str, code: LLMApiResponseCode):
-        super().__(text,code)
+        super().__init__(text, code)
 
-
-class LLMApi:
+class LLMApi(AbstractApi):
     def __init__(self):
+        super().__init__(LLM_CONFIG_FILE)
         self.llm_service: LLMService = LLMService()
-        self.llm_config = ConfigurationService(LLM_CONFIG_FILE)
     
     def run_mcp_server(self):
         # Initialize MCP Runner
@@ -35,18 +35,8 @@ class LLMApi:
             mcp_runner.init_mcp()
             logging.info("MCP Runner initialized successfully")
         except Exception as ex:
-            logging.error(f"Failed to initialize MCP Runner: {ex}", exc_info=True)
+            logging.exception(f"Failed to initialize MCP Runner: {ex}")
             raise
-
-
-    def load_llm_configuration(self):
-        """Load and serialize LLM configuration"""
-        return run_async_method(self.llm_config.load_configuration_async)
-
-    def save_llm_configuration(self, config) -> bool:
-        """Save LLM configuration after ensuring it's serializable"""
-        result = run_async_method(self.llm_config.save_configuration_async, config)
-        return result
         
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None) -> Dict[str, Any]:
         decoded_data = None
@@ -58,7 +48,7 @@ class LLMApi:
                 _, encoded = parts
                 decoded_data = base64.b64decode(encoded)   
             except Exception as e:
-                logging.error(f"Error processing image data: {e}", exc_info=True)
+                logging.exception(f"Error processing image data: {e}")
                 resp = LLMApiResponse("Error loading image", LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)
                 return resp.to_dict()
 

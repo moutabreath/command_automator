@@ -72,6 +72,9 @@ GLASSDOOR_SELECTORS_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config
 USER_BASE_DIR = BASE_DIR / 'user'
 USER_CONFIG_FILE  = USER_BASE_DIR / 'config'/ 'user-config.json'
 
+JOB_TRACKING_BASE_DIR = BASE_DIR / 'jobs_tracking'
+JOB_TRACKING_CONFIG_FILE  = JOB_TRACKING_BASE_DIR / 'config'/ 'job-tracking.json'
+
 T = TypeVar('T', bound=BaseModel)
 
 async def save_file(file_path: str | Path, content: str) -> bool:

@@ -8,9 +8,11 @@
     <link rel="stylesheet" href="tabs.css">
     <link rel="stylesheet" href="llm/llm.css">
     <link rel="stylesheet" href="user/user.css">
+    <link rel="stylesheet" href="job_tracking/job_tracking.css">
     <script src="commands_automator/commands_automator.js" defer></script>
     <script src="llm/llm.js" defer></script>
     <script src="user/user.js" defer></script>
+    <script src="job_tracking/job_tracking.js" defer></script>
     <script src="tabs.js" defer></script>
     <link rel="stylesheet" href="spinner.css">
 
@@ -78,10 +80,15 @@
         <div id="job-info-row" class="info-row" style="display: none;">
             <label for="company-name">Company Name</label>
             <input type="text" id="company-name">
-            <label for="position-url">Position URL</label>
-            <input type="text" id="position-url">
+            <label for="position-title">Position Title</label>
+            <input type="text" id="position-title">
             <label for="contact-person">Contact</label>
             <input type="text" id="contact-person">
+            <label for="position-url">Position URL</label>
+            <input type="text" id="position-url">
+            <label for="job-state">State</label>
+            <select id="job-state"></select>
+            <button id="track-job-btn"></button>Track Job Application</button>
         </div>
     </div>
 

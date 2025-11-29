@@ -1,0 +1,56 @@
+.info-row {
+      display: flex;
+      align-items: center;
+      gap: 15px;
+      margin: 20px;
+      width: calc(100% - 40px);
+      box-sizing: border-box;
+      flex-wrap: wrap;
+  }
+
+  .info-row label {
+      display: flex;
+      align-items: center;
+      gap: 5px;
+      min-width: fit-content;
+      white-space: nowrap;
+  }
+
+  .info-row input {
+      padding: 5px;
+      border: 2px solid #9EA3F5;
+      border-radius: 3px;
+      background-color: #222;
+      color: #fff;
+      height: 24px;
+      box-sizing: border-box;
+      flex-grow: 1;
+      min-width: 150px;
+  }
+
+  .info-row select {
+      padding: 5px;
+      border: 2px solid #9EA3F5;
+      border-radius: 3px;
+      background-color: #222;
+      color: #fff;
+      height: 24px;
+      box-sizing: border-box;
+      flex-grow: 1;
+      min-width: 150px;
+  }
+
+  #track-job-btn {
+      padding: 4px 12px;
+      background-color: #9EA3F5;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+      white-space: nowrap;
+      flex-shrink: 0;
+  }
+
+  #track-job-btn:hover {
+      background-color: #8792da;
+  }

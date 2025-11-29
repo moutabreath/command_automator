@@ -50,6 +50,7 @@ async function registerOrLogin(){
             document.getElementById('job-info-row').style.display = 'flex';
         }
         loadJobApplicationStates()
+        loadJobTrackingConfig()
     } catch (error) {
         console.error('Login failed:', error);
         alert('Login failed. Please check the console for details.');

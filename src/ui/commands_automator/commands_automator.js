@@ -43,26 +43,27 @@ async function updateDescription() {
 
 async function loadAutomatorConfig() {
     try {
-        config = await window.pywebview.api.load_commands_configuration();
+        let scriptsManagerConfig = await window.pywebview.api.load_commands_configuration();
         if (config === "" || config === " "){
             return;
         }
-        document.getElementById('script-select').value = config.selected_script || '';
-        document.getElementById('additional-text').value = config.additional_text || '';
-        document.getElementById('flags').value = config.flags || '';
+        document.getElementById('script-select').value = scriptsManagerConfig.selected_script || '';
+        document.getElementById('additional-text').value = scriptsManagerConfig.additional_text || '';
+        document.getElementById('flags').value = scriptsManagerConfig.flags || '';
         await updateDescription();
     } catch (error) {
         console.log('Error loading config:', error);
-        config = { selected_script: '', additional_text: '', flags: '' };
+        scriptsManagerConfig = { selected_script: '', additional_text: '', flags: '' };
     }
 }
 
 async function saveAutomatorConfig() {
     try {
-        config.selected_script = document.getElementById('script-select').value;
-        config.additional_text = document.getElementById('additional-text').value;
-        config.flags = document.getElementById('flags').value;
-        const result = await window.pywebview.api.save_commands_configuration(config);
+        let scriptsManagerConfig = {}
+        scriptsManagerConfig.selected_script = document.getElementById('script-select').value;
+        scriptsManagerConfig.additional_text = document.getElementById('additional-text').value;
+        scriptsManagerConfig.flags = document.getElementById('flags').value;
+        const result = await window.pywebview.api.save_commands_configuration(scriptsManagerConfig);
     } catch (error) {
         console.log('Error saving config:', error);
     }
@@ -131,12 +132,13 @@ async function initApp() {
     await initCommandsAutomator();
     await initLLM();
     await initUser();
+    await initJobTracking();
 }
 
 
 document.addEventListener('pywebviewready', async function () {
     console.log('pywebviewready event fired');
-    await initCommandsAutomator();
+    await initApp();
 });
 
 document.addEventListener('DOMContentLoaded', function () {

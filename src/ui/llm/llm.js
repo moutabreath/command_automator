@@ -11,12 +11,12 @@ async function loadLLMConfig() {
 }
 
 async function saveLLMConfig() {
-    let config = {};
+    let llmConfig = {};
     try {
         const outputPathElement = document.getElementById('output-file-path');
         if (outputPathElement) {
-            config.outputFilePath = outputPathElement.value;
-            await window.pywebview.api.save_llm_configuration(config);
+            llmConfig.outputFilePath = outputPathElement.value;
+            await window.pywebview.api.save_llm_configuration(llmConfig);
         }
         } catch (error) {
             console.log('Error saving config:', error);

@@ -7,8 +7,12 @@ from repository.abstract_mongo_persist import AbstractMongoPersist
 class UserMongoPersist(AbstractMongoPersist):
     def __init__(self, connection_string: str = "mongodb://localhost:27017/", db_name: str = "job_tracker"):
         """Initialize MongoDB connection"""
-        super().__init__(connection_string=connection_string, db_name=db_name)
+        super().__init__(connection_string=connection_string, db_name=db_name)        
+    
+    def create_index(self):
         self.users = self.db.users
+        self.users.create_index([("email", 1)], unique=True)
+        self.applications = self.db.job_applications
         
     def create_or_update_user(self, email: str) -> str:
         """Create a new user or return existing user

@@ -1,21 +1,25 @@
 import logging
-import api_utils
+from jobs_tracking.job_tracking_api import JobTrackingApi
+from llm.abstract_api import AbstractApi
 from llm.llm_api import LLMApi
 from user.user_api import UserApi
 import webview
 import sys
 
 from scripts_manager.scripts_manager_service import ScriptsManagerService
-from services.configuration_service import ConfigurationService
 from utils.file_utils import SCRIPTS_MANAGER_CONFIG_FILE
 from utils.logger_config import setup_logging
 
-class CommandsAutomatorApi:
-    def __init__(self, llm_api: LLMApi, user_api: UserApi):
+class CommandsAutomatorApi(AbstractApi):
+
+    def __init__(self, llm_api: LLMApi, user_api: UserApi, job_tracking_api: JobTrackingApi):
+        super().__init__(SCRIPTS_MANAGER_CONFIG_FILE)
+
         self.commands_automator_service = ScriptsManagerService()
-        self.commands_automator_config = ConfigurationService(SCRIPTS_MANAGER_CONFIG_FILE)
+
         self.llm_api = llm_api
         self.user_api = user_api
+        self.job_tracking_api = job_tracking_api
         
 
     def load_scripts(self):
@@ -39,38 +43,25 @@ class CommandsAutomatorApi:
         
     def load_commands_configuration(self):
         """Load and serialize commands configuration"""
-        try:
-            config = api_utils.run_async_method(self.commands_automator_config.load_configuration_async)
-            if isinstance(config, dict):
-                return config
-            return {}
-        except Exception as e:
-            logging.error(f"Error loading commands configuration: {e}", exc_info=True)
-            return {}
+        return self.load_configuration()
 
     def save_commands_configuration(self, config):
         """Save commands configuration after ensuring it's serializable"""
-        try:
-            if not isinstance(config, dict):
-                logging.error("Invalid configuration format")
-                return False
-            result = api_utils.run_async_method(self.commands_automator_config.save_configuration_async, config)
-            return result if isinstance(result, bool) else False
-        except Exception as e:
-            logging.error(f"Error saving commands configuration: {e}", exc_info=True)
-            return False 
+        return self.save_configuration(config)
         
     def execute_script(self, script_name, additional_text, flags):
         return self.commands_automator_service.execute_script(script_name, additional_text, flags)
+    
+       
         
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None):
         return self.llm_api.call_llm(prompt, image_data, output_file_path, user_id)
     
     def load_llm_configuration(self):
-       return self.llm_api.load_llm_configuration()
+       return self.llm_api.load_configuration()
 
     def save_llm_configuration(self, config):
-        return self.llm_api.save_llm_configuration(config)	
+        return self.llm_api.save_configuration(config)	
 
     def select_folder(self):
         if not webview.windows:
@@ -78,13 +69,29 @@ class CommandsAutomatorApi:
             return None
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
     
+    
     def load_user_config(self):
         return self.user_api.load_configuration()
     
     def login_or_register(self, email:str):
         return self.user_api.login_or_register(email)
+    
 
-        
+    def load_job_tracking_configuration(self):
+        return self.job_tracking_api.load_configuration()
+    
+    def save_job_tracking_configuration(self, config):
+        return self.job_tracking_api.save_configuration(config)
+    
+    
+    def get_job_application_states(self):
+        """Get list of job application states"""
+        return self.job_tracking_api.get_job_application_states()
+    
+    def track_job_application(self, user_id:str, company_name:str, job_url:str, job_title:str, state:str , contact:str):
+        return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state, contact)
+    
+
 def main():
     try:
         setup_logging()  # Set up logging at the application entry point
@@ -95,8 +102,9 @@ def main():
 
         user_api = UserApi()
         
+        job_tracking_api = JobTrackingApi()
         # Initialize API and create window
-        api = CommandsAutomatorApi(llm_api, user_api)
+        api = CommandsAutomatorApi(llm_api, user_api, job_tracking_api)
         window = webview.create_window(
             'Commands Automator',
             'ui/commands_automator.html',
