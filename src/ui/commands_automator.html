@@ -3,95 +3,172 @@
 
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commands Automator</title>
+    
+    <!-- Bootstrap CSS -->
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/css/bootstrap.min.css" rel="stylesheet">
+    
+    <!-- Custom CSS -->
     <link rel="stylesheet" href="commands_automator/commands_automator.css">
-    <link rel="stylesheet" href="tabs.css">
     <link rel="stylesheet" href="llm/llm.css">
     <link rel="stylesheet" href="user/user.css">
     <link rel="stylesheet" href="job_tracking/job_tracking.css">
+    <link rel="stylesheet" href="spinner.css">
+    
+</head>
+
+<body>
+    <!-- Spinner Overlay -->
+    <div id="spinner">
+        <div class="spinner-inner"></div>
+    </div>
+
+    <div class="container-fluid">
+        <!-- Tab Navigation -->
+        <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+                <button class="nav-link active" id="tab-automator-btn" data-bs-toggle="tab" 
+                        data-bs-target="#tab-automator" type="button" role="tab">
+                    Commands Automator
+                </button>
+            </li>
+            <li class="nav-item" role="presentation">
+                <button class="nav-link" id="tab-llm-btn" data-bs-toggle="tab" 
+                        data-bs-target="#tab-llm" type="button" role="tab">
+                    LLM Prompt
+                </button>
+            </li>
+        </ul>
+
+        <!-- Tab Content -->
+        <div class="tab-content" id="mainTabContent">
+            <!-- Commands Automator Tab -->
+            <div class="tab-pane fade show active" id="tab-automator" role="tabpanel">
+                <div class="row">
+                    <div class="col-lg-8">
+                        <div class="mb-3">
+                            <label for="script-select" class="form-label">Select Script</label>
+                            <select id="script-select" class="form-select"></select>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="script-description" class="form-label">Script Description</label>
+                            <textarea id="script-description" class="form-control" readonly rows="3"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="additional-text" class="form-label">Command Text (Only If Applicable)</label>
+                            <textarea id="additional-text" class="form-control" rows="2"></textarea>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="flags" class="form-label">Additional Arguments/Flags</label>
+                            <input id="flags" type="text" class="form-control">
+                        </div>
+                        
+                        <div class="mb-4">
+                            <button id="execute-btn" class="btn btn-primary btn-lg">Execute</button>
+                        </div>
+                        
+                        <div class="mb-3">
+                            <label for="result" class="form-label">Command Result</label>
+                            <textarea id="result" class="form-control" readonly rows="8"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- LLM Prompt Tab -->
+            <div class="tab-pane fade" id="tab-llm" role="tabpanel">
+                <div id="llm-main-content">
+                    <div class="llm-response-container mb-4">
+                        <div id="response-box" class="response-box p-3 mb-3" 
+                             style="background-color: #2a2a2a; border-radius: 8px; min-height: 200px; max-height: 400px; overflow-y: auto;"></div>
+                        
+                        <div class="query-box-wrapper">
+                            <div class="input-group mb-2">
+                                <textarea id="query-box" class="form-control" rows="3" 
+                                          placeholder="Message LLM"></textarea>
+                                <button id="send-btn" class="btn btn-primary" title="Send">
+                                    <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMTJMMjIgMk0yMiAyTDE1IDIyTDEwIDEyTDIgMTJMMjIgMloiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+"
+                                         alt="Send" style="width: 24px; height: 24px;" />
+                                </button>
+                                <button id="select-image-btn" class="btn btn-secondary">+</button>
+                            </div>
+                            <div id="image-preview" class="image-preview-area"></div>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-10">
+                            <label for="output-file-path" class="form-label">Output File Path</label>
+                            <input type="text" id="output-file-path" class="form-control">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end">
+                            <button id="select-folder-btn" class="btn btn-secondary w-100">Browse...</button>
+                            <input type="file" id="folder-input" webkitdirectory style="display:none;">
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="llm-login-container" class="card bg-dark border-secondary mb-3">
+                    <div class="card-body">
+                        <div class="row align-items-end">
+                            <div class="col-md-8">
+                                <label for="user-email" class="form-label">Email</label>
+                                <input type="email" id="user-email" class="form-control">
+                            </div>
+                            <div class="col-md-4">
+                                <button id="login-btn" class="btn btn-primary w-100">Login</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div id="job-info-row" class="card bg-dark border-secondary" style="display: none;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3" style="color: #9EA3F5;">Track Job Application</h5>
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label for="company-name" class="form-label">Company Name</label>
+                                <input type="text" id="company-name" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="position-title" class="form-label">Position Title</label>
+                                <input type="text" id="position-title" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="contact-person" class="form-label">Contact</label>
+                                <input type="text" id="contact-person" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="position-url" class="form-label">Position URL</label>
+                                <input type="text" id="position-url" class="form-control">
+                            </div>
+                            <div class="col-md-6">
+                                <label for="job-state" class="form-label">State</label>
+                                <select id="job-state" class="form-select"></select>
+                            </div>
+                            <div class="col-md-6 d-flex align-items-end">
+                                <button id="track-job-btn" class="btn btn-primary w-100">Track Job Application</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.2/js/bootstrap.bundle.min.js"></script>
+    
+    <!-- Custom Scripts -->
     <script src="commands_automator/commands_automator.js" defer></script>
     <script src="llm/llm.js" defer></script>
     <script src="user/user.js" defer></script>
     <script src="job_tracking/job_tracking.js" defer></script>
     <script src="tabs.js" defer></script>
-    <link rel="stylesheet" href="spinner.css">
-
-</head>
-
-<body>
-    <div id="spinner">
-        <div class="spinner-inner"></div>
-    </div>
-
-    <div class="tab-bar">
-        <button class="tab selected" id="tab-automator-btn">Commands Automator</button>
-        <button class="tab" id="tab-llm-btn">LLM Prompt</button>
-    </div>
-    <div id="tab-automator" class="tab-content active">
-        <label for="script-select">Select Script</label>
-        <select id="script-select"></select>
-        <br>
-        <label for="script-description">Script Description</label>
-        <textarea id="script-description" readonly rows="3" cols="60"></textarea>
-        <br>
-        <label for="additional-text">Command Text (Only If Applicable)</label>
-        <textarea id="additional-text" rows="2" cols="60"></textarea>
-        <br>
-        <label for="flags">Additional Arguments/Flags</label>
-        <input id="flags" type="text" size="60">
-        <br>
-        <button id="execute-btn">Execute</button>
-        <br>
-        <label for="result">Command Result</label>
-        <textarea id="result" readonly rows="6" cols="80"></textarea>
-    </div>
-    <div id="tab-llm" class="tab-content">
-        <div id="llm-main-content">
-            <div class="llm-response-container">
-                <div id="response-box" class="response-box"></div>
-                <div class="query-box-wrapper">
-                    <div class="input-container">
-                        <textarea id="query-box" rows="2" placeholder="Message LLM"></textarea>
-                    </div>
-                    <div class="query-buttons-section">
-                        <button id="send-btn" title="Send">
-                            <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMTJMMjIgMk0yMiAyTDE1IDIyTDEwIDEyTDIgMTJMMjIgMloiIHN0cm9rZT0iI2ZmZmZmZiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+"
-                                alt="Send" />
-                        </button>
-                        <button id="select-image-btn">+</button>
-                    </div>
-                    <div id="image-preview"></div>
-                </div>
-            </div>
-            <div class="query-input-section">
-                <label for="output-file-path">Output File Path</label>
-                <input type="text" id="output-file-path">
-                <button id="select-folder-btn">Browse...</button>
-                <input type="file" id="folder-input" webkitdirectory style="display:none;">
-            </div>
-        </div>
-        <div id="llm-login-container">
-            <div class="login-row">
-                <label for="user-email">Email</label>
-                <input type="text" id="user-email">
-                <button id="login-btn">Login</button>
-            </div>
-        </div>
-        <div id="job-info-row" class="info-row" style="display: none;">
-            <label for="company-name">Company Name</label>
-            <input type="text" id="company-name">
-            <label for="position-title">Position Title</label>
-            <input type="text" id="position-title">
-            <label for="contact-person">Contact</label>
-            <input type="text" id="contact-person">
-            <label for="position-url">Position URL</label>
-            <input type="text" id="position-url">
-            <label for="job-state">State</label>
-            <select id="job-state"></select>
-            <button id="track-job-btn"></button>Track Job Application</button>
-        </div>
-    </div>
-
 </body>
 
 </html>

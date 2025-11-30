@@ -1,5 +1,13 @@
+// Job Tracking JavaScript - Bootstrap Compatible
+
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
+    
+    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
+        console.error('PyWebView API not available for job tracking');
+        return;
+    }
+
     await loadJobApplicationStates();
     await loadJobTrackingConfig();
     await initJobTrackingEventListeners();
@@ -20,10 +28,12 @@ async function loadJobApplicationStates() {
     try {
         const states = await window.pywebview.api.get_job_application_states();
         const stateSelect = document.getElementById('job-state');
+        
         if (!stateSelect) {
             console.error('job-state element not found');
             return;
         }
+
         stateSelect.innerHTML = '';
 
         if (states && Array.isArray(states)) {
@@ -33,100 +43,204 @@ async function loadJobApplicationStates() {
                 option.textContent = getStateLabel(state);
                 stateSelect.appendChild(option);
             });
+            console.log(`Loaded ${states.length} job application states`);
+        } else {
+            console.warn('No job application states returned');
         }
     } catch (error) {
         console.error('Error loading job application states:', error);
     }
 }
+
 async function loadJobTrackingConfig() {
     try {
         let jobTrackingConfig = await window.pywebview.api.load_job_tracking_configuration();
-        if (config === "" || config === " ") {
+        
+        // Check if config is empty or invalid
+        if (!jobTrackingConfig || jobTrackingConfig === '' || jobTrackingConfig === ' ') {
+            console.log('No job tracking config found');
             return;
         }
-        document.getElementById('company-name').value = jobTrackingConfig.company_name || '';
-        document.getElementById('position-title').value = jobTrackingConfig.position_title || '';
-        document.getElementById('position-url').value = jobTrackingConfig.position_url || '';
-        document.getElementById('contact-person').value = jobTrackingConfig.contact_person || '';
+
+        // Populate form fields
+        const companyName = document.getElementById('company-name');
+        const positionTitle = document.getElementById('position-title');
+        const positionUrl = document.getElementById('position-url');
+        const contactPerson = document.getElementById('contact-person');
+
+        if (companyName) companyName.value = jobTrackingConfig.company_name || '';
+        if (positionTitle) positionTitle.value = jobTrackingConfig.position_title || '';
+        if (positionUrl) positionUrl.value = jobTrackingConfig.position_url || '';
+        if (contactPerson) contactPerson.value = jobTrackingConfig.contact_person || '';
+
+        console.log('Job tracking config loaded successfully');
     } catch (error) {
-        console.log('Error loading config:', error);
-        config = { selected_script: '', additional_text: '', flags: '' };
+        console.log('Error loading job tracking config:', error);
     }
 }
 
 async function saveJobTrackingConfig() {
     try {
-        const jobTrackingConfig = {};
-        jobTrackingConfig.company_name = document.getElementById('company-name').value;
-        jobTrackingConfig.position_title = document.getElementById('position-title').value;
-        jobTrackingConfig.position_url = document.getElementById('position-url').value;
-        jobTrackingConfig.contact_person = document.getElementById('contact-person').value;
+        const jobTrackingConfig = {
+            company_name: document.getElementById('company-name')?.value || '',
+            position_title: document.getElementById('position-title')?.value || '',
+            position_url: document.getElementById('position-url')?.value || '',
+            contact_person: document.getElementById('contact-person')?.value || ''
+        };
 
-        const result = await window.pywebview.api.save_job_tracking_configuration(jobTrackingConfig);
+        await window.pywebview.api.save_job_tracking_configuration(jobTrackingConfig);
+        console.log('Job tracking config saved');
     } catch (error) {
-        console.log('Error saving config:', error);
+        console.log('Error saving job tracking config:', error);
     }
 }
 
 async function initJobTrackingEventListeners() {
-    document.getElementById('company-name').addEventListener('input', async () => {
-        await saveJobTrackingConfig();
-    });
-    document.getElementById('position-title').addEventListener('input', async () => {
-        await saveJobTrackingConfig();
-    });
+    const companyName = document.getElementById('company-name');
+    const positionTitle = document.getElementById('position-title');
+    const positionUrl = document.getElementById('position-url');
+    const contactPerson = document.getElementById('contact-person');
+    const trackJobBtn = document.getElementById('track-job-btn');
 
-    document.getElementById('position-url').addEventListener('input', async () => {
-        await saveJobTrackingConfig();
-    });
-    document.getElementById('contact-person').addEventListener('input', async () => {
-        await saveJobTrackingConfig();
-    });
+    if (!trackJobBtn) {
+        console.error('Track job button not found');
+        return;
+    }
 
-    document.getElementById('track-job-btn').addEventListener('click', async () => {
+    // Save config on input change with debouncing
+    const debounce = (func, delay) => {
+        let timeoutId;
+        return function (...args) {
+            clearTimeout(timeoutId);
+            timeoutId = setTimeout(() => func.apply(this, args), delay);
+        };
+    };
+
+    const debouncedSave = debounce(saveJobTrackingConfig, 500);
+
+    if (companyName) {
+        companyName.addEventListener('input', debouncedSave);
+    }
+
+    if (positionTitle) {
+        positionTitle.addEventListener('input', debouncedSave);
+    }
+
+    if (positionUrl) {
+        positionUrl.addEventListener('input', debouncedSave);
+    }
+
+    if (contactPerson) {
+        contactPerson.addEventListener('input', debouncedSave);
+    }
+
+    // Track job button click
+    trackJobBtn.addEventListener('click', async () => {
         await trackJobApplication();
     });
 }
 
 async function trackJobApplication() {
-    const companyName = document.getElementById('company-name').value.trim();
-    const jobUrl = document.getElementById('position-url').value.trim();
-    const jobTitle = document.getElementById('position-title').value.trim();
-    const contactPerson = document.getElementById('contact-person').value.trim();
-    const jobState = document.getElementById('job-state').value;
+    const companyNameInput = document.getElementById('company-name');
+    const jobUrlInput = document.getElementById('position-url');
+    const jobTitleInput = document.getElementById('position-title');
+    const contactPersonInput = document.getElementById('contact-person');
+    const jobStateSelect = document.getElementById('job-state');
+    const trackJobBtn = document.getElementById('track-job-btn');
 
+    if (!companyNameInput || !jobUrlInput || !jobTitleInput || !jobStateSelect) {
+        console.error('Required job tracking elements not found');
+        return;
+    }
+
+    const companyName = companyNameInput.value.trim();
+    const jobUrl = jobUrlInput.value.trim();
+    const jobTitle = jobTitleInput.value.trim();
+    const contactPerson = contactPersonInput ? contactPersonInput.value.trim() : '';
+    const jobState = jobStateSelect.value;
+
+    // Validation
     if (!companyName || !jobUrl) {
-        alert('Please fill in Company Name and Position URL.');
+        showAlert('Please fill in Company Name and Position URL.', 'warning');
+        if (!companyName) companyNameInput.focus();
+        else jobUrlInput.focus();
         return;
     }
 
     if (!jobState) {
-        alert('Please select a Job State.');
+        showAlert('Please select a Job State.', 'warning');
+        jobStateSelect.focus();
         return;
     }
 
-    if (!user_id) {
-        alert('Please login first.');
+    const userId = window.userId || window.user_id;
+    if (!userId) {
+        showAlert('Please login first.', 'warning');
         return;
+    }
+
+    // Disable button during submission
+    if (trackJobBtn) {
+        trackJobBtn.disabled = true;
+        trackJobBtn.textContent = 'Tracking...';
+    }
+
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.classList.add('visible');
+        document.body.classList.add('spinner-active');
     }
 
     try {
         const response = await window.pywebview.api.track_job_application(
-            user_id,
+            userId,
             companyName,
             jobUrl,
             jobTitle,
             jobState,
             contactPerson || null
         );
-        alert('Job application tracked successfully!');
-        // Clear inputs
-        document.getElementById('company-name').value = '';
-        document.getElementById('position-title').value = '';
-        document.getElementById('position-url').value = '';
-        document.getElementById('contact-person').value = '';
+
+        showAlert('Job application tracked successfully!', 'success');
+        console.log('Job tracked:', response);
+
+        // Clear inputs after successful submission
+        companyNameInput.value = '';
+        jobTitleInput.value = '';
+        jobUrlInput.value = '';
+        if (contactPersonInput) contactPersonInput.value = '';
+        
+        // Save cleared config
+        await saveJobTrackingConfig();
+
     } catch (error) {
         console.error('Track job failed:', error);
-        alert('Failed to track job. Please check the console for details.');
+        showAlert('Failed to track job. Please check the console for details.', 'error');
+    } finally {
+        // Re-enable button
+        if (trackJobBtn) {
+            trackJobBtn.disabled = false;
+            trackJobBtn.textContent = 'Track Job Application';
+        }
+
+        // Hide spinner
+        if (spinner) {
+            spinner.classList.remove('visible');
+            document.body.classList.remove('spinner-active');
+        }
     }
+}
+
+function showAlert(message, type = 'info') {
+    // Simple alert fallback
+    // You can replace this with Bootstrap alerts or toasts
+    alert(message);
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', () => {
+        // Job tracking will be initialized after login
+        console.log('Job tracking module loaded');
+    });
 }

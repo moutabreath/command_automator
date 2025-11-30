@@ -1,9 +1,19 @@
+// User Authentication JavaScript - Bootstrap Compatible
+
+// Global user variables
+window.userId = undefined;
+window.user_id = undefined;
+let user_email = '';
+
 async function initUser() {
     console.log('Initializing User...');
 
     if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
         console.error('PyWebView API not available');
-        document.getElementById('result').value = 'Error: PyWebView API not available';
+        const resultElement = document.getElementById('result');
+        if (resultElement) {
+            resultElement.value = 'Error: PyWebView API not available';
+        }
         return;
     }
 
@@ -15,43 +25,156 @@ async function loadUserConfig() {
     try {
         let userConfig = await window.pywebview.api.load_user_config();
         const userEmail = document.getElementById('user-email');
-        if (userEmail) {
+        if (userEmail && userConfig) {
             userEmail.value = userConfig.email || '';
         }
     } catch (error) {
-        console.log('Error loading config:', error);
+        console.log('Error loading user config:', error);
     }
 }
 
-
-async function initUserEventListeners() {
-    document.getElementById('login-btn').addEventListener('click', async () => {
-        await registerOrLogin();
-    });
+async function saveUserConfig() {
+    try {
+        const userEmail = document.getElementById('user-email');
+        if (userEmail && userEmail.value) {
+            const userConfig = {
+                email: userEmail.value
+            };
+            await window.pywebview.api.save_user_config(userConfig);
+        }
+    } catch (error) {
+        console.log('Error saving user config:', error);
+    }
 }
 
-userId = undefined;
+async function initUserEventListeners() {
+    const loginBtn = document.getElementById('login-btn');
+    const userEmail = document.getElementById('user-email');
 
-async function registerOrLogin(){
-    const emailInput = document.getElementById('user-email');
-    user_email = emailInput.value.trim();
-    if (!user_email) {
-        alert('Please enter your email.');
+    if (!loginBtn) {
+        console.error('Login button not found');
         return;
     }
 
+    // Login button click
+    loginBtn.addEventListener('click', async () => {
+        await registerOrLogin();
+    });
+
+    // Enter key to login
+    if (userEmail) {
+        userEmail.addEventListener('keydown', async function (e) {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                await registerOrLogin();
+            }
+        });
+
+        // Save email on change
+        userEmail.addEventListener('change', async function () {
+            await saveUserConfig();
+        });
+    }
+}
+
+async function registerOrLogin() {
+    const emailInput = document.getElementById('user-email');
+    const loginBtn = document.getElementById('login-btn');
+
+    if (!emailInput) {
+        console.error('Email input not found');
+        return;
+    }
+
+    user_email = emailInput.value.trim();
+    
+    if (!user_email) {
+        showAlert('Please enter your email.', 'warning');
+        emailInput.focus();
+        return;
+    }
+
+    // Basic email validation
+    if (!isValidEmail(user_email)) {
+        showAlert('Please enter a valid email address.', 'warning');
+        emailInput.focus();
+        return;
+    }
+
+    // Disable button during login
+    if (loginBtn) {
+        loginBtn.disabled = true;
+        loginBtn.textContent = 'Logging in...';
+    }
+
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.classList.add('visible');
+        document.body.classList.add('spinner-active');
+    }
+
     try {
-        response = await window.pywebview.api.login_or_register(user_email);
-        if (response.code === "OK") {
-            user_id = response.text;
+        const response = await window.pywebview.api.login_or_register(user_email);
+        
+        if (response && response.code === 'OK') {
+            window.userId = response.text;
+            window.user_id = response.text;
+            
+            // Hide login container and show job tracking
+            const loginContainer = document.getElementById('llm-login-container');
+            const jobInfoRow = document.getElementById('job-info-row');
+            
+            if (loginContainer) {
+                loginContainer.style.display = 'none';
+            }
+            
+            if (jobInfoRow) {
+                jobInfoRow.style.display = 'block';
+            }
+
+            // Initialize job tracking
+            if (typeof initJobTracking === 'function') {
+                await initJobTracking();
+            }
+
+            showAlert('Login successful!', 'success');
+            console.log('User logged in successfully:', window.userId);
+        } else {
+            throw new Error(response?.text || 'Login failed');
         }
-        if (user_id) {
-            document.getElementById('llm-login-container').style.display = 'none';
-            document.getElementById('job-info-row').style.display = 'flex';
-        }
-        await initJobTracking();
     } catch (error) {
         console.error('Login failed:', error);
-        alert('Login failed. Please check the console for details.');
+        showAlert('Login failed. Please try again.', 'error');
+    } finally {
+        // Re-enable button
+        if (loginBtn) {
+            loginBtn.disabled = false;
+            loginBtn.textContent = 'Login';
+        }
+
+        // Hide spinner
+        if (spinner) {
+            spinner.classList.remove('visible');
+            document.body.classList.remove('spinner-active');
+        }
     }
+}
+
+function isValidEmail(email) {
+    // Basic email validation regex
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    return emailRegex.test(email);
+}
+
+function showAlert(message, type = 'info') {
+    // Simple alert fallback
+    // You can replace this with Bootstrap alerts or toasts if needed
+    alert(message);
+}
+
+// Initialize when DOM is ready
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initUser);
+} else {
+    initUser();
 }

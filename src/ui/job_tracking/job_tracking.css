@@ -1,56 +1,164 @@
-.info-row {
-      display: flex;
-      align-items: center;
-      gap: 15px;
-      margin: 20px;
-      width: calc(100% - 40px);
-      box-sizing: border-box;
-      flex-wrap: wrap;
-  }
+/* Job Tracking Styles - Bootstrap Compatible */
 
-  .info-row label {
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      min-width: fit-content;
-      white-space: nowrap;
-  }
+#job-info-row {
+    background-color: #2a2a2a;
+    border: 1px solid #444;
+    border-radius: 8px;
+    margin-top: 20px;
+}
 
-  .info-row input {
-      padding: 5px;
-      border: 2px solid #9EA3F5;
-      border-radius: 3px;
-      background-color: #222;
-      color: #fff;
-      height: 24px;
-      box-sizing: border-box;
-      flex-grow: 1;
-      min-width: 150px;
-  }
+#job-info-row .card-body {
+    padding: 20px;
+}
 
-  .info-row select {
-      padding: 5px;
-      border: 2px solid #9EA3F5;
-      border-radius: 3px;
-      background-color: #222;
-      color: #fff;
-      height: 24px;
-      box-sizing: border-box;
-      flex-grow: 1;
-      min-width: 150px;
-  }
+#job-info-row .card-title {
+    color: #9EA3F5;
+    font-weight: 600;
+    margin-bottom: 20px;
+    font-size: 1.25rem;
+}
 
-  #track-job-btn {
-      padding: 4px 12px;
-      background-color: #9EA3F5;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      white-space: nowrap;
-      flex-shrink: 0;
-  }
+/* Form Controls within Job Tracking */
+#job-info-row .form-control,
+#job-info-row .form-select {
+    padding: 8px 12px;
+    border: 2px solid #9EA3F5;
+    border-radius: 4px;
+    background-color: #222;
+    color: #fff;
+    font-size: 0.95rem;
+    transition: all 0.3s ease;
+}
 
-  #track-job-btn:hover {
-      background-color: #8792da;
-  }
+#job-info-row .form-control:focus,
+#job-info-row .form-select:focus {
+    outline: none;
+    border-color: #9EA3F5;
+    box-shadow: 0 0 0 0.25rem rgba(158, 163, 245, 0.25);
+    background-color: #222;
+}
+
+#job-info-row .form-control::placeholder {
+    color: #888;
+}
+
+#job-info-row .form-label {
+    color: #9EA3F5;
+    font-weight: 500;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+}
+
+/* Track Job Button */
+#track-job-btn {
+    padding: 10px 20px;
+    background-color: #9EA3F5;
+    color: #222;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    white-space: nowrap;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    width: 100%;
+    height: fit-content;
+}
+
+#track-job-btn:hover {
+    background-color: #8a8fe5;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 8px rgba(158, 163, 245, 0.3);
+}
+
+#track-job-btn:active {
+    transform: translateY(0);
+}
+
+#track-job-btn:focus-visible {
+    outline: 2px solid #9EA3F5;
+    outline-offset: 2px;
+}
+
+#track-job-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+    transform: none;
+}
+
+/* Grid Spacing Adjustments */
+#job-info-row .row {
+    margin-bottom: 0;
+}
+
+#job-info-row .g-3 {
+    --bs-gutter-x: 1rem;
+    --bs-gutter-y: 1rem;
+}
+
+/* State Select Styling */
+#job-state {
+    cursor: pointer;
+}
+
+#job-state option {
+    background-color: #222;
+    color: #fff;
+    padding: 8px;
+}
+
+/* Company Name and Position Title */
+#company-name,
+#position-title {
+    font-weight: 500;
+}
+
+/* URL Input */
+#position-url {
+    font-family: 'Courier New', monospace;
+    font-size: 0.9rem;
+}
+
+/* Contact Person */
+#contact-person {
+    font-style: italic;
+}
+
+/* Responsive Adjustments */
+@media (max-width: 992px) {
+    #job-info-row .col-md-6 {
+        margin-bottom: 10px;
+    }
+}
+
+@media (max-width: 768px) {
+    #job-info-row .card-title {
+        font-size: 1.1rem;
+        margin-bottom: 15px;
+    }
+    
+    #job-info-row .form-control,
+    #job-info-row .form-select {
+        font-size: 0.9rem;
+        padding: 6px 10px;
+    }
+    
+    #track-job-btn {
+        padding: 8px 16px;
+        font-size: 0.95rem;
+    }
+}
+
+@media (max-width: 576px) {
+    #job-info-row .card-body {
+        padding: 15px;
+    }
+    
+    #job-info-row .g-3 {
+        --bs-gutter-x: 0.75rem;
+        --bs-gutter-y: 0.75rem;
+    }
+    
+    #job-info-row .form-label {
+        font-size: 0.85rem;
+    }
+}

@@ -4,17 +4,21 @@
     left: 0;
     width: 100%;
     height: 100%;
-    background-color: rgba(0, 0, 0, 0.5);
+    background-color: rgba(0, 0, 0, 0.7);
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
-    visibility: hidden; /* Initially hidden */
+    z-index: 9999; /* Higher than Bootstrap's default z-indexes */
+    visibility: hidden;
+    opacity: 0;
+    transition: opacity 0.3s ease, visibility 0.3s ease;
     pointer-events: none; 
 }
+
 #spinner.visible {
     visibility: visible;
-    pointer-events: auto; /* Re-enable interactions with the overlay when shown */
+    opacity: 1;
+    pointer-events: auto;
 }
 
 .spinner-inner {
@@ -25,9 +29,19 @@
     height: 60px;
     animation: spin 1.5s linear infinite;
     will-change: transform;
+    box-shadow: 0 0 20px rgba(158, 163, 245, 0.3);
 }
 
 @keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+    0% { 
+        transform: rotate(0deg); 
+    }
+    100% { 
+        transform: rotate(360deg); 
+    }
+}
+
+/* Prevent body scroll when spinner is visible */
+body.spinner-active {
+    overflow: hidden;
 }
