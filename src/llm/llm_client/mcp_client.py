@@ -160,8 +160,7 @@ used just before this query.
 If a tool should be used, respond in JSON format:
 {{
   "tool": "tool_name",
-  "args": [list  of argumemts]
-  
+  "args": {{"param_name": "param_value"}}
 }}
 If the tool definition has no parameters respond in JSON format:
 {{
