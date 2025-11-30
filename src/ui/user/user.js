@@ -8,10 +8,7 @@ async function initUser() {
 
     if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
         console.error('PyWebView API not available');
-        const resultElement = document.getElementById('result');
-        if (resultElement) {
-            resultElement.value = 'Error: PyWebView API not available';
-        }
+        showAlert('Error: PyWebView API not available', 'error');
         return;
     }
 
@@ -34,9 +31,9 @@ async function loadUserConfig() {
 async function saveUserConfig() {
     try {
         const userEmail = document.getElementById('user-email');
-        if (userEmail && userEmail.value) {
+        if (userEmail && userEmail.value && isValidEmail(userEmail.value.trim())) {
             const userConfig = {
-                email: userEmail.value
+                email: userEmail.value.trim()
             };
             await window.pywebview.api.save_user_config(userConfig);
         }

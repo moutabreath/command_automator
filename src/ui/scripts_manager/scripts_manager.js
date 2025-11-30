@@ -45,7 +45,7 @@ async function updateDescription() {
 async function loadScriptsManagerConfig() {
     try {
         let scriptsManagerConfig = await window.pywebview.api.load_commands_configuration();
-        if (scriptsManagerConfig === "" || scriptsManagerConfig === " "){
+        if (!scriptsManagerConfig || scriptsManagerConfig === "" || scriptsManagerConfig === " ") {
             return;
         }
         document.getElementById('script-select').value = scriptsManagerConfig.selected_script || '';
@@ -111,7 +111,7 @@ async function initScriptsManager() {
         if (resultElement && resultElement.value.includes('Error:')) {
             resultElement.value = '';
         }
-        
+
         await loadScripts();
         await loadScriptsManagerConfig();
         await initScriptsManagerEventHandlers();
@@ -141,17 +141,17 @@ async function initScriptsManagerEventHandlers() {
 
 async function initApp() {
     console.log('Initializing application...');
-    
+
     const automatorReady = await initScriptsManager();
     if (!automatorReady) {
         console.log('Commands Automator not ready, will retry later');
         return false;
     }
-    
+
     if (typeof initLLM === 'function') await initLLM();
     if (typeof initUser === 'function') await initUser();
     if (typeof initJobTracking === 'function') await initJobTracking();
-    
+
     console.log('Application initialized successfully');
     return true;
 }
@@ -169,7 +169,7 @@ const maxInitAttempts = 10;
 async function tryInitApp() {
     initAttempts++;
     console.log(`Initialization attempt ${initAttempts}`);
-    
+
     if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
         const success = await initApp();
         if (success) {
@@ -177,7 +177,7 @@ async function tryInitApp() {
             return;
         }
     }
-    
+
     if (initAttempts < maxInitAttempts) {
         console.log(`PyWebView API not ready, retrying in 500ms (attempt ${initAttempts}/${maxInitAttempts})`);
         setTimeout(tryInitApp, 500);
@@ -192,15 +192,11 @@ async function tryInitApp() {
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM loaded, starting initialization');
-    
+
     // Clear result box initially
     const resultElement = document.getElementById('result');
     if (resultElement) {
         resultElement.value = '';
-    }
-    
-    if (typeof init_basic_llm_dom_elements === 'function') {
-        init_basic_llm_dom_elements();
     }
     tryInitApp();
 });

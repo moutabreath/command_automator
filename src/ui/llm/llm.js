@@ -47,7 +47,6 @@ async function initLLM() {
 
     await loadLLMConfig();
     await initLLMEventListeners();
-    init_basic_llm_dom_elements();
 }
 
 async function initLLMEventListeners() {

@@ -43,11 +43,6 @@ async function safeApiCall(apiFunction, ...args) {
     }
 }
 
-// Initialize basic DOM elements that don't require API
-function init_basic_llm_dom_elements() {
-    console.log('Initializing basic DOM elements');
-    // This function can be implemented if needed for basic DOM setup
-}
 
 function showAlert(message, type = 'info', duration = 5000) {
     const alertContainer = document.getElementById('alert-container');
@@ -63,7 +58,7 @@ function showAlert(message, type = 'info', duration = 5000) {
 
     const alertHtml = `
                 <div id="${alertId}" class="alert ${alertClass} alert-dismissible fade show" role="alert">
-                    ${message}
+                    ${escapeHtml(message)}
                     <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
                 </div>
             `;
