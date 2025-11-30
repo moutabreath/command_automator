@@ -2,8 +2,6 @@
 
 // Global user variables
 window.userId = undefined;
-window.user_id = undefined;
-let user_email = '';
 
 async function initUser() {
     console.log('Initializing User...');
@@ -86,16 +84,16 @@ async function registerOrLogin() {
         return;
     }
 
-    user_email = emailInput.value.trim();
+    let userEmail = emailInput.value.trim();
     
-    if (!user_email) {
+    if (!userEmail) {
         showAlert('Please enter your email.', 'warning');
         emailInput.focus();
         return;
     }
 
     // Basic email validation
-    if (!isValidEmail(user_email)) {
+    if (!isValidEmail(userEmail)) {
         showAlert('Please enter a valid email address.', 'warning');
         emailInput.focus();
         return;
@@ -114,11 +112,10 @@ async function registerOrLogin() {
     }
 
     try {
-        const response = await window.pywebview.api.login_or_register(user_email);
+        const response = await window.pywebview.api.login_or_register(userEmail);
         
         if (response && response.code === 'OK') {
             window.userId = response.text;
-            window.user_id = response.text;
             
             // Hide login container and show job tracking
             const loginContainer = document.getElementById('llm-login-container');
@@ -164,12 +161,6 @@ function isValidEmail(email) {
     // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-}
-
-function showAlert(message, type = 'info') {
-    // Simple alert fallback
-    // You can replace this with Bootstrap alerts or toasts if needed
-    alert(message);
 }
 
 // Initialize when DOM is ready

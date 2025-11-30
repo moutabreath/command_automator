@@ -1,5 +1,3 @@
-let config = {};
-
 async function loadScripts() {
     try {
         const scripts = await window.pywebview.api.load_scripts();
@@ -41,10 +39,10 @@ async function updateDescription() {
     }
 }
 
-async function loadAutomatorConfig() {
+async function loadScriptsManagerConfig() {
     try {
         let scriptsManagerConfig = await window.pywebview.api.load_commands_configuration();
-        if (config === "" || config === " "){
+        if (scriptsManagerConfig === "" || scriptsManagerConfig === " "){
             return;
         }
         document.getElementById('script-select').value = scriptsManagerConfig.selected_script || '';
@@ -96,22 +94,27 @@ async function executeScript() {
     }
 }
 
-async function initCommandsAutomator() {
+async function initScriptsManager() {
     if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
-        console.error('PyWebView API not available');
-        document.getElementById('result').value = 'Error: PyWebView API not available';
-        return;
+        console.log('PyWebView API not yet available, waiting...');
+        return false;
     }
 
-    console.log('PyWebView API is available');
+    console.log('PyWebView API is available, initializing Commands Automator');
 
-    await loadScripts();
-    await loadAutomatorConfig();
-    await initCommandsAutomatorEventHandlers();
-
+    try {
+        await loadScripts();
+        await loadScriptsManagerConfig();
+        await initScriptsManagerEventHandlers();
+        return true;
+    } catch (error) {
+        console.error('Error initializing Commands Automator:', error);
+        document.getElementById('result').value = `Initialization error: ${error.message}`;
+        return false;
+    }
 }
 
-async function initCommandsAutomatorEventHandlers() {
+async function initScriptsManagerEventHandlers() {
     document.getElementById('script-select').addEventListener('change', async () => {
         await updateDescription();
         await saveAutomatorConfig();
@@ -129,30 +132,57 @@ async function initCommandsAutomatorEventHandlers() {
 }
 
 async function initApp() {
-    await initCommandsAutomator();
-    await initLLM();
-    await initUser();
-    await initJobTracking();
+    console.log('Initializing application...');
+    
+    const automatorReady = await initScriptsManager();
+    if (!automatorReady) {
+        console.log('Commands Automator not ready, will retry later');
+        return false;
+    }
+    
+    if (typeof initLLM === 'function') await initLLM();
+    if (typeof initUser === 'function') await initUser();
+    if (typeof initJobTracking === 'function') await initJobTracking();
+    
+    console.log('Application initialized successfully');
+    return true;
 }
 
 
 document.addEventListener('pywebviewready', async function () {
     console.log('pywebviewready event fired');
-    await initApp();
+    initAttempts = 0; // Reset attempts since pywebview is ready
+    await tryInitApp();
 });
 
-document.addEventListener('DOMContentLoaded', function () {
-    init_basic_llm_dom_elements();
+let initAttempts = 0;
+const maxInitAttempts = 10;
+
+async function tryInitApp() {
+    initAttempts++;
+    console.log(`Initialization attempt ${initAttempts}`);
+    
     if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
-        console.log('PyWebView already ready, initializing...');
-        initApp();
-    } else {
-        setTimeout(() => {
-            if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
-                initApp();
-            } else {
-                console.error('PyWebView API still not available after timeout');
-            }
-        }, 1000);
+        const success = await initApp();
+        if (success) {
+            console.log('Application initialized successfully');
+            return;
+        }
     }
+    
+    if (initAttempts < maxInitAttempts) {
+        console.log(`PyWebView API not ready, retrying in 500ms (attempt ${initAttempts}/${maxInitAttempts})`);
+        setTimeout(tryInitApp, 500);
+    } else {
+        console.error('Failed to initialize after maximum attempts');
+        document.getElementById('result').value = 'Error: Failed to connect to application backend';
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded, starting initialization');
+    if (typeof init_basic_llm_dom_elements === 'function') {
+        init_basic_llm_dom_elements();
+    }
+    tryInitApp();
 });

@@ -231,11 +231,6 @@ async function trackJobApplication() {
     }
 }
 
-function showAlert(message, type = 'info') {
-    // Simple alert fallback
-    // You can replace this with Bootstrap alerts or toasts
-    alert(message);
-}
 
 // Initialize when DOM is ready
 if (document.readyState === 'loading') {
