@@ -2,6 +2,7 @@ from datetime import datetime, timezone
 import logging
 from typing import Optional, List, Dict
 import pymongo.errors as mongo_errors
+from motor.motor_asyncio import AsyncIOMotorClient
 
 from jobs_tracking.models import JobApplicationState
 
@@ -23,10 +24,10 @@ class CompanyMongoPersist(AbstractMongoPersist):
         
     # ==================== APPLICATION CRUD ====================
   
-    def get_application(self, user_id: str, company_name: str) -> PersistenceResponse[Dict]:
+    async def get_application(self, user_id: str, company_name: str) -> PersistenceResponse[Dict]:
         """Get application by user and company"""
         try:
-            result = self.job_applications.find_one({
+            result = await self.job_applications.find_one({
                 "user_id": user_id,
                 "company_name": company_name
                 })
@@ -59,10 +60,11 @@ class CompanyMongoPersist(AbstractMongoPersist):
                 error_message=str(e)
             )
     
-    def get_all_applications(self, user_id: str) -> PersistenceResponse[List[Dict]]:
+    async def get_all_applications(self, user_id: str) -> PersistenceResponse[List[Dict]]:
         """Get all applications for a user"""
         try:
-            results = list(self.job_applications.find({"user_id": user_id}))
+            cursor = self.job_applications.find({"user_id": user_id})
+            results = await cursor.to_list(length=None)
             return PersistenceResponse(
                 data=results,
                 code=PersistenceErrorCode.SUCCESS
@@ -85,10 +87,10 @@ class CompanyMongoPersist(AbstractMongoPersist):
                 error_message=str(e)
             )
     
-    def delete_application(self, user_id: str, company_name: str) -> PersistenceResponse[bool]:
+    async def delete_application(self, user_id: str, company_name: str) -> PersistenceResponse[bool]:
         """Delete an entire company application"""
         try:
-            result = self.job_applications.delete_one({
+            result = await self.job_applications.delete_one({
                 "user_id": user_id,
                 "company_name": company_name
             })
@@ -119,7 +121,7 @@ class CompanyMongoPersist(AbstractMongoPersist):
     
     # ==================== JOB CRUD ====================
     
-    def add_job(self, user_id: str, company_name: str, job_url: str, 
+    async def add_job(self, user_id: str, company_name: str, job_url: str, 
                 job_title: Optional[str], state: JobApplicationState, contact: Optional[str] = None) -> PersistenceResponse[Dict[str, bool]]:
         """Add or update a job in a company application
         
@@ -135,13 +137,13 @@ class CompanyMongoPersist(AbstractMongoPersist):
             "contact": contact
         }
         try:
-            existing = self._find_existing_application(user_id, company_name, job_url)
+            existing = await self._find_existing_application(user_id, company_name, job_url)
         
             if existing:
-                result_data = self._update_existing_application(company_name=company_name, user_id=user_id, job_url=job_url, job=job)
+                result_data = await self._update_existing_application(company_name=company_name, user_id=user_id, job_url=job_url, job=job)
             else:
                 # Add new job (create company application if needed)
-                self.job_applications.update_one(
+                await self.job_applications.update_one(
                     {"user_id": user_id, "company_name": company_name},
                     {"$push": {"jobs": job}},
                     upsert=True
@@ -162,10 +164,10 @@ class CompanyMongoPersist(AbstractMongoPersist):
             logging.exception(f"MongoDB error occurred: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
     
-    def get_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
+    async def get_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
         """Get all jobs for a company"""
         try:
-            app_response = self.get_application(user_id, company_name)
+            app_response = await self.get_application(user_id, company_name)
             if app_response.code == PersistenceErrorCode.SUCCESS and app_response.data:
                 return PersistenceResponse(data=app_response.data.get("jobs", []), code=PersistenceErrorCode.SUCCESS)
             elif app_response.code == PersistenceErrorCode.NOT_FOUND:
@@ -302,10 +304,10 @@ class CompanyMongoPersist(AbstractMongoPersist):
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
 
 
-    def _find_existing_application(self, user_id, company_name, job_url):
+    async def _find_existing_application(self, user_id, company_name, job_url):
         try:
             # Check if job already exists
-            existing = self.job_applications.find_one({
+            existing = await self.job_applications.find_one({
                 "user_id": user_id,
                 "company_name": company_name,
                 "jobs.job_url": job_url
@@ -321,11 +323,11 @@ class CompanyMongoPersist(AbstractMongoPersist):
             logging.exception(f"Unexpected error in add_job: {e}")
             raise 
 
-    def _update_existing_application(self, job, user_id, company_name, job_url)-> Dict[str, bool]:
+    async def _update_existing_application(self, job, user_id, company_name, job_url)-> Dict[str, bool]:
         # Use the '$' positional operator to update the matched job element in the jobs array
         set_fields = {f"jobs.$.{k}": v for k, v in job.items()}
         try:
-            result = self.job_applications.update_one(
+            result = await self.job_applications.update_one(
                 {
                     "user_id": user_id,
                     "company_name": company_name,

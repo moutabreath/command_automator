@@ -11,7 +11,7 @@ class JobTrackingService:
         self.application_persist = CompanyMongoPersist()
         self.application_persist.initialize_connection()
        
-    def add_job_to_company(self, user_id: str, company_name: str, 
+    async def add_job_to_company(self, user_id: str, company_name: str, 
                            job_url: str, job_title: str, state: JobApplicationState, 
                            contact: Optional[str] = None) -> Dict[str, bool]:
         """Add or update a job in a company application
@@ -24,7 +24,7 @@ class JobTrackingService:
         """
         company_name = company_name.lower()
         job_url = urlparse(job_url).geturl()
-        mongoResult:  PersistenceResponse[Dict[str, bool]] = self.application_persist.add_job(
+        mongoResult:  PersistenceResponse[Dict[str, bool]] = await self.application_persist.add_job(
             user_id=user_id,
             company_name=company_name,
             job_url=job_url,
