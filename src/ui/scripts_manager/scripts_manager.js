@@ -20,7 +20,10 @@ async function loadScripts() {
         }
     } catch (error) {
         console.error('Error loading scripts:', error);
-        document.getElementById('result').value = `Error loading scripts: ${error.message}`;
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'No scripts available';
+        select.appendChild(option);
     }
 }
 
@@ -103,13 +106,18 @@ async function initScriptsManager() {
     console.log('PyWebView API is available, initializing Commands Automator');
 
     try {
+        // Clear any previous error messages
+        const resultElement = document.getElementById('result');
+        if (resultElement && resultElement.value.includes('Error:')) {
+            resultElement.value = '';
+        }
+        
         await loadScripts();
         await loadScriptsManagerConfig();
         await initScriptsManagerEventHandlers();
         return true;
     } catch (error) {
         console.error('Error initializing Commands Automator:', error);
-        document.getElementById('result').value = `Initialization error: ${error.message}`;
         return false;
     }
 }
@@ -175,12 +183,22 @@ async function tryInitApp() {
         setTimeout(tryInitApp, 500);
     } else {
         console.error('Failed to initialize after maximum attempts');
-        document.getElementById('result').value = 'Error: Failed to connect to application backend';
+        const resultElement = document.getElementById('result');
+        if (resultElement) {
+            resultElement.value = 'Error: Failed to connect to application backend';
+        }
     }
 }
 
 document.addEventListener('DOMContentLoaded', function () {
     console.log('DOM loaded, starting initialization');
+    
+    // Clear result box initially
+    const resultElement = document.getElementById('result');
+    if (resultElement) {
+        resultElement.value = '';
+    }
+    
     if (typeof init_basic_llm_dom_elements === 'function') {
         init_basic_llm_dom_elements();
     }
