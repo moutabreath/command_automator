@@ -122,7 +122,7 @@ class CompanyMongoPersist(AbstractMongoPersist):
     # ==================== JOB CRUD ====================
     
     async def add_job(self, user_id: str, company_name: str, job_url: str, 
-                job_title: Optional[str], state: JobApplicationState, contact: Optional[str] = None) -> PersistenceResponse[Dict[str, bool]]:
+                job_title: Optional[str], state: JobApplicationState, contact: Optional[str] = None, contact_url: Optional[str] = None) -> PersistenceResponse[Dict[str, bool]]:
         """Add or update a job in a company application
         
         Returns:
@@ -134,7 +134,8 @@ class CompanyMongoPersist(AbstractMongoPersist):
             "job_title": job_title,
             "update_time": datetime.now(timezone.utc),
             "state": state.value if hasattr(state, 'value') else state,
-            "contact": contact
+            "contact": contact,
+            "contact_url": contact_url
         }
         try:
             existing = await self._find_existing_application(user_id, company_name, job_url)

@@ -13,7 +13,7 @@ class JobTrackingService:
        
     async def add_job_to_company(self, user_id: str, company_name: str, 
                            job_url: str, job_title: str, state: JobApplicationState, 
-                           contact: Optional[str] = None) -> Dict[str, bool]:
+                           contact: Optional[str] = None, contact_url: Optional[str] = None) -> Dict[str, bool]:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -30,10 +30,10 @@ class JobTrackingService:
             job_url=job_url,
             job_title=job_title,
             state=state,
-            contact=contact
+            contact=contact,
+            contact_url=contact_url
         )
         if mongoResult.code == PersistenceErrorCode.SUCCESS:
             return mongoResult.data
-        else:
-            logging.error(f"Failed to add job for user {user_id}, company {company_name}: {mongoResult.code}")
-            return {"created": False, "updated": False}
+        logging.error(f"Failed to add job for company {company_name}: {mongoResult.code}")        
+        return {"created": False, "updated": False}

@@ -23,7 +23,7 @@ class JobTrackingApi(AbstractApi):
         
     def add_job_to_company(self, user_id: str, company_name: str, 
                            job_url: str, job_title: str, state: str, 
-                           contact: Optional[str] = None) -> Dict[str, bool]:
+                           contact: Optional[str] = None, contact_url: Optional[str] = None) -> Dict[str, bool]:
         # Convert string to enum
         try:
             job_state = JobApplicationState[state.upper()] if state else JobApplicationState.UNKNOWN
