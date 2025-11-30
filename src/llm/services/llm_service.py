@@ -10,7 +10,7 @@ class LLMService:
         self.mcp_client = SmartMCPClient()
 
  
-    async def chat_with_bot(self, prompt: str, image_path: str | None,output_file_path: str | None, user_id: str) -> MCPResponse:
+    async def chat_with_bot(self, prompt: str, image_path: str | None, output_file_path: str | None, user_id: str) -> MCPResponse:
         """
         Process a chat query using the MCP client.
         
@@ -18,6 +18,7 @@ class LLMService:
             prompt: The user's text prompt
             image_path: Optional path to an image file
             output_file_path: Optional path for output file
+            user_id: User identifier for the query
             
         Returns:
            MCPResponse: The processed response from the MCP client

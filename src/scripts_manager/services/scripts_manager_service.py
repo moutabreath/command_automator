@@ -2,10 +2,10 @@ import glob
 import json
 import logging
 import os
+import platform
 import subprocess
 import chardet
-from typing import List, Dict
-import platform
+from typing import List, Dict, Optional, Tuple, Union
 
 from utils.file_utils import SCRIPTS_CONFIG_FILE, SCRIPTS_DIR
 
@@ -16,7 +16,7 @@ class ScriptsManagerService:
         self.scripts_attributes: Dict[str, Dict] = {}
         self.load_scripts_config()
 
-    def load_scripts_config(self):  
+    def load_scripts_config(self) -> None:
         try:  
             with open(f'{SCRIPTS_CONFIG_FILE}') as f:  
                 data = json.load(f)  
@@ -73,19 +73,19 @@ class ScriptsManagerService:
         logging.debug(f"Loaded {len(executables)} scripts")
         return executables
 
-    def get_script_attribute(self, file, attribute):
+    def get_script_attribute(self, file: str, attribute: str) -> str:
         script_name = os.path.basename(file)
         if script_name in self.scripts_attributes:
             return self.scripts_attributes[script_name].get(attribute, "")
         return ""
     
-    def get_name_from_script(self, file):
+    def get_name_from_script(self, file: str) -> str:
         return self.get_script_attribute(file, 'short_description')
 
-    def get_script_description(self, file):
+    def get_script_description(self, file: str) -> str:
         return self.get_script_attribute(file, 'detailed_description')
 
-    def get_arguments_for_script(self, script_path, additional_text, flags):
+    def get_arguments_for_script(self, script_path: str, additional_text: str, flags: str) -> Optional[List[str]]:
         script_name = os.path.basename(script_path)
         args = []
         if script_name.endswith('.py'):
@@ -106,6 +106,9 @@ class ScriptsManagerService:
             args.extend(flags.split())    
         other_script_name_as_input = self.get_other_script_name_as_input(script_name)
         if other_script_name_as_input is not None:
+            if '..' in other_script_name_as_input or os.path.isabs(other_script_name_as_input):
+                logging.error(f"Invalid script name contains path traversal: {other_script_name_as_input}")
+                return None
             base_dir = os.path.dirname(os.path.dirname(SCRIPTS_DIR))
             cleaners_path = os.path.join(base_dir, 'cleaners')
             files = glob.glob(f'{cleaners_path}/**/{other_script_name_as_input}', recursive=True)
@@ -121,19 +124,23 @@ class ScriptsManagerService:
     def get_updated_venv(arg):
         if not (arg and arg.lower().startswith('python')):
             return
+        
         new_venv = os.environ.copy()
         python_env = new_venv.get("PYTHONPATH", "")
         logging.log(logging.DEBUG, "PYTHONPATH before " + new_venv.get("PYTHONPATH", ""))
+
         sep = ';' if platform.system() == 'Windows' else ':'
         paths = python_env.split(sep) if python_env else []
         cwd = os.getcwd()
+
         if (len(python_env) != 0) and (python_env[-1] != sep):
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + sep
         if cwd not in paths:
             new_venv["PYTHONPATH"] = new_venv.get("PYTHONPATH", "") + cwd + sep
         return new_venv
+    
     @staticmethod
-    def run_app(run_version_command: str):
+    def run_app(run_version_command: str) -> None:
         """Run a command."""
         startupinfo = None
         if platform.system() == 'Windows':
@@ -147,11 +154,10 @@ class ScriptsManagerService:
         try:
             subprocess.run(run_version_command, startupinfo=startupinfo, shell=False, check=True)
         except subprocess.CalledProcessError as e:
-            logging.error(f"Command failed: {e}", exc_info=True)
-        except subprocess.CalledProcessError as e:
-            logging.error(f"Command failed: {e}", exc_info=True)
+            logging.exception(f"Command failed: {e}")
 
-    def get_string_from_thread_result(self, result, err):
+    def get_string_from_thread_result(self, result: Union[bytes, bytearray], err: Optional[Union[str, bytes]]) -> str:
+ 
         str_result = ""
         logging.log(logging.DEBUG, "entered.")
         if isinstance(result, (bytes, bytearray)):
@@ -177,7 +183,7 @@ class ScriptsManagerService:
         return False
             
     
-    def get_other_script_name_as_input(self, script_name):
+    def get_other_script_name_as_input(self, script_name: str) -> Optional[str]:
         if script_name in self.scripts_attributes:
             return self.scripts_attributes[script_name].get('other_script_name_as_input')
         return None
@@ -192,7 +198,7 @@ class ScriptsManagerService:
             return True
     
 
-    def execute_script(self, script_name, additional_text, flags):
+    def execute_script(self, script_name: str, additional_text: str, flags: str) -> str:
         script_path = self.get_name_to_scripts().get(script_name, script_name)
         args = self.get_arguments_for_script(script_path, additional_text, flags)
         if args is None:
@@ -201,7 +207,7 @@ class ScriptsManagerService:
         output, err  = self.run_internal(args, new_venv)
         return self.get_string_from_thread_result(output, err)
 
-    def run_internal(self, args, venv):
+    def run_internal(self, args: List[str], venv: Dict[str, str]) -> Tuple[bytes, bytes]:
         logging.log(logging.DEBUG, "entered")
         proc = None
         try:

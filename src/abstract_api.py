@@ -26,10 +26,15 @@ class ApiResponse:
         """Support pickling/serialization by returning a dict."""
         return self.to_dict()
 
+    def __setstate__(self, state: Dict[str, Any]) -> None:
+        """Restore instance from pickled state."""
+        self.text = state["text"]
+        # Restore the Enum from its name
+        self.code = ApiResponseCode[state["code"]]
 
 class AbstractApi(ABC):
 
-    def __init__(self, config_file_path:Path):
+    def __init__(self, config_file_path: Path):        
         self.config_service = ConfigurationService(config_file_path)
 
     def load_configuration(self):

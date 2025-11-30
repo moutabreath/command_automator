@@ -1,18 +1,16 @@
 import logging
 from jobs_tracking.job_tracking_api import JobTrackingApi
 from llm.llm_api import LLMApi
-from scripts_manager.scripts_manager_api import SriptsManagerApi
+from scripts_manager.scripts_manager_api import ScriptsManagerApi
 from user.user_api import UserApi
 import webview
 import sys
 
-from scripts_manager.services.scripts_manager_service import ScriptsManagerService
-from utils.file_utils import SCRIPTS_MANAGER_CONFIG_FILE
 from utils.logger_config import setup_logging
 
 class CommandsAutomatorApi:
 
-    def __init__(self, scripts_manager_api: SriptsManagerApi, llm_api: LLMApi, user_api: UserApi, job_tracking_api: JobTrackingApi):
+    def __init__(self, scripts_manager_api: ScriptsManagerApi, llm_api: LLMApi, user_api: UserApi, job_tracking_api: JobTrackingApi):
         self.scripts_manager_api = scripts_manager_api
         self.llm_api = llm_api
         self.user_api = user_api
@@ -22,7 +20,7 @@ class CommandsAutomatorApi:
         return self.scripts_manager_api.load_scripts()
         
     def get_script_description(self, script_name):
-        self.scripts_manager_api.get_script_description(script_name)
+        return self.scripts_manager_api.get_script_description(script_name)
         
     def load_commands_configuration(self):
         """Load and serialize commands configuration"""
@@ -80,7 +78,7 @@ def main():
         setup_logging()  # Set up logging at the application entry point
         logging.info("Starting Commands Automator application...")
 
-        scripts_manager_api = SriptsManagerApi()
+        scripts_manager_api = ScriptsManagerApi()
         
         llm_api = LLMApi()
         llm_api.run_mcp_server()
