@@ -1,16 +1,13 @@
 import base64
 from enum import Enum
 import logging
-from api_utils import ApiResponse
-from llm.abstract_api import AbstractApi
+from abstract_api import AbstractApi, ApiResponse
 from utils.utils import run_async_method
 from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
-from llm.llm_service import LLMService
+from llm.services.llm_service import LLMService
 from llm.mcp_servers.job_applicant_mcp import MCPRunner
 from utils.file_utils import LLM_CONFIG_FILE
-from services.configuration_service import ConfigurationService
 from typing import Dict, Any
-
 
 class LLMApiResponseCode(Enum):
     """Enumeration of possible LLM operation results"""
@@ -53,6 +50,8 @@ class LLMApi(AbstractApi):
                 return resp.to_dict()
 
         result: MCPResponse = run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path, user_id)
+        if not result:
+            return LLMApiResponse("Unknown error occurred", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM).to_dict()
         
         if result.code == MCPResponseCode.OK:
             resp = LLMApiResponse(result.text, LLMApiResponseCode.OK)
@@ -60,5 +59,4 @@ class LLMApi(AbstractApi):
         if result.code == MCPResponseCode.ERROR_MODEL_OVERLOADED:
             resp = LLMApiResponse("Model overloaded", LLMApiResponseCode.ERROR_MODEL_OVERLOADED)
             return resp.to_dict()
-        resp = LLMApiResponse("Error communicating with LLM", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-        return resp.to_dict()
+        return LLMApiResponse("Error communicating with LLM", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM).to_dict()

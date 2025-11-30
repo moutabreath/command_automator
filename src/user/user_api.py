@@ -1,9 +1,7 @@
 from enum import Enum
 from typing import Dict, Any
 
-from api_utils import ApiResponse
-from llm.abstract_api import AbstractApi
-from services.configuration_service import ConfigurationService
+from abstract_api import AbstractApi, ApiResponse
 from user.services.user_registry_service import UserRegistryResponseCode, UserRegistryService
 from utils.file_utils import USER_CONFIG_FILE
 

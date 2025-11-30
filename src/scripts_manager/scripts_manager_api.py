@@ -1,5 +1,5 @@
 import logging
-from llm.abstract_api import AbstractApi
+from abstract_api import AbstractApi
 from scripts_manager.services.scripts_manager_service import ScriptsManagerService
 from utils.file_utils import SCRIPTS_MANAGER_CONFIG_FILE
 

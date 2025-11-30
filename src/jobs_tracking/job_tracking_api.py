@@ -2,7 +2,7 @@ import logging
 from typing import Dict, List, Optional
 from jobs_tracking.models import JobApplicationState
 from jobs_tracking.services.job_tracking_service import JobTrackingService
-from llm.abstract_api import AbstractApi
+from abstract_api import AbstractApi
 from utils.file_utils import JOB_TRACKING_CONFIG_FILE
 
 

@@ -1,13 +1,14 @@
-from typing import Dict
-import asyncio
+from abc import ABC
 from enum import Enum
-import logging
-from typing import Any
+from pathlib import Path
+from typing import Any, Dict
+
+from services.configuration_service import ConfigurationService
+
 
 class ApiResponseCode(Enum):
     OK = 1
     ERROR_RUNNING_ASYNC_METHOD = 2
-
 
 class ApiResponse:
     def __init__(self, text: str, code: Enum):
@@ -26,10 +27,15 @@ class ApiResponse:
         return self.to_dict()
 
 
+class AbstractApi(ABC):
 
-def run_async_method(async_method, *args, **kwargs):
-    try:
-        return asyncio.run(async_method(*args, **kwargs))
-    except Exception as e:
-        logging.exception("Error running async method")      
-        return ApiResponse("Error running async method", ApiResponseCode.ERROR_RUNNIG_ASYNC_METHOD)
+    def __init__(self, config_file_path:Path):
+        self.config_service = ConfigurationService(config_file_path)
+
+    def load_configuration(self):
+        return self.config_service.load_configuration()
+    
+    def save_configuration(self, config):
+        return self.config_service.save_configuration(config)
+       
+    
