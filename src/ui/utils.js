@@ -43,6 +43,13 @@ async function safeApiCall(apiFunction, ...args) {
     }
 }
 
+// Escape HTML to prevent XSS attacks
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
 
 function showAlert(message, type = 'info', duration = 5000) {
     const alertContainer = document.getElementById('alert-container');
