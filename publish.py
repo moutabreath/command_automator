@@ -1,5 +1,6 @@
 import os
 import shutil
+import subprocess
 from datetime import datetime
 
 def copy_to_deploy():
@@ -24,6 +25,18 @@ def copy_to_deploy():
     # Create deploy directory if it doesn't exist
     os.makedirs(deploy_dir, exist_ok=True)
     
+    # Run deploy_locally.cmd before copying
+    print("Running deploy_locally.cmd...")
+    try:
+        result = subprocess.run(['deploy_locally.cmd'], cwd=source_dir, check=True, capture_output=True, text=True)
+        print("Deploy script completed successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"Deploy script failed with return code {e.returncode}")
+        print(f"Error output: {e.stderr}")
+        raise
+    except FileNotFoundError:
+        print("Warning: deploy_locally.cmd not found")
+    
     try:
         # List of specific files to copy
         files_to_copy = [
@@ -44,10 +57,10 @@ def copy_to_deploy():
         
         # Copy folders with their structure
         folders_to_copy = [
-            'src/commands_automator/scripts_manager/user_scripts',
-            'src/commands_automator/ui/resources',
-            'src/commands_automator/llm/resources',
-            'src/commands_automator/scripts_manager/config'
+            'src/scripts_manager/user_scripts',
+            'src/ui/resources',
+            'src/llm/resources',
+            'src/scripts_manager/config'
         ]
         
         for folder_name in folders_to_copy:
