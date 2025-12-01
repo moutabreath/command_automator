@@ -3,11 +3,22 @@ import logging
 from llm.llm_client.mcp_client import SmartMCPClient
 from llm.llm_client.mcp_response import MCPResponse
 from llm.llm_client.mcp_response import MCPResponseCode
+from llm.mcp_servers.job_applicant_mcp import MCPRunner
 
 class LLMService:
 
     def __init__(self):
         self.mcp_client = SmartMCPClient()
+
+    def run_mcp_server(self):
+        # Initialize MCP Runner
+        mcp_runner = MCPRunner()
+        try:
+            mcp_runner.init_mcp()
+            logging.info("MCP Runner initialized successfully")
+        except Exception as ex:
+            logging.exception(f"Failed to initialize MCP Runner: {ex}")
+            raise
 
  
     async def chat_with_bot(self, prompt: str, image_path: str | None, output_file_path: str | None, user_id: str) -> MCPResponse:

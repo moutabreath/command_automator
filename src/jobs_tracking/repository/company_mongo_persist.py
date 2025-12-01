@@ -1,8 +1,7 @@
 from datetime import datetime, timezone
 import logging
-from typing import Optional, List, Dict
+from typing import Optional, List, Dict, Any
 import pymongo.errors as mongo_errors
-from motor.motor_asyncio import AsyncIOMotorClient
 
 from jobs_tracking.models import JobApplicationState
 
@@ -10,17 +9,16 @@ from repository.abstract_mongo_persist import AbstractMongoPersist, PersistenceE
 
 
 class CompanyMongoPersist(AbstractMongoPersist):
+    def __init__(self, connection_string: str, db_name: str):
+        super().__init__(connection_string, db_name)
+        self.job_applications = None
 
-    def __init__(self, connection_string: str = "mongodb://localhost:27017/", db_name: str = "job_tracker"):
-        """Initialize MongoDB connection"""
-        super().__init__(connection_string=connection_string, db_name=db_name)        
+    def _setup_collections(self):
+        self.job_applications = self.async_db.job_applications
       
-    def create_index(self):
-        try:
-            self.job_applications = self.db.job_applications
-            self.job_applications.create_index([("user_id", 1), ("company_name", 1)])      
-        except Exception as e:
-            logging.exception(f"failed creating job application document or creating index {e}")
+    async def create_index(self):
+        if self.job_applications is not None:
+            await self.job_applications.create_index([("user_id", 1), ("company_name", 1)])
         
     # ==================== APPLICATION CRUD ====================
   
@@ -122,7 +120,8 @@ class CompanyMongoPersist(AbstractMongoPersist):
     # ==================== JOB CRUD ====================
     
     async def add_job(self, user_id: str, company_name: str, job_url: str, 
-                job_title: Optional[str], state: JobApplicationState, contact: Optional[str] = None, contact_url: Optional[str] = None) -> PersistenceResponse[Dict[str, bool]]:
+                job_title: Optional[str], job_state: JobApplicationState, contact: Optional[str] = None, 
+                contact_url: Optional[str] = None) -> PersistenceResponse[Dict[str, Any]]:
         """Add or update a job in a company application
         
         Returns:
@@ -133,7 +132,7 @@ class CompanyMongoPersist(AbstractMongoPersist):
             "job_url": job_url,
             "job_title": job_title,
             "update_time": datetime.now(timezone.utc),
-            "state": state.value if hasattr(state, 'value') else state,
+            "job_state": job_state.value if hasattr(job_state, 'value') else job_state,
             "contact": contact,
             "contact_url": contact_url
         }
@@ -141,7 +140,7 @@ class CompanyMongoPersist(AbstractMongoPersist):
             existing = await self._find_existing_application(user_id, company_name, job_url)
         
             if existing:
-                result_data = await self._update_existing_application(company_name=company_name, user_id=user_id, job_url=job_url, job=job)
+                result_data = await self._update_existing_application(job=job, user_id=user_id, company_name=company_name, job_url=job_url)
             else:
                 # Add new job (create company application if needed)
                 await self.job_applications.update_one(
@@ -149,7 +148,11 @@ class CompanyMongoPersist(AbstractMongoPersist):
                     {"$push": {"jobs": job}},
                     upsert=True
                 )
-                result_data = {"created": True, "updated": False}
+            result_data = {
+                    "job_title": job_title,
+                    "contact": contact,
+                    "contact_url": contact_url
+                }
             return PersistenceResponse(data=result_data, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")

@@ -1,8 +1,12 @@
 import logging
 from jobs_tracking.job_tracking_api import JobTrackingApi
+from jobs_tracking.services.job_tracking_service import JobTrackingService
 from llm.llm_api import LLMApi
+from llm.services.llm_service import LLMService
 from scripts_manager.scripts_manager_api import ScriptsManagerApi
+from user.services.user_registry_service import UserRegistryService
 from user.user_api import UserApi
+from utils.utils import AsyncRunner
 import webview
 import sys
 
@@ -71,21 +75,34 @@ class CommandsAutomatorApi:
     
     def track_job_application(self, user_id:str, company_name:str, job_url:str, job_title:str, state:str , contact:str):
         return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state, contact)
+
+
+async def initialize_apis():
+    """Initialize all APIs"""
+
+    scripts_manager_api = ScriptsManagerApi()
     
+    llm_service = LLMService()
+    llm_service.run_mcp_server()
+    llm_api = LLMApi(llm_service)
+
+    user_registry_service = await UserRegistryService.create()
+    
+    user_api = UserApi(user_registry_service)
+
+    job_tracking_service = await JobTrackingService.create()
+    job_tracking_api = JobTrackingApi(job_tracking_service)
+
+    return scripts_manager_api, llm_api, user_api, job_tracking_api
 
 def main():
     try:
         setup_logging()  # Set up logging at the application entry point
         logging.info("Starting Commands Automator application...")
 
-        scripts_manager_api = ScriptsManagerApi()
-        
-        llm_api = LLMApi()
-        llm_api.run_mcp_server()
+        AsyncRunner.start()
 
-        user_api = UserApi()
-        
-        job_tracking_api = JobTrackingApi()
+        scripts_manager_api, llm_api, user_api, job_tracking_api =  AsyncRunner.run_async(initialize_apis())
         # Initialize API and create window
         api = CommandsAutomatorApi(scripts_manager_api, llm_api, user_api, job_tracking_api)
         window = webview.create_window(

@@ -15,15 +15,16 @@ class UserApiResponse(ApiResponse):
 
 class UserApi(AbstractApi):
 
-    def __init__(self):
+    def __init__(self, user_registry_service: UserRegistryService):
         super().__init__(USER_CONFIG_FILE)
-        self.user_registry_service = UserRegistryService()   
+        self.user_registry_service = user_registry_service   
 
 
     def login_or_register(self, user_email:str) -> Dict[str, Any]:
-        response = self.user_registry_service.login_or_register_user(user_email=user_email)
+        response = self.user_registry_service.login_or_register(user_email)        
+        
+        if not response:
+            return UserApiResponse("Unknown error occurred", UserApiResponseCode.ERROR).to_dict()
         if response.code == UserRegistryResponseCode.OK:
-              if response.code == UserRegistryResponseCode.OK:
-                return UserApiResponse(response.user_id, UserApiResponseCode.OK).to_dict()        
+            return UserApiResponse(response.user_id, UserApiResponseCode.OK).to_dict()        
         return UserApiResponse(f"Error registering or logging in {user_email}", UserApiResponseCode.ERROR).to_dict()
-

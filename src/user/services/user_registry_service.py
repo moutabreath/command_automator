@@ -1,5 +1,8 @@
 from enum import Enum
+from repository.abstract_mongo_persist import AbstractMongoPersist
+from services.abstract_persistence_service import AbstractPersistenceService
 from user.repository.user_mongo_persist import UserMongoPersist
+from utils.utils import AsyncRunner
 
 class UserRegistryResponseCode(Enum):
     OK = 1
@@ -10,18 +13,36 @@ class UserRegistryResponse:
         self.user_id = user_id
         self.code = code
         
-class UserRegistryService:
-    def __init__(self, user_persist: UserMongoPersist = None):
-        self.user_persist = user_persist if user_persist is not None else UserMongoPersist()
-        self.user_persist._serializable = False  # Prevent webview introspection
-        self.user_persist.initialize_connection()
+class UserRegistryService(AbstractPersistenceService):
+    
+    def __init__(self, user_persist: UserMongoPersist):
+        # We now REQUIRE an initialized persistence object to be passed in
+        self.user_persist = user_persist
+        super().__init__(self.user_persist)
 
+    @classmethod
+    async def create(cls):
+        # 1. Create the initialized persistence layer
+        # This will fail if DB is down or logic is wrong, preventing "Zombie" services
+        user_persist = await UserMongoPersist.create()
+        
+        # 2. Return the fully formed service
+        return cls(user_persist)
 
-    def login_or_register_user(self, user_email) -> UserRegistryResponse:
+    def login_or_register(self, user_email: str) -> UserRegistryResponse:
         if not user_email or not user_email.strip():
             return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
         
-        result = self.user_persist.create_or_update_user(user_email)
-        if result == "":
-            return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
-        return UserRegistryResponse(result, UserRegistryResponseCode.OK)
+        response = AsyncRunner.run_async(
+            self._login_or_register_user_async(user_email)
+        )
+        if response:
+            return UserRegistryResponse(response.user_id, UserRegistryResponseCode.OK)
+        return UserRegistryResponse("Error registering or logging in", UserRegistryResponseCode.ERROR)
+
+
+    async def _login_or_register_user_async(self, user_email) -> UserRegistryResponse:
+        response: UserRegistryResponse = await self.user_persist.create_or_update_user(user_email)
+        if response:            
+            return UserRegistryResponse(response, UserRegistryResponseCode.OK)
+        return UserRegistryResponse("Eroror registering or logging in", UserRegistryResponseCode.ERROR)

@@ -21,19 +21,11 @@ class LLMApiResponse(ApiResponse):
         super().__init__(text, code)
 
 class LLMApi(AbstractApi):
-    def __init__(self):
+
+    def __init__(self,llm_service: LLMService):
         super().__init__(LLM_CONFIG_FILE)
-        self.llm_service: LLMService = LLMService()
-    
-    def run_mcp_server(self):
-        # Initialize MCP Runner
-        mcp_runner = MCPRunner()
-        try:
-            mcp_runner.init_mcp()
-            logging.info("MCP Runner initialized successfully")
-        except Exception as ex:
-            logging.exception(f"Failed to initialize MCP Runner: {ex}")
-            raise
+        self.llm_service = llm_service
+  
         
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None) -> Dict[str, Any]:
         decoded_data = None
