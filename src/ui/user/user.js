@@ -8,7 +8,6 @@ async function initUser() {
 
     if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
         console.error('PyWebView API not available');
-        showAlert('Error: PyWebView API not available', 'error');
         return;
     }
 
@@ -158,11 +157,4 @@ function isValidEmail(email) {
     // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
-}
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initUser);
-} else {
-    initUser();
 }

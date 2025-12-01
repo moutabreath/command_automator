@@ -230,12 +230,3 @@ async function trackJobApplication() {
         }
     }
 }
-
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', () => {
-        // Job tracking will be initialized after login
-        console.log('Job tracking module loaded');
-    });
-}

@@ -1,3 +1,21 @@
+document.addEventListener('pywebviewready', async function () {
+    console.log('pywebviewready event fired');
+    initAttempts = 0; // Reset attempts since pywebview is ready
+    await tryInitApp();
+});
+
+
+document.addEventListener('DOMContentLoaded', function () {
+    console.log('DOM loaded, starting initialization');
+
+    // Clear result box initially
+    const resultElement = document.getElementById('result');
+    if (resultElement) {
+        resultElement.value = '';
+    }
+    tryInitApp();
+});
+
 async function loadScripts() {
     try {
         const scripts = await window.pywebview.api.load_scripts();
@@ -157,11 +175,6 @@ async function initApp() {
 }
 
 
-document.addEventListener('pywebviewready', async function () {
-    console.log('pywebviewready event fired');
-    initAttempts = 0; // Reset attempts since pywebview is ready
-    await tryInitApp();
-});
 
 let initAttempts = 0;
 const maxInitAttempts = 10;
@@ -190,13 +203,3 @@ async function tryInitApp() {
     }
 }
 
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM loaded, starting initialization');
-
-    // Clear result box initially
-    const resultElement = document.getElementById('result');
-    if (resultElement) {
-        resultElement.value = '';
-    }
-    tryInitApp();
-});

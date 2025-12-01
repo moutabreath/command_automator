@@ -1,4 +1,19 @@
-// LLM Interface JavaScript - Bootstrap Compatible
+async function initLLM() {
+    console.log('Initializing LLM...');
+
+    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
+        console.error('PyWebView API not available');
+        const resultElement = document.getElementById('result');
+        if (resultElement) {
+            resultElement.value = 'Error: PyWebView API not available';
+        }
+        return;
+    }
+
+    await loadLLMConfig();
+    await initLLMEventListeners();
+    init_basic_llm_dom_elements()
+}
 
 async function loadLLMConfig() {
     try {
@@ -33,21 +48,7 @@ function init_basic_llm_dom_elements() {
     autoResize();
 }
 
-async function initLLM() {
-    console.log('Initializing LLM...');
 
-    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
-        console.error('PyWebView API not available');
-        const resultElement = document.getElementById('result');
-        if (resultElement) {
-            resultElement.value = 'Error: PyWebView API not available';
-        }
-        return;
-    }
-
-    await loadLLMConfig();
-    await initLLMEventListeners();
-}
 
 async function initLLMEventListeners() {
     const sendBtn = document.getElementById('send-btn');
@@ -332,11 +333,4 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
 function showToast(message, type = 'info') {
     // Simple alert fallback (you can replace with Bootstrap toast if needed)
     alert(message);
-}
-
-// Initialize when DOM is ready
-if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initLLM);
-} else {
-    initLLM();
 }
