@@ -1,12 +1,7 @@
 // Job Tracking JavaScript - Bootstrap Compatible
 
 async function initJobTracking() {
-    console.log('Initializing Job Tracking...');
-    
-    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
-        console.error('PyWebView API not available for job tracking');
-        return;
-    }
+    console.log('Initializing Job Tracking...');    
 
     await loadJobApplicationStates();
     await loadJobTrackingConfig();
@@ -145,6 +140,7 @@ async function trackJobApplication() {
     const jobUrlInput = document.getElementById('position-url');
     const jobTitleInput = document.getElementById('position-title');
     const contactPersonInput = document.getElementById('contact-person');
+    const contactPersonUrlInput = document.getElementById('contact-person-url');
     const jobStateSelect = document.getElementById('job-state');
     const trackJobBtn = document.getElementById('track-job-btn');
 
@@ -157,6 +153,7 @@ async function trackJobApplication() {
     const jobUrl = jobUrlInput.value.trim();
     const jobTitle = jobTitleInput.value.trim();
     const contactPerson = contactPersonInput ? contactPersonInput.value.trim() : '';
+    const contactPersonUrl = contactPersonUrlInput ? contactPersonUrlInput.value.trim() : '';
     const jobState = jobStateSelect.value;
 
     // Validation
@@ -198,21 +195,15 @@ async function trackJobApplication() {
             jobUrl,
             jobTitle,
             jobState,
-            contactPerson || null
+            contactPerson || null,
+            contactPersonUrl || null
         );
 
-        showAlert('Job application tracked successfully!', 'success');
-        console.log('Job tracked:', response);
-
-        // Clear inputs after successful submission
-        companyNameInput.value = '';
-        jobTitleInput.value = '';
-        jobUrlInput.value = '';
-        if (contactPersonInput) contactPersonInput.value = '';
-        
-        // Save cleared config
-        await saveJobTrackingConfig();
-
+        if (response && response.code === 'OK') {
+            showAlert('Job application tracked successfully!', 'success');
+        } else {
+            showAlert('Failed to track job application.', 'error');
+        }
     } catch (error) {
         console.error('Track job failed:', error);
         showAlert('Failed to track job. Please check the console for details.', 'error');

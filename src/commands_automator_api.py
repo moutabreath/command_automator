@@ -73,8 +73,8 @@ class CommandsAutomatorApi:
         """Get list of job application states"""
         return self.job_tracking_api.get_job_application_states()
     
-    def track_job_application(self, user_id:str, company_name:str, job_url:str, job_title:str, state:str , contact:str):
-        return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state, contact)
+    def track_job_application(self, user_id:str, company_name:str, job_url:str, job_title:str, state:str , contact:str, contact_url:str):
+        return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state, contact, contact_url)
 
 
 async def initialize_apis():
