@@ -6,11 +6,6 @@ window.userId = undefined;
 async function initUser() {
     console.log('Initializing User...');
 
-    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
-        console.error('PyWebView API not available');
-        return;
-    }
-
     await loadUserConfig();
     await initUserEventListeners();
 }

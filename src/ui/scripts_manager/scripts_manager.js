@@ -1,21 +1,3 @@
-document.addEventListener('pywebviewready', async function () {
-    console.log('pywebviewready event fired');
-    initAttempts = 0; // Reset attempts since pywebview is ready
-    await tryInitApp();
-});
-
-
-document.addEventListener('DOMContentLoaded', function () {
-    console.log('DOM loaded, starting initialization');
-
-    // Clear result box initially
-    const resultElement = document.getElementById('result');
-    if (resultElement) {
-        resultElement.value = '';
-    }
-    tryInitApp();
-});
-
 async function loadScripts() {
     try {
         const scripts = await window.pywebview.api.load_scripts();
@@ -116,13 +98,6 @@ async function executeScript() {
 }
 
 async function initScriptsManager() {
-    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
-        console.log('PyWebView API not yet available, waiting...');
-        return false;
-    }
-
-    console.log('PyWebView API is available, initializing Commands Automator');
-
     try {
         // Clear any previous error messages
         const resultElement = document.getElementById('result');
@@ -157,49 +132,5 @@ async function initScriptsManagerEventHandlers() {
     });
 }
 
-async function initApp() {
-    console.log('Initializing application...');
 
-    const automatorReady = await initScriptsManager();
-    if (!automatorReady) {
-        console.log('Commands Automator not ready, will retry later');
-        return false;
-    }
-
-    if (typeof initLLM === 'function') await initLLM();
-    if (typeof initUser === 'function') await initUser();
-    if (typeof initJobTracking === 'function') await initJobTracking();
-
-    console.log('Application initialized successfully');
-    return true;
-}
-
-
-
-let initAttempts = 0;
-const maxInitAttempts = 10;
-
-async function tryInitApp() {
-    initAttempts++;
-    console.log(`Initialization attempt ${initAttempts}`);
-
-    if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
-        const success = await initApp();
-        if (success) {
-            console.log('Application initialized successfully');
-            return;
-        }
-    }
-
-    if (initAttempts < maxInitAttempts) {
-        console.log(`PyWebView API not ready, retrying in 500ms (attempt ${initAttempts}/${maxInitAttempts})`);
-        setTimeout(tryInitApp, 500);
-    } else {
-        console.error('Failed to initialize after maximum attempts');
-        const resultElement = document.getElementById('result');
-        if (resultElement) {
-            resultElement.value = 'Error: Failed to connect to application backend';
-        }
-    }
-}
 

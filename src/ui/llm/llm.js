@@ -1,18 +1,8 @@
 async function initLLM() {
     console.log('Initializing LLM...');
 
-    if (typeof window.pywebview === 'undefined' || typeof window.pywebview.api === 'undefined') {
-        console.error('PyWebView API not available');
-        const resultElement = document.getElementById('result');
-        if (resultElement) {
-            resultElement.value = 'Error: PyWebView API not available';
-        }
-        return;
-    }
-
     await loadLLMConfig();
     await initLLMEventListeners();
-    init_basic_llm_dom_elements()
 }
 
 async function loadLLMConfig() {
@@ -40,16 +30,6 @@ async function saveLLMConfig() {
     }
 }
 
-function init_basic_llm_dom_elements() {
-    const queryBox = document.getElementById('query-box');
-    if (!queryBox) return;
-
-    queryBox.addEventListener('input', autoResize);
-    autoResize();
-}
-
-
-
 async function initLLMEventListeners() {
     const sendBtn = document.getElementById('send-btn');
     const queryBox = document.getElementById('query-box');
@@ -61,6 +41,8 @@ async function initLLMEventListeners() {
         console.error('Required LLM elements not found');
         return;
     }
+
+    queryBox.addEventListener('input', autoResize);
 
     // Send button click
     sendBtn.addEventListener('click', async () => {
