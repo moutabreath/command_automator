@@ -47,6 +47,7 @@ class AbstractMongoPersist(ABC):
         self.async_client = None
         self.async_db = None
         self._initialized = False
+        logging.getLogger("pymongo").setLevel(logging.WARNING)
 
     @classmethod
     async def create(cls, connection_string: str = "mongodb://localhost:27017/", 
@@ -69,10 +70,7 @@ class AbstractMongoPersist(ABC):
         """
         Internal initialization logic. 
         Should be called automatically by create(), not manually.
-        """
-        if self._initialized:
-            return
-        
+        """        
         # CRITICAL: We grab the current loop (Background Loop)
         try:
             loop = asyncio.get_running_loop()
