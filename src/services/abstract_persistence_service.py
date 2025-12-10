@@ -1,8 +1,8 @@
-from abc import ABC
+from services.shared_service import SharedService
 from repository.abstract_mongo_persist import AbstractMongoPersist
 
 
-class AbstractPersistenceService(ABC):
+class AbstractPersistenceService(SharedService):
 
     def __init__(self, abstractMongoPersist:AbstractMongoPersist):
         self.abstractMongoPersist = abstractMongoPersist

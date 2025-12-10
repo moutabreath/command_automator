@@ -116,7 +116,7 @@ def main():
         )
         
         logging.info("Starting webview...")
-        webview.start(icon='ui/resources/Commands_Automator.ico', debug=True)
+        webview.start(icon='ui/resources/Commands_Automator.ico')
     except Exception as ex:
         logging.error(f"Fatal error in main: {ex}", exc_info=True)
         raise

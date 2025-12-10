@@ -1,6 +1,6 @@
 from llm.mcp_servers.job_search.models import Job
 from llm.mcp_servers.job_search.utils.time_parser import parse_time_expression
-from llm.mcp_servers.services.shared_service import SharedService
+from services.shared_service import SharedService
 
 
 class AbstractJobScraper(SharedService):

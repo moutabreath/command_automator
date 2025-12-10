@@ -2,7 +2,7 @@ import os
 from typing import List
 
 from llm.mcp_servers.job_search.models import Job
-from llm.mcp_servers.services.shared_service import SharedService
+from services.shared_service import SharedService
 from utils import file_utils
 
 
