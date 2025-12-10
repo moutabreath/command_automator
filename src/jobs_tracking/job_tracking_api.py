@@ -55,7 +55,9 @@ class JobTrackingApi(AbstractApi):
         
     def add_job_to_company(self, user_id: str, company_name: str, 
                            job_url: str, job_title: str, job_state: str, 
-                           contact: Optional[str] = None, contact_url: Optional[str] = None) -> Dict[str, bool]:
+                           contact_name: Optional[str] = None,
+                            contact_linkedin: Optional[str] = None,
+                            contact_email: Optional[str] = None) -> Dict[str, bool]:
         # Convert string to enum
         try:
             job_state = JobApplicationState[job_state.upper()] if job_state else JobApplicationState.UNKNOWN
@@ -63,14 +65,15 @@ class JobTrackingApi(AbstractApi):
             logging.error(f"Invalid job state: {job_state}")
             job_state = JobApplicationState.UNKNOWN
         
-        response = self.job_tracking_service.add_job_to_company(
+        response = self.job_tracking_service.add_or_update_position(
             user_id=user_id,
             company_name=company_name,
             job_url=job_url,
             job_title=job_title,
             job_state=job_state,
-            contact=contact,
-            contact_url=contact_url
+            contact_name=contact_name,
+            contact_linkedin=contact_linkedin,
+            contact_email=contact_email
         )
         if response  and response.code == JobTrackingResponseCode.OK:            
             return JobTrackingApiResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
@@ -80,6 +83,6 @@ class JobTrackingApi(AbstractApi):
     async def _add_job_to_company_async(self, user_id: str, company_name: str, 
                            job_url: str, job_title: str, job_state: str, 
                            contact: Optional[str] = None, contact_url: Optional[str] = None) -> Dict[str, bool]:
-        return self.job_tracking_service.add_job_to_company(user_id=user_id, company_name=company_name, 
+        return self.job_tracking_service.add_or_update_position(user_id=user_id, company_name=company_name, 
                                                         job_url=job_url, job_title=job_title, 
-                                                        job_state=job_state, contact=contact, contact_url=contact_url)
+                                                        job_state=job_state, contact_name=contact, contact_linkedin=contact_url)

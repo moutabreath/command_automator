@@ -15,6 +15,7 @@ class CompanyMongoPersist(AbstractMongoPersist):
 
     def _setup_collections(self):
         self.job_applications = self.async_db.job_applications
+        self.jobs = self.async_db.jobs
       
     async def create_index(self):
         if self.job_applications is not None:
@@ -119,28 +120,33 @@ class CompanyMongoPersist(AbstractMongoPersist):
     
     # ==================== JOB CRUD ====================
     
-    async def add_job(self, user_id: str, company_name: str, job_url: str, 
-                job_title: Optional[str], job_state: JobApplicationState, contact: Optional[str] = None, 
-                contact_url: Optional[str] = None) -> PersistenceResponse[Dict[str, Any]]:
+    async def add_or_update_position(self, user_id: str, company_name: str, job_url: str, 
+                job_title: Optional[str], job_state: JobApplicationState, contact_name: Optional[str], 
+                contact_linkedin: Optional[str], contact_email: Optional[str]) -> PersistenceResponse[Dict[str, Any]]:
         """Add or update a job in a company application
         
         Returns:
             A PersistenceResponse with a dictionary indicating if the job was created or updated: `{"created": bool, "updated": bool}`.
-        """
-      
-        job = {
-            "job_url": job_url,
-            "job_title": job_title,
-            "update_time": datetime.now(timezone.utc),
-            "job_state": job_state.value if hasattr(job_state, 'value') else job_state,
-            "contact": contact,
-            "contact_url": contact_url
-        }
+        """      
+       
         try:
-            existing = await self._find_existing_application(user_id, company_name, job_url)
-        
-            if existing:
-                result_data = await self._update_existing_application(job=job, user_id=user_id, company_name=company_name, job_url=job_url)
+            #1. find existing - need to find the job id
+            existing_job = await self._find_existing_postion(company_name, job_url)
+            if existing_job:
+                job = {
+                    "job_url": job_url,
+                    "job_title": job_title,
+                    "update_time": datetime.now(timezone.utc),
+                    "job_state": job_state.value if hasattr(job_state, 'value') else job_state,
+                    "contact_name": contact_name,
+                    "contact_linkedin": contact_linkedin,
+                    "contact_email" : contact_email
+                }
+                #2. if job id exists, check if the user has already registered the job application
+                existing_application = await self._find_existing_application(user_id, company_name, existing_job)
+                if existing_application:
+                    result_data = await self._update_existing_application(job=job, user_id=user_id, company_name=company_name, job_url=job_url)
+            
             else:
                 # Add new job (create company application if needed)
                 await self.job_applications.update_one(
@@ -150,8 +156,8 @@ class CompanyMongoPersist(AbstractMongoPersist):
                 )
             result_data = {
                     "job_title": job_title,
-                    "contact": contact,
-                    "contact_url": contact_url
+                    "contact": contact_name,
+                    "contact_url": contact_linkedin
                 }
             return PersistenceResponse(data=result_data, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:

@@ -140,7 +140,8 @@ async function trackJobApplication() {
     const jobUrlInput = document.getElementById('position-url');
     const jobTitleInput = document.getElementById('position-title');
     const contactPersonInput = document.getElementById('contact-person');
-    const contactPersonUrlInput = document.getElementById('contact-person-url');
+    const contactPersonLinkedinInput = document.getElementById('contact-person-linkedin');
+    const contactPersonEmailInput = document.getElementById('contact-person-email');
     const jobStateSelect = document.getElementById('job-state');
     const trackJobBtn = document.getElementById('track-job-btn');
 
@@ -153,7 +154,8 @@ async function trackJobApplication() {
     const jobUrl = jobUrlInput.value.trim();
     const jobTitle = jobTitleInput.value.trim();
     const contactPerson = contactPersonInput ? contactPersonInput.value.trim() : '';
-    const contactPersonUrl = contactPersonUrlInput ? contactPersonUrlInput.value.trim() : '';
+    const contactPersonLinkdein = contactPersonLinkedinInput ? contactPersonLinkedinInput.value.trim() : '';
+    const contactPersonEmail = contactPersonEmailInput ? contactPersonEmailInput.value.trim() : '';
     const jobState = jobStateSelect.value;
 
     // Validation
@@ -196,7 +198,8 @@ async function trackJobApplication() {
             jobTitle,
             jobState,
             contactPerson || null,
-            contactPersonUrl || null
+            contactPersonLinkdein || null,
+            contactPersonEmail || null
         );
 
         if (response && response.code === 'OK') {
