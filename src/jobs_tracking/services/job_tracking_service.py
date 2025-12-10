@@ -32,28 +32,33 @@ class JobTrackingService(AbstractPersistenceService):
         return cls(company_persist)
 
     
-    def add_job_to_company(self, user_id: str, company_name: str, 
-                           job_url: str, job_title: str, job_state: JobApplicationState, 
-                           contact: Optional[str] = None, contact_url: Optional[str] = None) -> JobTrackingResponse:
+    def add_or_update_position(self, user_id: str, company_name: str, 
+                            job_url: str, job_title: str, job_state: JobApplicationState, 
+                            contact_name: Optional[str] = None,
+                            contact_linkedin: Optional[str] = None,
+                            contact_email: Optional[str] = None) -> JobTrackingResponse:
         company_name = company_name.lower()
         job_url = urlparse(job_url).geturl()
         
         result = AsyncRunner.run_async(
-            self._add_job_to_company_async(
+            self._add_or_update_position_async(
             user_id=user_id,
             company_name=company_name,
             job_url=job_url,
             job_title=job_title,
             job_state=job_state,
-            contact=contact,
-            contact_url=contact_url)
+            contact_name=contact_name,
+            contact_linkedin=contact_linkedin,
+            contact_email=contact_email
+            )
         )
         return result
     
        
-    async def _add_job_to_company_async(self, user_id: str, company_name: str, 
+    async def _add_or_update_position_async(self, user_id: str, company_name: str, 
                            job_url: str, job_title: str, job_state: JobApplicationState, 
-                           contact: Optional[str] = None, contact_url: Optional[str] = None) -> JobTrackingResponse:
+                           contact_name: Optional[str] = None, contact_linkedin: Optional[str] = None,
+                           contact_email: Optional[str] = None) -> JobTrackingResponse:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -63,14 +68,15 @@ class JobTrackingService(AbstractPersistenceService):
             {"created": bool, "updated": bool}
         """
       
-        mongoResult: PersistenceResponse[Dict[str, bool]] = await self.application_persist.add_job(
+        mongoResult: PersistenceResponse[Dict[str, bool]] = await self.application_persist.add_or_update_position(
             user_id=user_id,
             company_name=company_name,
             job_url=job_url,
             job_title=job_title,
             job_state=job_state,
-            contact=contact,
-            contact_url=contact_url
+            contact_name=contact_name,
+            contact_linkedin=contact_linkedin,
+            contact_email=contact_email
         )
         if mongoResult.code == PersistenceErrorCode.SUCCESS:
             return JobTrackingResponse(job = mongoResult.data, code = JobTrackingResponseCode.OK)
