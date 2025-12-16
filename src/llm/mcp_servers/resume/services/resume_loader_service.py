@@ -2,10 +2,9 @@ import logging
 from pathlib import Path
 from typing import Tuple, List, Optional
 
-from llm.mcp_servers.services.shared_service import SharedService
 from utils import file_utils
 
-class ResumeLoaderService(SharedService):
+class ResumeLoaderService:
 
     async def get_main_part_guide_lines(self) -> str:
         file_path: Path = file_utils.RESUME_ADDITIONAL_FILES_DIR / 'guidelines.txt'     

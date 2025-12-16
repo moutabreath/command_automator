@@ -1,9 +1,4 @@
-from llm.mcp_servers.job_search.models import Job
-from llm.mcp_servers.job_search.utils.time_parser import parse_time_expression
-from services.shared_service import SharedService
-
-
-class AbstractJobScraper(SharedService):
+class AbstractJobScraper:
 
     def __init__(self):
         self.headers = {

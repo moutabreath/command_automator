@@ -2,11 +2,10 @@ import os
 from typing import List
 
 from llm.mcp_servers.job_search.models import Job
-from services.shared_service import SharedService
 from utils import file_utils
 
 
-class JobsSaver(SharedService):
+class JobsSaver:
     
     async def save_jobs_to_file(self, jobs: List[Job], filename: str) -> bool:
         """Save jobs to JSON file

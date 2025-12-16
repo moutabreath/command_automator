@@ -25,6 +25,7 @@ dependencies = [
     "playwright>=1.55.1,<2.0.0",
     "pymongo>=4.15.4",
     "motor>=3.7.1",
+    "dependency-injector>=4.48.3",
 ]
 
 [tool.setuptools]

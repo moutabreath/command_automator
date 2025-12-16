@@ -115,7 +115,7 @@ class SmartMCPClient:
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
             return None, None
         try:
-            messages = self._init_messages(query)
+            messages = self._init_messages(query, user_id)
             
             selected_tool, args = self.gemini_agent.get_mcp_tool_json(prompt=messages,
                                                                 chat=self.resume_chat,
@@ -130,7 +130,7 @@ class SmartMCPClient:
             logging.error(f"Error using LLM for tool decision {e}", exc_info=True)
             return None, None
             
-    def _init_messages(self, query: str):
+    def _init_messages(self, query: str, user_id:str):
         tool_descriptions = {}
         
         for tool in self.session_tools.tools:
@@ -141,10 +141,10 @@ class SmartMCPClient:
                 tool_descriptions[tool.name] = f"{tool.description}{param_info}"
         
         available_descriptions = tool_descriptions
-        system_prompt = self._init_system_prompt(available_descriptions, query)
+        system_prompt = self._init_system_prompt(available_descriptions, query, user_id)
         return system_prompt
     
-    def _init_system_prompt(self, available_descriptions, query):
+    def _init_system_prompt(self, available_descriptions:dict, query:str, user_id:str):
         return f"""You are a tool selection assistant. 
 Based on the user's query, determine if any of these available tools should be used:
 {json.dumps(available_descriptions, indent=2)}
@@ -152,10 +152,11 @@ Based on the user's query, determine if any of these available tools should be u
 IMPORTANT: Only use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
  2. Searching jobs from the internet. 
+ 3. Getting inofrmation about jobs I have already applied to. Infer the company name if possible.
+ The user id is {user_id}.
 If you have already used a tool before, infer if you should use it again. For example if the user query is
 'again', and you have used a tool in the previous query, you may decide to use the tool you previously
 used just before this query.
-
 
 If a tool should be used, respond in JSON format:
 {{

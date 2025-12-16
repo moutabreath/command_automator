@@ -1,120 +1,85 @@
+import asyncio
 import logging
 import multiprocessing
 from multiprocessing import freeze_support
-from typing import Any, Dict, List, Optional, Type, cast, TypeVar
+from typing import Dict, List
 
+from dependency_injector import containers, providers
+from llm.mcp_servers.services.mongo_company_persist import MongoCompanyPersist
 from mcp.server.fastmcp import FastMCP
+
+
+from utils.logger_config import setup_logging
+from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
 from llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
 from llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
 from llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
 from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
 from llm.mcp_servers.resume.models import ResumeData
-from llm.mcp_servers.services.shared_service import SharedService
-from utils.logger_config import setup_logging
-from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
+from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
 
 # Initialize FastMCP
 mcp = FastMCP("job_applicant_helper")
 
-# Global variable for service access within the child process
-# This will be initialized in the child process only
-_shared_services = None
+# Global container instance
+_container = None
+
+class Container(containers.DeclarativeContainer):
+    """Dependency injection container"""
+    
+    # Configuration
+    config = providers.Configuration()
+    
+    # MongoDB persistence
+    company_mongo_persist = providers.Resource(
+        MongoCompanyPersist,
+        connection_string=config.mongo.connection_string,
+        db_name=config.mongo.db_name
+    )
+    
+    # Services
+    resume_loader_service = providers.Factory(ResumeLoaderService)
+    linkedin_scraper = providers.Factory(LinkedInJobScraper)
+    glassdoor_scraper = providers.Factory(GlassdoorJobsScraper)
+    job_saver = providers.Factory(JobsSaver)
+    
+    # Job tracking service with injected dependency
+    job_tracking_service = providers.Factory(
+        JobTrackingService,
+        application_persist=company_mongo_persist
+    )
+
+def get_container() -> Container:
+    """Get the global container instance"""
+    global _container
+    if _container is None:
+        raise RuntimeError("Container not initialized")
+    return _container
 
 
-class ServiceNames:
-    RESUME_LOADER = 'resume_loader_service'
-    LINKEDIN_SCRAPER = 'linkedin_job_scraper'
-    GLASSDOOR_SCRAPER = 'glassdoor_jobs_scraper'
-    JOB_SAVER = 'job_saver'
-
-# Define a TypeVar that can be any service type
-ServiceT = TypeVar('ServiceT')
-
-class ServiceRegistry:
-    """Type-safe service registry using generics"""
+async def init_container() -> Container:
+    """Initialize the dependency injection container"""
+    global _container
     
-    def __init__(self):
-        self._services: Dict[str, object] = {}
+    logging.info("Initializing DI container in MCP subprocess")
     
-    def register(self, name: str, service: object) -> None:
-        """Register a service with a name"""
-        self._services[name] = service
-        logging.debug(f"Registered service: {name} -> {type(service).__name__}")
+    # Create and configure container
+    container = Container()
+    container.config.mongo.connection_string.from_value("mongodb://localhost:27017/")
+    container.config.mongo.db_name.from_value("job_tracker")
     
-    def get(self, name: str, service_type: Type[ServiceT]) -> ServiceT:
-        """
-        Get a service by name with type safety.
-        
-        Args:
-            name: The service name
-            service_type: The expected type of the service (for type checking)
-            
-        Returns:
-            The service instance, typed as ServiceT
-            
-        Example:
-            resume_service = registry.get(ServiceNames.RESUME_LOADER, ResumeLoaderService)
-            # resume_service is now typed as ResumeLoaderService
-        """
-        service = self._services.get(name)
-        if service is None:
-            raise ValueError(f"Service '{name}' not found in registry")
-        
-        # Runtime type check (optional but recommended)
-        if not isinstance(service, service_type):
-            raise TypeError(
-                f"Service '{name}' is {type(service).__name__}, "
-                f"expected {service_type.__name__}"
-            )
-        
-        return cast(ServiceT, service)
+    # Initialize resources
+    container.init_resources()
     
-    def has(self, name: str) -> bool:
-        """Check if a service is registered"""
-        return name in self._services
+    # Get MongoDB resource and initialize connection
+    mongo_persist = container.company_mongo_persist()
+    await mongo_persist.initialize_connection()
     
-    def clear(self) -> None:
-        """Clear all registered services"""
-        self._services.clear()
-
-
-# Global service registry instance
-_service_registry: ServiceRegistry | None = None
-
-
-def get_service_registry() -> ServiceRegistry:
-    """Get the global service registry instance"""
-    global _service_registry
-    if _service_registry is None:
-        raise RuntimeError(
-            "Service registry not initialized. "
-            "This should only be called in the MCP subprocess."
-        )
-    return _service_registry
-
-
-def init_shared_services() -> ServiceRegistry:
-    """Initialize services in the child process. Returns the service registry."""
-    global _service_registry
-    
-    logging.info("Initializing shared services in MCP subprocess")
-    
-    # Create the registry
-    registry = ServiceRegistry()
-    
-    # Register all services
-    registry.register(ServiceNames.RESUME_LOADER, ResumeLoaderService())
-    registry.register(ServiceNames.LINKEDIN_SCRAPER, LinkedInJobScraper())
-    registry.register(ServiceNames.GLASSDOOR_SCRAPER, GlassdoorJobsScraper())
-    registry.register(ServiceNames.JOB_SAVER, JobsSaver())
-    
-    # Store globally
-    _service_registry = registry
-    
-    logging.info("Shared services initialized successfully")
-    return registry
+    _container = container
+    logging.info("DI container initialized successfully")
+    return container
 
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
@@ -122,12 +87,8 @@ async def get_resume_files() -> ResumeData:
     Fetch resume file, applicant name, job description and guidelines
     """    
     try:
-        registry = get_service_registry()
-        
-        resume_loader_service = registry.get(
-            ServiceNames.RESUME_LOADER, 
-            ResumeLoaderService
-        )
+        container = get_container()
+        resume_loader_service = container.resume_loader_service()
         resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
         if resume_content is None:
             logging.error("Couldn't parse resume content")
@@ -220,20 +181,68 @@ async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | 
     """
     return await _run_glassdoor_scraper(job_title, location, remote)
 
+@mcp.tool()
+async def get_user_applications_for_company(user_id: str, company_name: str) -> dict:
+    """
+    Get all job applications for a specific user and company.
+    
+    Args:
+        user_id: The user's unique identifier
+        company_name: The name of the company to get applications for
+    
+    Returns:
+        Dictionary containing application data with jobs list
+    """
+    try:        
+        container = get_container()
+        company_persist = container.company_mongo_persist()
+        
+        # Get the application data
+        response = await company_persist.get_application(user_id, company_name.lower())
+        
+        from repository.abstract_mongo_persist import PersistenceErrorCode
+        
+        if response.code == PersistenceErrorCode.SUCCESS:
+            return {
+                "success": True,
+                "company_name": company_name,
+                "user_id": user_id,
+                "application_data": response.data
+            }
+        elif response.code == PersistenceErrorCode.NOT_FOUND:
+            return {
+                "success": True,
+                "company_name": company_name,
+                "user_id": user_id,
+                "application_data": None,
+                "message": "No applications found for this company"
+            }
+        else:
+            return {
+                "success": False,
+                "error": response.error_message or "Unknown error occurred"
+            }
+            
+    except Exception as e:
+        logging.error(f"Error getting user applications: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e)
+        }
+            
+    except Exception as e:
+        logging.error(f"Error getting user applications: {e}", exc_info=True)
+        return {
+            "success": False,
+            "error": str(e)
+        }
+
 
 async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
     """Run the LinkedIn job scraper"""
-    registry = get_service_registry()
-    
-    # Type-safe retrieval
-    linkedin_scraper = registry.get(
-        ServiceNames.LINKEDIN_SCRAPER, 
-        LinkedInJobScraper
-    )
-    jobs_saver = registry.get(
-        ServiceNames.JOB_SAVER, 
-        JobsSaver
-    )
+    container = get_container()
+    linkedin_scraper = container.linkedin_scraper()
+    jobs_saver = container.job_saver()
     
     max_pages: int = 2
     logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
@@ -264,16 +273,9 @@ async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, fo
     """Run the Glassdoor job scraper"""
     max_pages: int = 3
     max_jobs_per_page: int = 20
-    registry = get_service_registry()
-    
-    glassdoor_scraper = registry.get(
-        ServiceNames.GLASSDOOR_SCRAPER, 
-        GlassdoorJobsScraper
-    )
-    job_saver = registry.get(
-        ServiceNames.JOB_SAVER, 
-        JobsSaver
-    )
+    container = get_container()
+    glassdoor_scraper = container.glassdoor_scraper()
+    job_saver = container.job_saver()
 
     job_title,location, _, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote, forbidden_titles)
     try:
@@ -363,14 +365,12 @@ class MCPRunner:
 
     def run_mcp(self):
         """Run the MCP server in the subprocess"""
-        global _shared_services
-        
         try:
             # Initialize logging in the child process
             setup_logging()
             
-            # Initialize services in the child process
-            _shared_services = init_shared_services()
+            # Initialize DI container in the child process
+            asyncio.run(init_container())
             
             # Set server configuration
             mcp.settings.mount_path = "/mcp"
