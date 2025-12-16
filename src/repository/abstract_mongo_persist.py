@@ -5,20 +5,18 @@ from dataclasses import dataclass
 from abc import ABC, abstractmethod
 from typing import Generic, TypeVar, Optional
 from urllib.parse import urlparse
-import uuid
 
-import pymongo.errors as mongo_errors
 from motor.motor_asyncio import AsyncIOMotorClient
 # ==================== TYPES & ENUMS ====================
 
 class PersistenceErrorCode(Enum):
-    SUCCESS = "SUCCESS"
-    NOT_FOUND = "NOT_FOUND"
-    OPERATION_ERROR = "OPERATION_ERROR"
-    DUPLICATE_KEY = "DUPLICATE_KEY"
-    CONNECTION_ERROR = "CONNECTION_ERROR"
-    VALIDATION_ERROR = "VALIDATION_ERROR"
-    UNKNOWN_ERROR = "UNKNOWN_ERROR"
+    SUCCESS = 1
+    NOT_FOUND = 2
+    OPERATION_ERROR = 3
+    DUPLICATE_KEY = 4
+    CONNECTION_ERROR = 5
+    VALIDATION_ERROR = 6
+    UNKNOWN_ERROR = 7
 
 T = TypeVar('T')
 
