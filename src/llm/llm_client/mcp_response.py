@@ -10,6 +10,7 @@ class MCPResponseCode(Enum):
     ERROR_WITH_TOOL_RESPONSE = 4
     ERROR_COMMUNICATING_WITH_LLM = 5
     ERROR_MODEL_OVERLOADED = 6
+    ERROR_MODEL_QUOTA_EXCEEDED = 7
 
 @dataclass(frozen=True)
 class MCPResponse:

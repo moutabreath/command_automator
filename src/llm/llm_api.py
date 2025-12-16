@@ -15,6 +15,7 @@ class LLMApiResponseCode(Enum):
     ERROR_COMMUNICATING_WITH_LLM = 2
     ERROR_MODEL_OVERLOADED = 3
     ERROR_LOADING_IMAGE_TO_MODEL = 4
+    ERROR_MODEL_QUOTA_EXCEEDED = 5
 
 class LLMApiResponse(ApiResponse):
     def __init__(self, text: str, code: LLMApiResponseCode):
@@ -45,10 +46,13 @@ class LLMApi(AbstractApi):
         if not result:
             return LLMApiResponse("Unknown error occurred", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM).to_dict()
         
-        if result.code == MCPResponseCode.OK:
-            resp = LLMApiResponse(result.text, LLMApiResponseCode.OK)
-            return resp.to_dict()
-        if result.code == MCPResponseCode.ERROR_MODEL_OVERLOADED:
-            resp = LLMApiResponse("Model overloaded", LLMApiResponseCode.ERROR_MODEL_OVERLOADED)
-            return resp.to_dict()
-        return LLMApiResponse("Error communicating with LLM", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM).to_dict()
+        match result.code:
+            case MCPResponseCode.OK:
+                resp = LLMApiResponse(result.text, LLMApiResponseCode.OK)
+            case MCPResponseCode.ERROR_MODEL_OVERLOADED:
+                resp = LLMApiResponse("Model overloaded", LLMApiResponseCode.ERROR_MODEL_OVERLOADED)
+            case MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED:
+                resp = LLMApiResponse("Model Exhausted", LLMApiResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
+            case _:
+                resp = LLMApiResponse("Error communicating with LLM", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+        return resp.to_dict()

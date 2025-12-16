@@ -20,6 +20,7 @@ class LLMResponseCode(Enum):
     ERROR_USING_GEMINI_API = 2
     GEMINI_UNAVAILABLE = 3
     MODEL_OVERLOADED = 4
+    RESOURCE_EXHAUSTED = 5
     
 class LLMAgentResponse:
     def __init__(self, text: str, code: LLMResponseCode):
@@ -94,6 +95,8 @@ class GeminiClientWrapper:
                 if 'overloaded' in message.lower():
                     return LLMAgentResponse(message, LLMResponseCode.MODEL_OVERLOADED)
                 return LLMAgentResponse(message, LLMResponseCode.GEMINI_UNAVAILABLE)
+            if status == 429:
+                return LLMAgentResponse(message, LLMResponseCode.RESOURCE_EXHAUSTED)
             return LLMAgentResponse(f"Sorry, I couldn't process your request with Gemini", LLMResponseCode.ERROR_USING_GEMINI_API)
         
     def get_mcp_tool_json(self, prompt: str,
