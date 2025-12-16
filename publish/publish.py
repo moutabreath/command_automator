@@ -3,6 +3,9 @@ import shutil
 import subprocess
 from datetime import datetime
 
+
+source_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory
+
 def copy_to_deploy():
     """
     Create a timestamped deployment directory and copy application files.
@@ -14,8 +17,7 @@ def copy_to_deploy():
     Raises:
         Exception: Re-raises any exception encountered during file operations.
     """
-    # Source and destination paths    # Source and destination paths
-    source_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory
+    # Source and destination paths
     deploy_dir = os.path.join(source_dir, 'deploy')
     
     # Create timestamp folder
@@ -25,17 +27,7 @@ def copy_to_deploy():
     # Create deploy directory if it doesn't exist
     os.makedirs(deploy_dir, exist_ok=True)
     
-    # Run deploy_locally.cmd before copying
-    print("Running deploy_locally.cmd...")
-    try:
-        result = subprocess.run(['deploy_locally.cmd'], cwd=source_dir, check=True, capture_output=True, text=True)
-        print("Deploy script completed successfully")
-    except subprocess.CalledProcessError as e:
-        print(f"Deploy script failed with return code {e.returncode}")
-        print(f"Error output: {e.stderr}")
-        raise
-    except FileNotFoundError:
-        print("Warning: deploy_locally.cmd not found")
+  
     
     try:
         # List of specific files to copy
@@ -77,7 +69,19 @@ def copy_to_deploy():
         print(f"Error during deployment: {str(e)}")
         raise  # Re-raise the exception for debugging
 
-
+def run_pyinstaller():
+      # Run deploy_locally.cmd before copying
+    print("Running deploy_locally.cmd...")
+    try:
+        result = subprocess.run(['deploy_locally.cmd'], cwd=source_dir, check=True, capture_output=True, text=True)
+        print("Deploy script completed successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"Deploy script failed with return code {e.returncode}")
+        print(f"Error output: {e.stderr}")
+        raise
+    except FileNotFoundError:
+        print("Warning: deploy_locally.cmd not found")
 
 if __name__ == "__main__":
+    run_pyinstaller()
     copy_to_deploy()
