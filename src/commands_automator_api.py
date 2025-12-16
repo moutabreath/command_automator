@@ -104,7 +104,7 @@ def main():
 
         AsyncRunner.start()
 
-        scripts_manager_api, llm_api, user_api, job_tracking_api =  AsyncRunner.run_async(initialize_apis())
+        scripts_manager_api, llm_api, user_api, job_tracking_api = AsyncRunner.run_async(initialize_apis())
         # Initialize API and create window
         api = CommandsAutomatorApi(scripts_manager_api, llm_api, user_api, job_tracking_api)
         window = webview.create_window(

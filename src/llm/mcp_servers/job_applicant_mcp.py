@@ -2,84 +2,21 @@ import asyncio
 import logging
 import multiprocessing
 from multiprocessing import freeze_support
-from typing import Dict, List
+from typing import List
 
-from dependency_injector import containers, providers
-from llm.mcp_servers.services.mongo_company_persist import MongoCompanyPersist
+from llm.mcp_servers.mcp_dependency_container import MCPContainer
+from llm.mcp_servers.resume.models import ResumeData
 from mcp.server.fastmcp import FastMCP
 
 
 from utils.logger_config import setup_logging
 from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
-from llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
-from llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
-from llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
-from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
-from llm.mcp_servers.resume.models import ResumeData
-
-from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
 
 # Initialize FastMCP
 mcp = FastMCP("job_applicant_helper")
 
-# Global container instance
-_container = None
 
-class Container(containers.DeclarativeContainer):
-    """Dependency injection container"""
-    
-    # Configuration
-    config = providers.Configuration()
-    
-    # MongoDB persistence
-    company_mongo_persist = providers.Resource(
-        MongoCompanyPersist,
-        connection_string=config.mongo.connection_string,
-        db_name=config.mongo.db_name
-    )
-    
-    # Services
-    resume_loader_service = providers.Factory(ResumeLoaderService)
-    linkedin_scraper = providers.Factory(LinkedInJobScraper)
-    glassdoor_scraper = providers.Factory(GlassdoorJobsScraper)
-    job_saver = providers.Factory(JobsSaver)
-    
-    # Job tracking service with injected dependency
-    job_tracking_service = providers.Factory(
-        JobTrackingService,
-        application_persist=company_mongo_persist
-    )
-
-def get_container() -> Container:
-    """Get the global container instance"""
-    global _container
-    if _container is None:
-        raise RuntimeError("Container not initialized")
-    return _container
-
-
-async def init_container() -> Container:
-    """Initialize the dependency injection container"""
-    global _container
-    
-    logging.info("Initializing DI container in MCP subprocess")
-    
-    # Create and configure container
-    container = Container()
-    container.config.mongo.connection_string.from_value("mongodb://localhost:27017/")
-    container.config.mongo.db_name.from_value("job_tracker")
-    
-    # Initialize resources
-    container.init_resources()
-    
-    # Get MongoDB resource and initialize connection
-    mongo_persist = container.company_mongo_persist()
-    await mongo_persist.initialize_connection()
-    
-    _container = container
-    logging.info("DI container initialized successfully")
-    return container
 
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
@@ -87,7 +24,7 @@ async def get_resume_files() -> ResumeData:
     Fetch resume file, applicant name, job description and guidelines
     """    
     try:
-        container = get_container()
+        container = MCPContainer.get_container()
         resume_loader_service = container.resume_loader_service()
         resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
         if resume_content is None:
@@ -194,7 +131,7 @@ async def get_user_applications_for_company(user_id: str, company_name: str) -> 
         Dictionary containing application data with jobs list
     """
     try:        
-        container = get_container()
+        container = MCPContainer.get_container()
         company_persist = container.company_mongo_persist()
         
         # Get the application data
@@ -240,7 +177,7 @@ async def get_user_applications_for_company(user_id: str, company_name: str) -> 
 
 async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
     """Run the LinkedIn job scraper"""
-    container = get_container()
+    container = container = MCPContainer.get_container()
     linkedin_scraper = container.linkedin_scraper()
     jobs_saver = container.job_saver()
     
@@ -273,7 +210,7 @@ async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, fo
     """Run the Glassdoor job scraper"""
     max_pages: int = 3
     max_jobs_per_page: int = 20
-    container = get_container()
+    container = MCPContainer.get_container()
     glassdoor_scraper = container.glassdoor_scraper()
     job_saver = container.job_saver()
 
@@ -370,7 +307,7 @@ class MCPRunner:
             setup_logging()
             
             # Initialize DI container in the child process
-            asyncio.run(init_container())
+            asyncio.run(MCPContainer.init_container())
             
             # Set server configuration
             mcp.settings.mount_path = "/mcp"
