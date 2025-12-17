@@ -37,12 +37,21 @@ class MCPContainer(Container):
         logging.info("Initializing MCP DI container")
         container = MCPContainer()
         
-        # Initialize resources first
-        container.init_resources()
-        
-        # Then initialize MongoDB connection
-        await container.company_mongo_persist().initialize_connection()
-        
-        cls._container = container
-        logging.info("MCP DI container initialized successfully")
-        return container
+        try:
+            # Initialize resources first
+            container.init_resources()
+            
+            # Then initialize MongoDB connection
+            await container.company_mongo_persist().initialize_connection()
+            
+            cls._container = container
+            logging.info("MCP DI container initialized successfully")
+            return container
+        except Exception as e:
+            logging.error(f"Failed to initialize MCP DI container: {e}")
+            # Cleanup any partially initialized resources
+            try:
+                container.shutdown_resources()
+            except Exception as cleanup_error:
+                logging.error(f"Error during cleanup: {cleanup_error}")
+            raise

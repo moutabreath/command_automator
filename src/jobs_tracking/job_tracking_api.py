@@ -33,10 +33,9 @@ class JobTrackingApiResponse:
 
     def __setstate__(self, state: Dict[str, Any]) -> None:
         """Restore instance from pickled state."""
-        self.text = state["text"]
+        self.job = state["job"]
         # Restore the Enum from its name
         self.code = JobTrackingApiResponseCode[state["code"]]
-
 
 class JobTrackingApi(AbstractApi):
     
@@ -57,7 +56,7 @@ class JobTrackingApi(AbstractApi):
                            job_url: str, job_title: str, job_state: str, 
                            contact_name: Optional[str] = None,
                             contact_linkedin: Optional[str] = None,
-                            contact_email: Optional[str] = None) -> Dict[str, bool]:
+                            contact_email: Optional[str] = None) -> Dict[str, Any]:
         # Convert string to enum
         try:
             job_state = JobApplicationState[job_state.upper()] if job_state else JobApplicationState.UNKNOWN
@@ -77,12 +76,4 @@ class JobTrackingApi(AbstractApi):
         )
         if response  and response.code == JobTrackingResponseCode.OK:            
             return JobTrackingApiResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
-        return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
-    
-
-    async def _add_job_to_company_async(self, user_id: str, company_name: str, 
-                           job_url: str, job_title: str, job_state: str, 
-                           contact: Optional[str] = None, contact_url: Optional[str] = None) -> Dict[str, bool]:
-        return self.job_tracking_service.add_or_update_position(user_id=user_id, company_name=company_name, 
-                                                        job_url=job_url, job_title=job_title, 
-                                                        job_state=job_state, contact_name=contact, contact_linkedin=contact_url)
+        return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()    

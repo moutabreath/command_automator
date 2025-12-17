@@ -8,4 +8,4 @@ class AbstractPersistenceService:
         
     
     async def initialize_connection(self):
-        self.abstractMongoPersist.initialize_connection()
+        await self.abstractMongoPersist.initialize_connection()

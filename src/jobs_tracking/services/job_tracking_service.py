@@ -37,8 +37,17 @@ class JobTrackingService(AbstractPersistenceService):
                             contact_name: Optional[str] = None,
                             contact_linkedin: Optional[str] = None,
                             contact_email: Optional[str] = None) -> JobTrackingResponse:
+        
+        if not user_id or not company_name or not job_url or not job_title:
+            logging.error("Missing required parameters for add_or_update_position")
+            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
+        
         company_name = company_name.lower()
-        job_url = urlparse(job_url).geturl()
+        try:
+            job_url = urlparse(job_url).geturl()
+        except (ValueError, AttributeError) as e:
+            logging.error(f"Invalid job_url format: {e}")
+            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
         
         result = AsyncRunner.run_async(
             self._add_or_update_position_async(

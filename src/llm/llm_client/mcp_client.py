@@ -118,9 +118,10 @@ class SmartMCPClient:
         
         # If query is just a simple greeting, don't use a tool
         query_lower = query.lower().strip()
-        if any(greeting in query_lower for greeting in common_greetings) and len(query_lower) < 30:
-            logging.debug("Query appears to be a simple greeting or too short - not using tools")
-            return None, None
+        query_words = query_lower.split()
+        if query_words and query_words[0] in common_greetings and len(query_words) <= 3:
+             logging.debug("Query appears to be a simple greeting or too short - not using tools")
+             return None, None
         try:
             messages = self._init_messages(query, user_id)
             
@@ -158,9 +159,8 @@ Based on the user's query, determine if any of these available tools should be u
 
 IMPORTANT: Only use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
- 2. Searching jobs from the internet. 
- 3. Getting inofrmation about jobs I have already applied to. Infer the company name if possible.
- The user id is {user_id}.
+ 3. Getting information about jobs I have already applied to. Infer the company name if possible.
+ The user id is {user_id}. The user id is {user_id}.
 If you have already used a tool before, infer if you should use it again. For example if the user query is
 'again', and you have used a tool in the previous query, you may decide to use the tool you previously
 used just before this query.
