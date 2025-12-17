@@ -36,7 +36,10 @@ class LLMApi(AbstractApi):
                 if len(parts) != 2:
                     raise ValueError("Invalid image data format: expected 'prefix,base64data'")
                 _, encoded = parts
-                decoded_data = base64.b64decode(encoded)   
+                # Validate size before decoding (e.g., 10MB limit)
+                if len(encoded) > 10 * 1024 * 1024 * 4 // 3:  # base64 is ~4/3 size of original
+                    raise ValueError("Image data exceeds maximum allowed size")
+                decoded_data = base64.b64decode(encoded)            
             except Exception as e:
                 logging.exception(f"Error processing image data: {e}")
                 resp = LLMApiResponse("Error loading image", LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)

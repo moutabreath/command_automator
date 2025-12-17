@@ -25,12 +25,18 @@ class MongoCompanyPersist:
         self.async_client = AsyncIOMotorClient(
             self.connection_string
         )
-        self.async_client._serializable = False
         
         self.async_db = self.async_client[self.db_name]
-        self.async_db._serializable = False        
         
         self.job_applications = self.async_db.job_applications
+    
+    async def close(self):
+        """Close MongoDB connection."""
+        if self.async_client:
+            self.async_client.close()
+            self.async_client = None
+            self.async_db = None
+            self.job_applications = None
    
   
     async def get_application(self, user_id: str, company_name: str) -> PersistenceResponse[Dict]:
@@ -45,15 +51,9 @@ class MongoCompanyPersist:
                     data=result,
                     code=PersistenceErrorCode.SUCCESS
                 )
-            logging.error(f"Document not found {user_id}, {company_name}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.NOT_FOUND,
-                error_message=f"Document with id {user_id} and company name {company_name} not found"
-            )
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
+            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
         except mongo_errors.ConnectionFailure as e:
             logging.exception(f"MongoDB connection failed: {e}")
             return PersistenceResponse(
@@ -120,7 +120,7 @@ class MongoCompanyPersist:
    
     # ==================== QUERY HELPERS ====================
     
-    def get_jobs_by_state(self, user_id: str, state: str) -> PersistenceResponse[List[Dict]]:
+    async def get_jobs_by_state(self, user_id: str, state: str) -> PersistenceResponse[List[Dict]]:
         """Get all jobs with a specific state across all companies"""
         pipeline = [
             {"$match": {"user_id": user_id}},
@@ -132,7 +132,7 @@ class MongoCompanyPersist:
             }}
         ]
         try:
-            results = list(self.job_applications.aggregate(pipeline))
+            results = await self.job_applications.aggregate(pipeline).to_list(length=None)
             return PersistenceResponse(data=results, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
@@ -148,7 +148,7 @@ class MongoCompanyPersist:
             logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
     
-    def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[List[Dict]]:
+    async def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[List[Dict]]:
         """Get most recently updated jobs"""
         pipeline = [
             {"$match": {"user_id": user_id}},
@@ -161,7 +161,7 @@ class MongoCompanyPersist:
             }}
         ]
         try:
-            results = list(self.job_applications.aggregate(pipeline))
+            results = await self.job_applications.aggregate(pipeline).to_list(length=None)
             return PersistenceResponse(data=results, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
@@ -194,5 +194,5 @@ class MongoCompanyPersist:
             logging.exception(f"MongoDB connection failed: {e}")
             raise
         except Exception as e:
-            logging.exception(f"Unexpected error in add_job: {e}")
-            raise 
+            logging.exception(f"Unexpected error in _find_existing_application: {e}")
+            raise

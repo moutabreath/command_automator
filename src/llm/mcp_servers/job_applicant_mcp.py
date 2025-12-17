@@ -166,18 +166,10 @@ async def get_user_applications_for_company(user_id: str, company_name: str) -> 
             "success": False,
             "error": str(e)
         }
-            
-    except Exception as e:
-        logging.error(f"Error getting user applications: {e}", exc_info=True)
-        return {
-            "success": False,
-            "error": str(e)
-        }
-
 
 async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
     """Run the LinkedIn job scraper"""
-    container = container = MCPContainer.get_container()
+    container = MCPContainer.get_container()
     linkedin_scraper = container.linkedin_scraper()
     jobs_saver = container.job_saver()
     
@@ -185,14 +177,14 @@ async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> 
     logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
 
     job_title,location, remote, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote)
-    jobs = []
+    container = MCPContainer.get_container()
+    linkedin_scraper = container.linkedin_scraper()
     try:
         jobs = linkedin_scraper.run_scraper(job_title=job_title,
             location=location,
             remote=remote,
             forbidden_titles = forbidden_titles,
             max_pages=max_pages)
-    
     except Exception as e:
         logging.error(f"Error finding jobs from linkedin {e}", exc_info=True)
         return []
