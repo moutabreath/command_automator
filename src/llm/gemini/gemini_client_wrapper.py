@@ -34,6 +34,13 @@ class GeminiClientWrapper:
     CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"
 
     def __init__(self, cleanup_files: bool = False):
+        """
+        Initialize the Gemini client wrapper.
+        
+        Args:
+            cleanup_files: WARNING - If True, deletes ALL files from the Gemini client.
+                          Use with extreme caution in shared environments.
+        """
         api_key = os.environ.get("GOOGLE_API_KEY")
         if not api_key:
             raise ValueError("GOOGLE_API_KEY environment variable is required")
@@ -65,38 +72,42 @@ class GeminiClientWrapper:
                                  ) -> LLMAgentResponse:
 
         config = self.base_config.copy()
-        config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type
-        parts = [Part(text=prompt)]
+        config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type        
 
         if file_paths:
             prompt = f"{prompt} \n\n\n {await self._get_json_files_content_for_prompt(file_paths)}"
             parts = [Part(text=prompt)]
         # Handle single image from base64
         elif base64_decoded:
+            parts = [Part(text=prompt)]
             try:
                 image = Image.open(io.BytesIO(base64_decoded))
-                parts.append(Part(inline_data=image))
+                parts.append(Part(image=image))
+                
             except Exception as e:
                 logging.error(f"Error processing image data: {e}", exc_info=True)
                 return LLMAgentResponse(
                     f"Failed to process image: {str(e)}", 
                     LLMResponseCode.ERROR_USING_GEMINI_API
                 )
+        else:
+            parts = [Part(text=prompt)]
         try:
             response = chat.send_message(message=parts, config=config)
             if response:
                 return LLMAgentResponse(response.text, LLMResponseCode.OK)
             return LLMAgentResponse(f"Couldn't get result from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
-        except Exception as e:
-            logging.error(f"Error using Gemini: {e}", exc_info=True)
-            status = getattr(e, 'status_code', None) or (e.args[0] if e.args else None)
-            if status == 503:
-                message = getattr(e, 'message', str(e))
+        except Exception as e:            
+            status = getattr(e, 'code', None) or (e.args[0] if e.args else None)
+            message = getattr(e, 'message', str(e))
+            if status == 503:                
                 if 'overloaded' in message.lower():
                     return LLMAgentResponse(message, LLMResponseCode.MODEL_OVERLOADED)
+                logging.exception(f"Error using Gemini: {e}")
                 return LLMAgentResponse(message, LLMResponseCode.GEMINI_UNAVAILABLE)
             if status == 429:
                 return LLMAgentResponse(message, LLMResponseCode.RESOURCE_EXHAUSTED)
+            logging.exception(f"Error using Gemini: {e}")
             return LLMAgentResponse(f"Sorry, I couldn't process your request with Gemini", LLMResponseCode.ERROR_USING_GEMINI_API)
         
     def get_mcp_tool_json(self, prompt: str,

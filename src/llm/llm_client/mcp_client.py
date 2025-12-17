@@ -40,15 +40,7 @@ class SmartMCPClient:
         try:
             if not await self._is_mcp_server_ready():
                 llm_response:LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                match llm_response.code:
-                    case LLMResponseCode.OK:
-                        return MCPResponse(llm_response.text, MCPResponseCode.OK)
-                    case LLMResponseCode.MODEL_OVERLOADED:
-                        return MCPResponse(llm_response.text, MCPResponseCode.ERROR_MODEL_OVERLOADED)
-                    case LLMResponseCode.RESOURCE_EXHAUSTED:
-                        return MCPResponse(llm_response.text, MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
-                    case _:
-                        return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)        
+                return self._convert_llm_response_to_mcp_response(llm_response)
 
             async with streamablehttp_client(self.mcp_server_url) as (
                 read_stream,
@@ -72,13 +64,22 @@ class SmartMCPClient:
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
                 else:
                     agent_response = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                    if agent_response.code == LLMResponseCode.OK:
-                        return MCPResponse(agent_response.text, MCPResponseCode.OK)
-                    return MCPResponse(agent_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+                    return self._convert_llm_response_to_mcp_response(agent_response)
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
             return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
+    def _convert_llm_response_to_mcp_response(self, llm_response: LLMAgentResponse) -> MCPResponse:
+        match llm_response.code:
+            case LLMResponseCode.OK:
+                return MCPResponse(llm_response.text, MCPResponseCode.OK)
+            case LLMResponseCode.MODEL_OVERLOADED:
+                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_MODEL_OVERLOADED)
+            case LLMResponseCode.RESOURCE_EXHAUSTED:
+                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
+            case _:
+                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+
     async def _is_mcp_server_ready(self, timeout=2):
         try:
             async with aiohttp.ClientSession() as session, \
