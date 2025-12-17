@@ -54,17 +54,16 @@ async function loadScriptsManagerConfig() {
         await updateDescription();
     } catch (error) {
         console.log('Error loading config:', error);
-        scriptsManagerConfig = { selected_script: '', additional_text: '', flags: '' };
     }
 }
 
 async function saveAutomatorConfig() {
     try {
-        let scriptsManagerConfig = {}
+        let scriptsManagerConfig = {};
         scriptsManagerConfig.selected_script = document.getElementById('script-select').value;
         scriptsManagerConfig.additional_text = document.getElementById('additional-text').value;
         scriptsManagerConfig.flags = document.getElementById('flags').value;
-        const result = await window.pywebview.api.save_commands_configuration(scriptsManagerConfig);
+        await window.pywebview.api.save_commands_configuration(scriptsManagerConfig);
     } catch (error) {
         console.log('Error saving config:', error);
     }
@@ -99,9 +98,20 @@ async function executeScript() {
 
 async function initScriptsManager() {
     try {
+        // Validate required DOM elements exist
+        const requiredElements = [
+            'script-select', 'script-description', 'additional-text', 
+            'flags', 'result', 'execute-btn', 'spinner'
+        ];
+        const missingElements = requiredElements.filter(id => !document.getElementById(id));
+        if (missingElements.length > 0) {
+            console.error('Missing required DOM elements:', missingElements);
+            return false;
+        }
+        
         // Clear any previous error messages
         const resultElement = document.getElementById('result');
-        if (resultElement && resultElement.value.includes('Error:')) {
+        if (resultElement.value.includes('Error:')) {
             resultElement.value = '';
         }
 
@@ -115,10 +125,33 @@ async function initScriptsManager() {
     }
 }
 
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
+}
+
 async function initScriptsManagerEventHandlers() {
     document.getElementById('script-select').addEventListener('change', async () => {
         await updateDescription();
         await saveAutomatorConfig();
+    });
+
+    const debouncedSave = debounce(saveAutomatorConfig, 500);
+    document.getElementById('additional-text').addEventListener('input', () => {
+        debouncedSave();
+    });
+    document.getElementById('flags').addEventListener('input', () => {
+        debouncedSave();
+    });
+    document.getElementById('execute-btn').addEventListener('click', async () => {
+        await executeScript();
     });
 
     document.getElementById('additional-text').addEventListener('input', async () => {
@@ -131,6 +164,3 @@ async function initScriptsManagerEventHandlers() {
         await executeScript();
     });
 }
-
-
-

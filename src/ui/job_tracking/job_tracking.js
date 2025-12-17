@@ -52,10 +52,10 @@ async function loadJobTrackingConfig() {
         let jobTrackingConfig = await window.pywebview.api.load_job_tracking_configuration();
         
         // Check if config is empty or invalid
-        if (!jobTrackingConfig || jobTrackingConfig === '' || jobTrackingConfig === ' ') {
-            console.log('No job tracking config found');
-            return;
-        }
+        if (!jobTrackingConfig || Object.keys(jobTrackingConfig).length === 0) {
+             console.log('No job tracking config found');
+             return;
+         }  
 
         // Populate form fields
         const companyName = document.getElementById('company-name');
@@ -154,7 +154,7 @@ async function trackJobApplication() {
     const jobUrl = jobUrlInput.value.trim();
     const jobTitle = jobTitleInput.value.trim();
     const contactPerson = contactPersonInput ? contactPersonInput.value.trim() : '';
-    const contactPersonLinkdein = contactPersonLinkedinInput ? contactPersonLinkedinInput.value.trim() : '';
+    const contactPersonLinkedin = contactPersonLinkedinInput ? contactPersonLinkedinInput.value.trim() : '';
     const contactPersonEmail = contactPersonEmailInput ? contactPersonEmailInput.value.trim() : '';
     const jobState = jobStateSelect.value;
 
@@ -198,7 +198,7 @@ async function trackJobApplication() {
             jobTitle,
             jobState,
             contactPerson || null,
-            contactPersonLinkdein || null,
+            contactPersonLinkedin || null,
             contactPersonEmail || null
         );
 

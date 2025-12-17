@@ -35,11 +35,11 @@ async function saveUserConfig() {
         console.log('Error saving user config:', error);
     }
 }
+let isLoggingIn = false;
 
 async function initUserEventListeners() {
     const loginBtn = document.getElementById('login-btn');
     const userEmail = document.getElementById('user-email');
-
     if (!loginBtn) {
         console.error('Login button not found');
         return;
@@ -67,6 +67,9 @@ async function initUserEventListeners() {
 }
 
 async function registerOrLogin() {
+    if (isLoggingIn) {
+        return;
+    } 
     const emailInput = document.getElementById('user-email');
     const loginBtn = document.getElementById('login-btn');
 
@@ -102,7 +105,8 @@ async function registerOrLogin() {
         document.body.classList.add('spinner-active');
     }
 
-    try {
+    try {        
+        isLoggingIn = true;
         const response = await window.pywebview.api.login_or_register(userEmail);
         
         if (response && response.code === 'OK') {
@@ -128,12 +132,14 @@ async function registerOrLogin() {
             showAlert('Login successful!', 'success');
             console.log('User logged in successfully:', window.userId);
         } else {
-            throw new Error(response?.text || 'Login failed');
+            isLoggingIn = false;
+            throw new Error(response?.text || 'Login failed');            
         }
     } catch (error) {
         console.error('Login failed:', error);
         showAlert('Login failed. Please try again.', 'error');
-    } finally {
+        isLoggingIn = false;
+    } finally {        
         // Re-enable button
         if (loginBtn) {
             loginBtn.disabled = false;

@@ -33,7 +33,7 @@ function waitForPyWebView(maxAttempts = 20, interval = 250) {
 async function safeApiCall(apiFunction, ...args) {
     try {
         if (!isPyWebViewReady()) {
-            throw new Error('PyWebView API not available');
+            await waitForPyWebView();
         }
 
         return await apiFunction(...args);
@@ -53,8 +53,7 @@ function escapeHtml(text) {
 
 function showAlert(message, type = 'info', duration = 5000) {
     const alertContainer = document.getElementById('alert-container');
-    const alertId = 'alert-' + Date.now();
-
+    const alertId = 'alert-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
     const alertClass = {
         'success': 'alert-success',
         'error': 'alert-danger',
@@ -80,4 +79,5 @@ function showAlert(message, type = 'info', duration = 5000) {
             bsAlert.close();
         }
     }, duration);
+    
 }
