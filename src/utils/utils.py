@@ -3,15 +3,20 @@ import threading
 import logging
 from typing import TypeVar, Any, Coroutine, Optional, Callable
 
-def run_async_method(async_method, *args, **kwargs):
+
+
+T = TypeVar('T')
+
+def run_async_method(async_method: Callable[..., Coroutine[Any, Any, T]], *args, **kwargs) -> T:
+    """
+    Runs an async method synchronously. Raises on error after logging.
+    """
     try:
         return asyncio.run(async_method(*args, **kwargs))
     except Exception as e:
         logging.error(f"Error running async method {e}", exc_info=True)
         return None # Caller must handle None return
 
-
-T = TypeVar('T')
 
 class AsyncRunner:
     """
@@ -80,11 +85,12 @@ class AsyncRunner:
         
         try:
             # Block this thread (the UI thread) until result is ready
-            return future.result()
+            return future.result(timeout=30.0)  # Adjust timeout as needed
         except Exception as e:
             logging.error(f"AsyncRunner Error: {e}")
-            raise e
+            raise
 
+        
     @classmethod
     def shutdown(cls):
         """Stops the background loop gracefully."""

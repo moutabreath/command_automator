@@ -3,6 +3,7 @@ from repository.abstract_mongo_persist import AbstractMongoPersist
 from services.abstract_persistence_service import AbstractPersistenceService
 from user.repository.user_mongo_persist import UserMongoPersist
 from utils.utils import AsyncRunner
+import logging
 
 class UserRegistryResponseCode(Enum):
     OK = 1
@@ -32,17 +33,18 @@ class UserRegistryService(AbstractPersistenceService):
     def login_or_register(self, user_email: str) -> UserRegistryResponse:
         if not user_email or not user_email.strip():
             return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
-        
-        response = AsyncRunner.run_async(
-            self._login_or_register_user_async(user_email)
-        )
-        if response:
-            return UserRegistryResponse(response.user_id, UserRegistryResponseCode.OK)
-        return UserRegistryResponse("Error registering or logging in", UserRegistryResponseCode.ERROR)
+        try:
+            response: UserRegistryResponse = AsyncRunner.run_async(
+                self._login_or_register_user_async(user_email)
+            )
+            return response
+        except Exception:
+            logging.exception("Error during login or register")
+            return UserRegistryResponse(f"Error during login or register:", UserRegistryResponseCode.ERROR)
 
 
     async def _login_or_register_user_async(self, user_email) -> UserRegistryResponse:
-        response: UserRegistryResponse = await self.user_persist.create_or_update_user(user_email)
+        response = await self.user_persist.create_or_update_user(user_email)
         if response:            
-            return UserRegistryResponse(response, UserRegistryResponseCode.OK)
-        return UserRegistryResponse("Eroror registering or logging in", UserRegistryResponseCode.ERROR)
+            return UserRegistryResponse(response['_id'], UserRegistryResponseCode.OK)
+        return UserRegistryResponse("Error registering or logging in", UserRegistryResponseCode.ERROR)

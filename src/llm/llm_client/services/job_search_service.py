@@ -13,7 +13,7 @@ class JobSearchService:
         self.gemini_agent: GeminiClientWrapper = gemini_utils
         self.job_search_chat: Chat = self.gemini_agent.init_chat()        
 
-    async def get_unified_jobs(self):
+    async def get_unified_jobs(self) -> MCPResponse:
         try:
             # Upload each JSON file to Gemini
             file_paths = self.get_job_files_path()         
