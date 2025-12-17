@@ -3,6 +3,7 @@ from typing import Optional, Dict
 import uuid
 
 from repository.abstract_mongo_persist import AbstractMongoPersist
+from pymongo.errors import DuplicateKeyError
 
 
 class UserMongoPersist(AbstractMongoPersist):
@@ -18,8 +19,8 @@ class UserMongoPersist(AbstractMongoPersist):
 
     async def create_index(self):
         if self.users is not None:
-            await self.users.create_index([("email", 1)], unique=True)
-        
+            await self.users.create_index([("email", 1)], unique=True)        
+
     async def create_or_update_user(self, email: str) -> Optional[Dict]:
         # No defensive check needed - create() guarantees readiness
         existing_user = await self.get_user_by_email(email)
@@ -34,11 +35,14 @@ class UserMongoPersist(AbstractMongoPersist):
         }
         try:
             await self.users.insert_one(user)
-            return await self.get_user(user_id)
+            return user
+        except DuplicateKeyError:
+            # Another process created the user concurrently
+            return await self.get_user_by_email(email)
         except Exception as e:
             logging.error(f"Error creating user {email}: {e}")
             return None
-
+    
     async def get_user(self, user_id: str) -> Optional[Dict]:
         """Get user by ID"""
         return await self.users.find_one({"_id": user_id})
@@ -48,12 +52,15 @@ class UserMongoPersist(AbstractMongoPersist):
         return await self.users.find_one({"email": email})
 
     async def update_user_email(self, user_id: str, new_email: str) -> bool:
-        """Update user email"""
-        result = await self.users.update_one(
-            {"_id": user_id},
-            {"$set": {"email": new_email}}
-        )
-        return result.modified_count > 0
+        try:
+            result = await self.users.update_one(
+                {"_id": user_id},
+                {"$set": {"email": new_email}}
+            )
+            return result.modified_count > 0
+        except DuplicateKeyError:
+            logging.warning(f"Cannot update user {user_id}: email {new_email} already exists")
+            return False
 
     async def delete_user(self, user_id: str) -> bool:
         """Delete user and all their applications"""
