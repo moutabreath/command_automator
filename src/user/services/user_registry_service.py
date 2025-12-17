@@ -30,12 +30,10 @@ class UserRegistryService(AbstractPersistenceService):
         # 2. Return the fully formed service
         return cls(user_persist)
 
-    def login_or_register(self, user_email: str) -> UserRegistryResponse:
-        if not user_email or not user_email.strip():
-            return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
+    def login_or_register(self, user_email: str) -> UserRegistryResponse:        
         try:
             response: UserRegistryResponse = AsyncRunner.run_async(
-                self._login_or_register_user_async(user_email)
+                self.login_or_register_user_async(user_email)
             )
             return response
         except Exception:
@@ -43,7 +41,9 @@ class UserRegistryService(AbstractPersistenceService):
             return UserRegistryResponse(f"Error during login or register:", UserRegistryResponseCode.ERROR)
 
 
-    async def _login_or_register_user_async(self, user_email) -> UserRegistryResponse:
+    async def login_or_register_user_async(self, user_email) -> UserRegistryResponse:
+        if not user_email or not user_email.strip():
+            return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
         response = await self.user_persist.create_or_update_user(user_email)
         if response:            
             return UserRegistryResponse(response['_id'], UserRegistryResponseCode.OK)
