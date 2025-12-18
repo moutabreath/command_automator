@@ -94,16 +94,16 @@ def add_line_with_link(doc, line, url, p = None):
     link_name = "link"
     if 'linkedin' in line.lower():
         link_name = "LinkedIn"
-    if 'github' in line.lower():
+    elif 'github' in line.lower():
         link_name = get_github_project_name(url)
     line = line.replace(url, "")
     if p is None:
-        p = doc.add_paragraph(line)
+        p = doc.add_paragraph()
         p.paragraph_format.space_before = Pt(0)
         p.paragraph_format.space_after = Pt(0)
-    p.add_run(line)
+    run = p.add_run(line)
+    run.font.size = Pt(9)
     add_link(link_name, url, p)
-
 
 def get_github_project_name(url):
     # Regex pattern to find the last part of the URL after the last '/'

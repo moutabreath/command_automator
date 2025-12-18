@@ -132,34 +132,9 @@ async def get_user_applications_for_company(user_id: str, company_name: str) -> 
     """
     try:        
         container = MCPContainer.get_container()
-        company_persist = container.company_mongo_persist()
-        
-        # Get the application data
-        response = await company_persist.get_application(user_id, company_name.lower())
-        
-        from repository.abstract_mongo_persist import PersistenceErrorCode
-        
-        if response.code == PersistenceErrorCode.SUCCESS:
-            return {
-                "success": True,
-                "company_name": company_name,
-                "user_id": user_id,
-                "application_data": response.data
-            }
-        elif response.code == PersistenceErrorCode.NOT_FOUND:
-            return {
-                "success": True,
-                "company_name": company_name,
-                "user_id": user_id,
-                "application_data": None,
-                "message": "No applications found for this company"
-            }
-        else:
-            return {
-                "success": False,
-                "error": response.error_message or "Unknown error occurred"
-            }
-            
+        job_service = container.company_mcp_service()
+        return await job_service.get_user_applications_for_company(user_id, company_name)
+
     except Exception as e:
         logging.error(f"Error getting user applications: {e}", exc_info=True)
         return {
