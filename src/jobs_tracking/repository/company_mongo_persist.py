@@ -5,13 +5,11 @@ import pymongo.errors as mongo_errors
 
 from jobs_tracking.models import JobApplicationState
 
-from repository.abstract_mongo_persist import AbstractMongoPersist, PersistenceErrorCode, PersistenceResponse
+from repository.abstract_mongo_persist import PersistenceErrorCode, PersistenceResponse
+from repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
 
+class CompanyMongoPersist(AbstractOwnerMongoPersist):
 
-class CompanyMongoPersist(AbstractMongoPersist):
-    def __init__(self, connection_string: str, db_name: str):
-        super().__init__(connection_string, db_name)
-        self.job_applications = None
 
     def _setup_collections(self):
         self.job_applications = self.async_db.job_applications

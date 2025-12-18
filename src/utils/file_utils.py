@@ -75,6 +75,8 @@ USER_CONFIG_FILE  = USER_BASE_DIR / 'config'/ 'user-config.json'
 JOB_TRACKING_BASE_DIR = BASE_DIR / 'jobs_tracking'
 JOB_TRACKING_CONFIG_FILE  = JOB_TRACKING_BASE_DIR / 'config'/ 'job-tracking.json'
 
+MONGO_DB_CONFIG_FILE = BASE_DIR / 'config' / 'mongo_config.json'
+
 T = TypeVar('T', bound=BaseModel)
 
 async def save_file(file_path: str | Path, content: str) -> bool:
@@ -127,12 +129,12 @@ def serialize_objects(objects: List[T]) -> str | None:
 async def read_json_file(file_path: str) -> dict | None:
     data = await read_text_file(file_path)
     if (data == None):
-        return None
+        return {}
     try:
         return json.loads(data)
     except (json.JSONDecodeError, OSError) as e:
         logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
-        return None
+        return {}
     
 async def read_text_file(file_path: str | Path) -> str | None:
     content: str = ""
@@ -143,4 +145,4 @@ async def read_text_file(file_path: str | Path) -> str | None:
         return content
     except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
         logging.error(f"Error reading file: {file_path} - {e}", exc_info=True)
-        return None
+        return {}

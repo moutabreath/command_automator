@@ -4,31 +4,23 @@ import pymongo.errors as mongo_errors
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from repository.abstract_mongo_persist import PersistenceErrorCode, PersistenceResponse
+from repository.abstract_mongo_persist import AbstractMongoPersist, PersistenceErrorCode, PersistenceResponse
 
-class MongoCompanyPersist:
-    def __init__(self, connection_string: str, db_name: str):
-        self.connection_string = connection_string
-        self.db_name = db_name
-        
-        # State indicators
-        self.async_client = None
-        self.async_db = None
-        logging.getLogger("pymongo").setLevel(logging.WARNING)
-
+class MCPCompanyMongoPersist(AbstractMongoPersist):
     
     async def initialize_connection(self):
         """
         Internal initialization logic. 
         """
+        await super().initialize_connection()
 
-        self.async_client = AsyncIOMotorClient(
+        self.job_applications = self.async_db.job_applications
+
+    def _init_motor_client(self):
+         self.async_client = AsyncIOMotorClient(
             self.connection_string
         )
-        
-        self.async_db = self.async_client[self.db_name]
-        
-        self.job_applications = self.async_db.job_applications
+
     
     async def close(self):
         """Close MongoDB connection."""

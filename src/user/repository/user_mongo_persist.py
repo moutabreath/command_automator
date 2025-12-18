@@ -2,16 +2,12 @@ import logging
 from typing import Optional, Dict
 import uuid
 
-from repository.abstract_mongo_persist import AbstractMongoPersist
 from pymongo.errors import DuplicateKeyError
 
+from repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
 
-class UserMongoPersist(AbstractMongoPersist):
-    def __init__(self, connection_string: str, db_name: str):
-        super().__init__(connection_string, db_name)
-        # Explicitly None to catch uninitialized usage
-        self.users = None
-        self.applications = None
+
+class UserMongoPersist(AbstractOwnerMongoPersist):
 
     def _setup_collections(self):
         self.users = self.async_db.users

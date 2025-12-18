@@ -1,7 +1,8 @@
 from enum import Enum
-from repository.abstract_mongo_persist import AbstractMongoPersist
 from services.abstract_persistence_service import AbstractPersistenceService
+from services.configuration_service import ConfigurationService
 from user.repository.user_mongo_persist import UserMongoPersist
+from utils import file_utils
 from utils.utils import AsyncRunner
 import logging
 
@@ -22,10 +23,10 @@ class UserRegistryService(AbstractPersistenceService):
         super().__init__(self.user_persist)
 
     @classmethod
-    async def create(cls):
+    async def create(cls, mongo_connection_string, db_name):
         # 1. Create the initialized persistence layer
         # This will fail if DB is down or logic is wrong, preventing "Zombie" services
-        user_persist = await UserMongoPersist.create()
+        user_persist = await UserMongoPersist.create(mongo_connection_string, db_name)
         
         # 2. Return the fully formed service
         return cls(user_persist)

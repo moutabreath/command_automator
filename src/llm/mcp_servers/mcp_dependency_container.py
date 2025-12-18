@@ -1,19 +1,19 @@
 import logging
-from dependency_injector import containers, providers
+from dependency_injector import providers
 
-from llm.mcp_servers.services.mongo_company_persist import MongoCompanyPersist
+from llm.mcp_servers.persistence.mcp_company_mongo_persist import MCPCompanyMongoPersist
 from llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
 from llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
 from llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
+from llm.mcp_servers.services.company_mcp_service import CompanyMCPService
 from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
-from jobs_tracking.services.job_tracking_service import JobTrackingService
 from utils.dependency_container import Container
 
 class MCPContainer(Container):
     
     # MongoDB persistence
-    company_mongo_persist = providers.Resource(
-        MongoCompanyPersist,
+    mcp_mongo_company_persist = providers.Resource(
+        MCPCompanyMongoPersist,
         connection_string=Container.config.mongo.connection_string,
         db_name=Container.config.mongo.db_name
     )
@@ -24,10 +24,10 @@ class MCPContainer(Container):
     glassdoor_scraper = providers.Factory(GlassdoorJobsScraper)
     job_saver = providers.Factory(JobsSaver)
     
-    # Job tracking service with injected dependency
-    job_tracking_service = providers.Factory(
-        JobTrackingService,
-        application_persist=company_mongo_persist
+    # Company MCP Service
+    company_mcp_service = providers.Factory(
+        CompanyMCPService,
+        company_persist=mcp_mongo_company_persist
     )
     
     @classmethod
@@ -41,8 +41,9 @@ class MCPContainer(Container):
             # Initialize resources first
             container.init_resources()
             
+            company_mcp_service = container.company_mcp_service()
             # Then initialize MongoDB connection
-            await container.company_mongo_persist().initialize_connection()
+            await company_mcp_service.initialize()
             
             cls._container = container
             logging.info("MCP DI container initialized successfully")

@@ -4,8 +4,10 @@ from jobs_tracking.services.job_tracking_service import JobTrackingService
 from llm.llm_api import LLMApi
 from llm.services.llm_service import LLMService
 from scripts_manager.scripts_manager_api import ScriptsManagerApi
+from services.configuration_service import ConfigurationService
 from user.services.user_registry_service import UserRegistryService
 from user.user_api import UserApi
+from utils import file_utils
 from utils.utils import AsyncRunner
 import webview
 import sys
@@ -88,14 +90,28 @@ async def initialize_apis():
     llm_service.run_mcp_server()
     llm_api = LLMApi(llm_service)
 
-    user_registry_service = await UserRegistryService.create()
-    
-    user_api = UserApi(user_registry_service)
+    user_api = None
+    job_tracking_api = None
 
-    job_tracking_service = await JobTrackingService.create()
-    job_tracking_api = JobTrackingApi(job_tracking_service)
+    configuration_service = ConfigurationService(file_utils.MONGO_DB_CONFIG_FILE)
+    mongo_config = await configuration_service.load_configuration_async()
+    mongo_connection_string = mongo_config['connection_string']  if 'connection_string' in mongo_config else None
+    db_name = mongo_config['db_name']  if 'db_name' in mongo_config else None
+    try:
+        if not (db_name) or not (mongo_connection_string):
+            logging.error("MongoDB configuration is missing")
+            raise ValueError("MongoDB configuration is missing")
+        
+        user_registry_service = await UserRegistryService.create(mongo_connection_string=mongo_connection_string, db_name=db_name)
+        user_api = UserApi(user_registry_service)
 
-    return scripts_manager_api, llm_api, user_api, job_tracking_api
+        job_tracking_service = await JobTrackingService.create(mongo_connection_string=mongo_connection_string, db_name=db_name)
+        job_tracking_api = JobTrackingApi(job_tracking_service)
+
+        return scripts_manager_api, llm_api, user_api, job_tracking_api
+    except ValueError as e:
+        logging.error(f"Error initializing APIs: {e}")
+        return scripts_manager_api, llm_api, user_api, job_tracking_api
 
 def main():
     try:

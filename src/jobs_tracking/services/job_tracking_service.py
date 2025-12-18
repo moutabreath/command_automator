@@ -25,10 +25,10 @@ class JobTrackingService(AbstractPersistenceService):
         super().__init__(self.application_persist)
 
     @classmethod
-    async def create(cls):
+    async def create(cls, mongo_connection_string, db_name):
         # 1. Create the initialized persistence layer
         # This will fail if DB is down or logic is wrong, preventing "Zombie" services
-        company_persist = await CompanyMongoPersist.create()
+        company_persist = await CompanyMongoPersist.create(mongo_connection_string, db_name)
         return cls(company_persist)
 
     
