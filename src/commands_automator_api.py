@@ -1,10 +1,11 @@
 import logging
+import os
+from dotenv import load_dotenv
 from jobs_tracking.job_tracking_api import JobTrackingApi
 from jobs_tracking.services.job_tracking_service import JobTrackingService
 from llm.llm_api import LLMApi
 from llm.services.llm_service import LLMService
 from scripts_manager.scripts_manager_api import ScriptsManagerApi
-from services.configuration_service import ConfigurationService
 from user.services.user_registry_service import UserRegistryService
 from user.user_api import UserApi
 from utils import file_utils
@@ -58,16 +59,24 @@ class CommandsAutomatorApi:
     
     
     def load_user_config(self):
+        if self.user_api is None:
+            return {"error": "User API not available - MongoDB configuration missing"}
         return self.user_api.load_configuration()
     
     def login_or_register(self, email:str):
+        if self.user_api is None:
+            return {"error": "User API not available - MongoDB configuration missing"}
         return self.user_api.login_or_register(email)
     
 
     def load_job_tracking_configuration(self):
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.load_configuration()
     
     def save_job_tracking_configuration(self, config):
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.save_configuration(config)
     
     
@@ -77,6 +86,8 @@ class CommandsAutomatorApi:
     
     def track_job_application(self, user_id:str, company_name:str, job_url:str, job_title:str, state:str,
                               contact_name:str, contact_linkedin:str, contact_email:str):
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state,
                                                          contact_name, contact_linkedin, contact_email)
 
@@ -93,25 +104,24 @@ async def initialize_apis():
     user_api = None
     job_tracking_api = None
 
-    configuration_service = ConfigurationService(file_utils.MONGO_DB_CONFIG_FILE)
-    mongo_config = await configuration_service.load_configuration_async()
-    mongo_connection_string = mongo_config['connection_string']  if 'connection_string' in mongo_config else None
-    db_name = mongo_config['db_name']  if 'db_name' in mongo_config else None
-    try:
-        if not (db_name) or not (mongo_connection_string):
-            logging.error("MongoDB configuration is missing")
-            raise ValueError("MongoDB configuration is missing")
-        
-        user_registry_service = await UserRegistryService.create(mongo_connection_string=mongo_connection_string, db_name=db_name)
-        user_api = UserApi(user_registry_service)
+    load_dotenv(dotenv_path=file_utils.BASE_DIR / '.env.local')
+    
+    mongo_connection_string = os.getenv('MONGODB_URI')
+    db_name = os.getenv('MONGODB_DB_NAME')
+    
+    if not db_name or not mongo_connection_string:
+        logging.warning("MongoDB configuration not found in .env.local. Database-related features will be disabled.")
+    else:
+        try:
+            user_registry_service = await UserRegistryService.create(mongo_connection_string=mongo_connection_string, db_name=db_name)
+            user_api = UserApi(user_registry_service)
 
-        job_tracking_service = await JobTrackingService.create(mongo_connection_string=mongo_connection_string, db_name=db_name)
-        job_tracking_api = JobTrackingApi(job_tracking_service)
+            job_tracking_service = await JobTrackingService.create(mongo_connection_string=mongo_connection_string, db_name=db_name)
+            job_tracking_api = JobTrackingApi(job_tracking_service)
+        except Exception as e:
+            logging.error(f"Error initializing database APIs: {e}")
 
-        return scripts_manager_api, llm_api, user_api, job_tracking_api
-    except ValueError as e:
-        logging.error(f"Error initializing APIs: {e}")
-        return scripts_manager_api, llm_api, user_api, job_tracking_api
+    return scripts_manager_api, llm_api, user_api, job_tracking_api
 
 def main():
     try:

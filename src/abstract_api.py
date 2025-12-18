@@ -11,10 +11,10 @@ class ApiResponseCode(Enum):
     ERROR_RUNNING_ASYNC_METHOD = 2
 
 class ApiResponse:
-    def __init__(self, text: str, code: Enum):
+    def __init__(self, text: str, code: ApiResponseCode):
         self.text = text
         self.code = code
-
+        
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON-serializable representation."""
         return {
