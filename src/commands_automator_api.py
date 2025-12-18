@@ -104,7 +104,7 @@ async def initialize_apis():
     user_api = None
     job_tracking_api = None
 
-    load_dotenv(dotenv_path=file_utils.BASE_DIR / '.env.local')
+    load_dotenv('.env.local')
     
     mongo_connection_string = os.getenv('MONGODB_URI')
     db_name = os.getenv('MONGODB_DB_NAME')

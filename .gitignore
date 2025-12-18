@@ -24,3 +24,4 @@ src/llm/config/llm-config.json
 src/llm/mcp_servers/resume/resources/Tal_Druckmann.txt
 src/user/config/user-config.json
 src/jobs_tracking/config/job-tracking.json
+publish/build/*
