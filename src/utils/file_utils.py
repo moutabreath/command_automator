@@ -140,7 +140,6 @@ async def read_text_file(file_path: str | Path) -> str | None:
     try:
         async with aiofiles.open(file_path, 'r', encoding="utf-8") as file:
             content = await file.read()
-        return content
     except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
         logging.error(f"Error reading file: {file_path} - {e}", exc_info=True)
-        return {}
+    return content
