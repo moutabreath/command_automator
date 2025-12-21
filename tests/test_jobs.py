@@ -1,11 +1,22 @@
 import pytest
-import mongomock
-
 from user.services.user_registry_service import UserRegistryService
 from jobs_tracking.services.job_tracking_service import JobTrackingService, JobTrackingResponseCode
 from jobs_tracking.models import JobApplicationState
 
 from tests.mockups.mongo_mockups import MockCompanyMongoPersist, MockUserMongoPersist
+import mongomock
+
+@pytest.fixture
+def db():
+    return mongomock.MongoClient().job_tracker_test
+
+@pytest.fixture(autouse=True)
+def cleanup_db(db):
+    """Clean up database after each test"""
+    yield  # This runs the test
+    # Cleanup after test
+    db.users.drop()
+    db.job_applications.drop()
 
 
 @pytest.fixture
@@ -18,10 +29,11 @@ def job_service(db):
     mock_persist = MockCompanyMongoPersist(db)
     return JobTrackingService(mock_persist)
 
-def test_track_and_retrieve_dummy_job(user_service, job_service, db):
+@pytest.mark.asyncio
+async def test_track_and_retrieve_dummy_job(user_service, job_service, db):
     # 1. Register
     email = "dummy.user@example.com"
-    auth_res = user_service.login_or_register(email)
+    auth_res = await user_service.login_or_register_user_async(email)
     user_id = auth_res.user_id
     
     # 2. Track
@@ -30,7 +42,7 @@ def test_track_and_retrieve_dummy_job(user_service, job_service, db):
     status = JobApplicationState.APPLIED
     url = "http://dummy.company/jobs/1"
     
-    job_res = job_service.add_or_update_position(
+    job_res = await job_service.add_or_update_position_async(
         user_id=user_id,
         company_name=company,
         job_url=url,
@@ -41,53 +53,39 @@ def test_track_and_retrieve_dummy_job(user_service, job_service, db):
         contact_email="john@example.com"
     )
     
+    # Validate job_res has valid response
+    assert job_res is not None
     assert job_res.code == JobTrackingResponseCode.OK
+    assert job_res.job is not None
     assert job_res.job['job_title'] == position
-    
-    # 3. Ensure you can retrieve it
-    saved_app = db.job_applications.find_one({"user_id": user_id, "company_name": "dummy company"})
-    assert saved_app is not None
-    assert len(saved_app['jobs']) == 1
-    assert saved_app['jobs'][0]['job_title'] == position
-    assert user_id is not None
-    assert len(user_id) > 0
-    
-    # Verify persistence
-    saved_user = api.db.users.find_one({'email': email})
-    assert saved_user is not None
-    assert str(saved_user['_id']) == user_id
+    assert job_res.job['job_url'] == url
+    assert job_res.job['job_state'] == status.value
+    assert job_res.job['contact_name'] == "John"
 
-def test_track_and_retrieve_dummy_job(api):
-    """Test tracking a dummy job and ensuring it can be retrieved."""
-    # 1. Register a user
-    email = "dummy.user@example.com"
-    auth_res = api.login_or_register(email)
-    user_id = auth_res['text']
+@pytest.mark.asyncio
+async def test_get_applications(user_service, job_service):
+    # 1. Register user and add job
+    email = "test.user@example.com"
+    auth_res = await user_service.login_or_register_user_async(email)
+    user_id = auth_res.user_id
     
-    # 2. Track a dummy job
-    company = "Dummy Company"
-    position = "Software Engineer"
-    status = "APPLIED"
-    url = "http://dummy.company/jobs/1"
+    company = "Test Company"
+    position = "Developer"
     
-    job_res = api.track_job_application(
+    await job_service.add_or_update_position_async(
         user_id=user_id,
-        company=company,
-        url=url,
-        title=position,
-        status=status
+        company_name=company,
+        job_url="http://test.com/job",
+        job_title=position,
+        job_state=JobApplicationState.APPLIED,
+        contact_name="Jane",
+        contact_linkedin="linkedin.com/jane",
+        contact_email="jane@test.com"
     )
     
-    assert job_res['code'] == 'OK'
-    assert '_id' in job_res
-    assert job_res['company'] == company
-    job_id = job_res['_id']
-    
-    # 3. Ensure you can retrieve it
-    retrieved_job = api.get_job(job_id)
-    
-    assert retrieved_job is not None
-    assert retrieved_job['_id'] == job_id
-    assert retrieved_job['company'] == company
-    assert retrieved_job['position_title'] == position
-    assert retrieved_job['user_id'] == user_id
+    # 2. Test job retrieval
+    positions = await job_service.get_positions(user_id, company)
+    assert positions is not None
+    assert positions.code == JobTrackingResponseCode.OK
+    assert len(positions.jobs) == 1
+    assert positions.jobs[0]['job_title'] == position

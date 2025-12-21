@@ -33,6 +33,9 @@ dependencies = [
     "certifi>=2025.8.3",
 ]
 
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+
 [tool.setuptools]
 package-dir = {"" = "src"}
 package-data = { "commands_automator" = ["user/config/user_config.json", "jobs_tracking/config/job_tracking_config.json"] }

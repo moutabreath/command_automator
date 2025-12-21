@@ -2,7 +2,7 @@ import pytest
 import mongomock
 import uuid
 from datetime import datetime, timezone
-from typing import Optional, Dict, Any
+from typing import List, Optional, Dict, Any
 
 from jobs_tracking.models import JobApplicationState
 from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
@@ -60,7 +60,7 @@ class MockCompanyMongoPersist:
             self.job_applications.insert_one(doc)
         else:
             jobs = doc.get("jobs", [])
-            existing_idx = next((i for i, j in enumerate(jobs) if j["job_url"] == job_url), -1)
+            existing_idx = next((index for index, job in enumerate(jobs) if job["job_url"] == job_url), -1)
             if existing_idx >= 0:
                 jobs[existing_idx].update(job_entry)
             else:
@@ -72,3 +72,9 @@ class MockCompanyMongoPersist:
             )
             
         return PersistenceResponse(data=job_entry, code=PersistenceErrorCode.SUCCESS)
+
+    async def get_positions(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
+        doc = self.job_applications.find_one({"user_id": user_id, "company_name": company_name})
+        if doc:
+            return PersistenceResponse(data=doc.get("jobs", []), code=PersistenceErrorCode.SUCCESS)
+        return PersistenceResponse([], code=PersistenceErrorCode.SUCCESS)
