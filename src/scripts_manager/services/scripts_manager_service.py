@@ -7,7 +7,7 @@ import subprocess
 import chardet
 from typing import List, Dict, Optional, Tuple, Union
 
-from utils.file_utils import SCRIPTS_CONFIG_FILE, SCRIPTS_DIR
+from utils.file_utils import USER_SCRIPTS_CONFIG_FILE, USER_SCRIPTS_DIR
 
 
 class ScriptsManagerService:
@@ -18,7 +18,7 @@ class ScriptsManagerService:
 
     def load_scripts_config(self) -> None:
         try:  
-            with open(f'{SCRIPTS_CONFIG_FILE}') as f:  
+            with open(f'{USER_SCRIPTS_CONFIG_FILE}') as f:  
                 data = json.load(f)  
         except (FileNotFoundError, OSError) as e:
             logging.error("Error loading scripts_config.json", exc_info=True)  
@@ -55,7 +55,7 @@ class ScriptsManagerService:
         files = []
         try:            
             for ext in extensions:
-                files.extend(glob.glob(f'{SCRIPTS_DIR}/**/{ext}', recursive=True))
+                files.extend(glob.glob(f'{USER_SCRIPTS_DIR}/**/{ext}', recursive=True))
 
         except Exception as e:
             logging.error(f"Error loading scripts: {e}", exc_info=True)

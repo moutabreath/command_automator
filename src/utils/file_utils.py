@@ -1,79 +1,25 @@
 import json
 import logging
-import sys
+import os
 from pathlib import Path
 from typing import List, Any, TypeVar
 import aiofiles
 from pydantic import BaseModel
 
-def find_project_root(marker_filename: str) -> Path:
-    """
-    Traverse up the directory tree until a marker file is found.
-    Uses the directory of the currently executing script as a starting point.
-    """
-    # Start search from the directory of this file
-    current_dir = Path(__file__).resolve().parent
-    
-    for parent in [current_dir] + list(current_dir.parents):
-        if (parent / marker_filename).exists():
-            return parent
-    
-    # Fallback/error if marker not found
-    logging.error(f"Error: Could not find project root marker '{marker_filename}'")
-    raise FileNotFoundError(
-        f"Could not find project root marker '{marker_filename}' "
-        f"starting from {current_dir}"
-    )
 
-# Determine project root in both dev and frozen (pyinstaller) modes.
-try:
-    if getattr(sys, 'frozen', False):
-        # When frozen by PyInstaller, resources are extracted to _MEIPASS
-        meipass = getattr(sys, '_MEIPASS', None)
-        if meipass:
-            PROJECT_ROOT = Path(meipass)
-        else:
-            # Fallback to directory of the executable
-            PROJECT_ROOT = Path(sys.executable).resolve().parent
-    else:
-        # Use a known file like 'README.md' to find repo root in dev
-        try:
-            PROJECT_ROOT = find_project_root('README.md')
-        except FileNotFoundError:
-            # Fallback to two levels up from this file if marker not present
-            PROJECT_ROOT = Path(__file__).resolve().parents[2]
-except Exception as e:
-    logging.error(f"Error determining PROJECT_ROOT: {e}")
-    PROJECT_ROOT = Path(__file__).resolve().parent
+BASE_DIR = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator'
+CONFIG_FILE = BASE_DIR / 'commands_automator.config'
 
-if (PROJECT_ROOT / 'src').exists():
-    BASE_DIR = PROJECT_ROOT / 'src'
-else:
-    BASE_DIR = PROJECT_ROOT / 'app'
+USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts' 
+USER_SCRIPTS_CONFIG_FILE = USER_SCRIPTS_DIR / 'config' / 'scripts_config.json'
 
-SCRIPTS_MANAGER_BASE_DIR = BASE_DIR / 'scripts_manager'
-
-SCRIPTS_MANAGER_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-executor-config.json'
-SCRIPTS_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
-SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
-
-LLM_BASE_DIR = BASE_DIR / 'llm'
-
-LLM_CONFIG_FILE = LLM_BASE_DIR / 'config' / 'llm-config.json'
-
-RESUME_RESOURCES_DIR =  LLM_BASE_DIR / 'mcp_servers' /  'resume' / 'resources'
+RESUME_RESOURCES_DIR =  BASE_DIR / 'mcp_servers' /  'resume' / 'resources'
 RESUME_ADDITIONAL_FILES_DIR = RESUME_RESOURCES_DIR / 'additional_files'
 
+JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
+GLASSDOOR_SELECTORS_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'glassdoor_selectors.json'
 
-JOB_FILE_DIR = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'results'
-JOB_SEARCH_CONFIG_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
-GLASSDOOR_SELECTORS_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'glassdoor_selectors.json'
 
-USER_BASE_DIR = BASE_DIR / 'user'
-USER_CONFIG_FILE  = USER_BASE_DIR / 'config'/ 'user-config.json'
-
-JOB_TRACKING_BASE_DIR = BASE_DIR / 'jobs_tracking'
-JOB_TRACKING_CONFIG_FILE  = JOB_TRACKING_BASE_DIR / 'config'/ 'job-tracking.json'
 
 T = TypeVar('T', bound=BaseModel)
 

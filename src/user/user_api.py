@@ -3,7 +3,6 @@ from typing import Dict, Any
 
 from abstract_api import AbstractApi, ApiResponse
 from user.services.user_registry_service import UserRegistryResponseCode, UserRegistryService
-from utils.file_utils import USER_CONFIG_FILE
 
 class UserApiResponseCode(Enum):
     OK = 1
@@ -16,7 +15,6 @@ class UserApiResponse(ApiResponse):
 class UserApi(AbstractApi):
 
     def __init__(self, user_registry_service: UserRegistryService):
-        super().__init__(USER_CONFIG_FILE)
         self.user_registry_service = user_registry_service   
 
 

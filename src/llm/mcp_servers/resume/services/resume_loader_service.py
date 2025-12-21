@@ -51,7 +51,7 @@ class ResumeLoaderService:
     
     async def get_job_description(self) -> str:
         file_path: Path = file_utils.RESUME_ADDITIONAL_FILES_DIR / 'job_description.txt'
-        job_desc: str = await file_utils.read_text_file(file_path)
+        job_desc: str = await file_utils.read_text_file(file_path, force_refresh=True)
         if not job_desc:
             logging.error(f"No job description file found at {file_path}")
             return ""

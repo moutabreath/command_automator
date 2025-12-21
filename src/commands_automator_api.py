@@ -1,6 +1,9 @@
 import logging
 import os
 from dotenv import load_dotenv
+import configparser
+
+
 from jobs_tracking.job_tracking_api import JobTrackingApi
 from jobs_tracking.services.job_tracking_service import JobTrackingService
 from llm.llm_api import LLMApi
@@ -15,13 +18,43 @@ import sys
 
 from utils.logger_config import setup_logging
 
+from utils.file_utils import CONFIG_FILE
+
 class CommandsAutomatorApi:
 
     def __init__(self, scripts_manager_api: ScriptsManagerApi, llm_api: LLMApi, user_api: UserApi, job_tracking_api: JobTrackingApi):
         self.scripts_manager_api = scripts_manager_api
         self.llm_api = llm_api
         self.user_api = user_api
-        self.job_tracking_api = job_tracking_api        
+        self.job_tracking_api = job_tracking_api
+        self.config_path = str(CONFIG_FILE)
+        
+
+    def save_config(self, config_data):
+        """Save unified configuration to commands_automator.config"""
+        config = configparser.ConfigParser()
+        
+        # Parse the config_data and write to sections
+        for section, values in config_data.items():
+            config[section] = values
+            
+        os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
+        with open(self.config_path, 'w') as f:
+            config.write(f)
+            
+    def load_config(self):
+        """Load unified configuration from commands_automator.config"""
+        if not os.path.exists(self.config_path):
+            return {}
+            
+        config = configparser.ConfigParser()
+        config.read(self.config_path)
+        
+        result = {}
+        for section in config.sections():
+            result[section] = dict(config[section])
+        return result
+
 
     def load_scripts(self):
         return self.scripts_manager_api.load_scripts()
@@ -30,12 +63,15 @@ class CommandsAutomatorApi:
         return self.scripts_manager_api.get_script_description(script_name)
         
     def load_commands_configuration(self):
-        """Load and serialize commands configuration"""
-        return self.scripts_manager_api.load_configuration()
+        """Load commands configuration from unified config"""
+        config = self.load_config()
+        return config.get('scripts_manager', {})
 
     def save_commands_configuration(self, config):
-        """Save commands configuration after ensuring it's serializable"""
-        return self.scripts_manager_api.save_configuration(config)
+        """Save commands configuration to unified config"""
+        full_config = self.load_config()
+        full_config['scripts_manager'] = config
+        self.save_config(full_config)
         
     def execute_script(self, script_name, additional_text, flags):
         return self.scripts_manager_api.execute_script(script_name, additional_text, flags)
@@ -46,10 +82,15 @@ class CommandsAutomatorApi:
         return self.llm_api.call_llm(prompt, image_data, output_file_path, user_id)
     
     def load_llm_configuration(self):
-       return self.llm_api.load_configuration()
+        """Load LLM configuration from unified config"""
+        config = self.load_config()
+        return config.get('llm', {})
 
     def save_llm_configuration(self, config):
-        return self.llm_api.save_configuration(config)
+        """Save LLM configuration to unified config"""
+        full_config = self.load_config()
+        full_config['llm'] = config
+        self.save_config(full_config)
     
     def select_folder(self):
         if not webview.windows:
@@ -59,9 +100,11 @@ class CommandsAutomatorApi:
     
     
     def load_user_config(self):
+        """Load user configuration from unified config"""
         if self.user_api is None:
             return {"error": "User API not available - MongoDB configuration missing"}
-        return self.user_api.load_configuration()
+        config = self.load_config()
+        return config.get('user', {})
     
     def login_or_register(self, email:str):
         if self.user_api is None:
@@ -70,14 +113,19 @@ class CommandsAutomatorApi:
     
 
     def load_job_tracking_configuration(self):
+        """Load job tracking configuration from unified config"""
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.load_configuration()
+        config = self.load_config()
+        return config.get('job_tracking', {})
     
     def save_job_tracking_configuration(self, config):
+        """Save job tracking configuration to unified config"""
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.save_configuration(config)
+        full_config = self.load_config()
+        full_config['job_tracking'] = config
+        self.save_config(full_config)
     
     
     def get_job_application_states(self):

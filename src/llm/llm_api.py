@@ -5,8 +5,6 @@ from abstract_api import AbstractApi, ApiResponse
 from utils.utils import run_async_method
 from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
 from llm.services.llm_service import LLMService
-from llm.mcp_servers.job_applicant_mcp import MCPRunner
-from utils.file_utils import LLM_CONFIG_FILE
 from typing import Dict, Any
 
 class LLMApiResponseCode(Enum):
@@ -24,7 +22,6 @@ class LLMApiResponse(ApiResponse):
 class LLMApi(AbstractApi):
 
     def __init__(self,llm_service: LLMService):
-        super().__init__(LLM_CONFIG_FILE)
         self.llm_service = llm_service
   
         
