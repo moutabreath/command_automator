@@ -28,6 +28,24 @@ class CommandsAutomatorApi:
         self.user_api = user_api
         self.job_tracking_api = job_tracking_api
         self.config_path = str(CONFIG_FILE)
+        self._config_cache = None
+        
+    def _load_config_once(self):
+        """Load configuration once and cache it"""
+        if self._config_cache is None:
+            if not os.path.exists(self.config_path):
+                self._config_cache = {}
+            else:
+                config = configparser.ConfigParser()
+                config.read(self.config_path)
+                self._config_cache = {}
+                for section in config.sections():
+                    self._config_cache[section] = dict(config[section])
+        return self._config_cache
+        
+    def _invalidate_config_cache(self):
+        """Invalidate config cache when config is saved"""
+        self._config_cache = None
         
 
     def save_config(self, config_data):
@@ -41,19 +59,13 @@ class CommandsAutomatorApi:
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, 'w') as f:
             config.write(f)
+        
+        # Invalidate cache after saving
+        self._invalidate_config_cache()
             
     def load_config(self):
         """Load unified configuration from commands_automator.config"""
-        if not os.path.exists(self.config_path):
-            return {}
-            
-        config = configparser.ConfigParser()
-        config.read(self.config_path)
-        
-        result = {}
-        for section in config.sections():
-            result[section] = dict(config[section])
-        return result
+        return self._load_config_once()
 
 
     def load_scripts(self):

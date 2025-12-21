@@ -10,7 +10,7 @@ async function loadLLMConfig() {
         let llmConfig = await window.pywebview.api.load_llm_configuration();
         const outputPath = document.getElementById('output-file-path');
         if (outputPath) {
-            outputPath.value = llmConfig.outputFilePath || '';
+            outputPath.value = llmConfig.output_file_path || '';
         }
     } catch (error) {
         console.log('Error loading LLM config:', error);
@@ -22,7 +22,7 @@ async function saveLLMConfig() {
     try {
         const outputPathElement = document.getElementById('output-file-path');
         if (outputPathElement) {
-            llmConfig.outputFilePath = outputPathElement.value;
+            llmConfig.output_file_path = outputPathElement.value;
             await window.pywebview.api.save_llm_configuration(llmConfig);
         }
     } catch (error) {
