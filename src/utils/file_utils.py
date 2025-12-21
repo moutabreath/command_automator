@@ -1,23 +1,65 @@
 import json
 import logging
 import os
+import sys
 from pathlib import Path
 from typing import List, Any, TypeVar
 import aiofiles
 from pydantic import BaseModel
 
+def find_project_root(marker_filename: str) -> Path:
+    """
+    Traverse up the directory tree until a marker file is found.
+    Uses the directory of the currently executing script as a starting point.
+    """
+    # Start search from the directory of this file
+    current_dir = Path(__file__).resolve().parent
+    
+    for parent in [current_dir] + list(current_dir.parents):
+        if (parent / marker_filename).exists():
+            return parent
+    
+    # Fallback/error if marker not found
+    logging.error(f"Error: Could not find project root marker '{marker_filename}'")
+    raise FileNotFoundError(
+        f"Could not find project root marker '{marker_filename}' "
+        f"starting from {current_dir}"
+    )
 
-BASE_DIR = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator'
-CONFIG_FILE = BASE_DIR / 'commands_automator.config'
+# Determine project root in both dev and frozen (pyinstaller) modes.
+try:
+    if getattr(sys, 'frozen', False):
+        # When frozen, use APPDATA for resources
+        BASE_DIR = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator'
+    else:
+        # In development, use source directory
+        try:
+            PROJECT_ROOT = find_project_root('README.md')
+            BASE_DIR = PROJECT_ROOT / 'src'
+        except FileNotFoundError:
+            # Fallback to two levels up from this file if marker not present
+            BASE_DIR = Path(__file__).resolve().parents[2] / 'src'
+except Exception as e:
+    logging.error(f"Error determining BASE_DIR: {e}")
+    BASE_DIR = Path(__file__).resolve().parent
 
-USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts' 
+# Set paths based on BASE_DIR
+if getattr(sys, 'frozen', False):
+    # Frozen mode - use APPDATA structure
+    RESUME_RESOURCES_DIR = BASE_DIR / 'mcp_servers' / 'resume' / 'resources'
+    USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
+    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+else:
+    # Development mode - use source structure
+    RESUME_RESOURCES_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'resume' / 'resources'
+    USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
+    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+
+# Common paths
+CONFIG_FILE = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator' / 'commands_automator.config'
 USER_SCRIPTS_CONFIG_FILE = USER_SCRIPTS_DIR / 'config' / 'scripts_config.json'
-
-RESUME_RESOURCES_DIR =  BASE_DIR / 'mcp_servers' /  'resume' / 'resources'
 RESUME_ADDITIONAL_FILES_DIR = RESUME_RESOURCES_DIR / 'additional_files'
-
-JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
-GLASSDOOR_SELECTORS_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'glassdoor_selectors.json'
+GLASSDOOR_SELECTORS_FILE = JOB_SEARCH_CONFIG_FILE.parent / 'glassdoor_selectors.json'
 
 
 
