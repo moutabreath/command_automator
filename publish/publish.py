@@ -1,80 +1,50 @@
 import os
-import shutil
 import subprocess
-from datetime import datetime
+from sys import argv
 
 
-source_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory
+current_dir = os.path.dirname(os.path.abspath(__file__))  # Current directory
+base_dir = os.path.dirname(current_dir)
+source_code_dir = os.path.join(base_dir, 'src')  # Source code directory
+deploy_dir = "dist"
 
-def copy_to_deploy():
-    """
-    Create a timestamped deployment directory and copy application files.
-    
-    Creates a directory at ./deploy/commands_automator_api_<timestamp>/ and copies
-    the executable, README, and required resource folders. Prints warnings for
-    missing files/folders but continues execution.
-    
-    Raises:
-        Exception: Re-raises any exception encountered during file operations.
-    """
-    # Source and destination paths
-    deploy_dir = os.path.join(source_dir, 'deploy')
-    
-    # Create timestamp folder
-    timestamp = datetime.now().strftime('%Y%m%d_%H%M%S')
-    deploy_dir = os.path.join(deploy_dir, f'commands_automator_api_{timestamp}')
-    
-    # Create deploy directory if it doesn't exist
-    os.makedirs(deploy_dir, exist_ok=True)
-    
-  
-    
+
+def kill_process():
+    """Kills the commands_automator_api.exe process using CMD script"""
     try:
-        # List of specific files to copy
-        files_to_copy = [
-            'commands_automator_api.exe',
-            'README.md'
-        ]
-        
-        # Copy individual files
-        for file_name in files_to_copy:
-            source_file = os.path.join(source_dir, file_name)
-            dest_file = os.path.join(deploy_dir, file_name)
-            
-            if os.path.exists(source_file):
-                shutil.copy2(source_file, dest_file)
-                print(f"Copied {file_name}")
-            else:
-                print(f"Warning: {file_name} not found in source directory")
-        
-        # Copy folders with their structure
-        folders_to_copy = [
-            'src/scripts_manager/user_scripts',
-            'src/ui/resources',
-            'src/llm/resources',
-            'src/scripts_manager/config'
-        ]
-        
-        for folder_name in folders_to_copy:
-            source_folder = os.path.join(source_dir, folder_name)
-            dest_folder = os.path.join(deploy_dir, folder_name)
-            
-            if os.path.exists(source_folder):
-                shutil.copytree(source_folder, dest_folder, dirs_exist_ok=True)
-                print(f"Copied {folder_name} folder and its contents")
-            else:
-                print(f"Warning: {folder_name} folder not found in source directory")
-        print(f"Files deployed to: {deploy_dir}")        
+        subprocess.run(['kill_process.cmd'], cwd=current_dir, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+        print("Process killed successfully")
     except Exception as e:
-        print(f"Error during deployment: {str(e)}")
-        raise  # Re-raise the exception for debugging
+        print(f"Warning: Error killing process: {e}")
+
+
+
+def start_process():
+    """Starts the commands_automator_api.exe process using CMD script"""
+    try:
+        subprocess.run(['start_process.cmd'], cwd=current_dir, check=True)
+        print("Start process script executed")
+    except subprocess.CalledProcessError as e:
+        print(f"Error starting process: {e}")
+    except FileNotFoundError:
+        print("Warning: start_process.cmd not found")
+
+def copy_config_and_resources():
+    """Copy configuration files using CMD script"""
+    try:
+        result = subprocess.run(['copy_files.cmd'], cwd=current_dir, check=True, capture_output=True, text=True)
+        print("Configuration files copied successfully")
+    except subprocess.CalledProcessError as e:
+        print(f"Error copying config files: {e.stderr}")
+    except FileNotFoundError:
+        print("Warning: copy_config.cmd not found")
 
 def run_pyinstaller():
-      # Run deploy_locally.cmd before copying
     print("Running deploy_locally.cmd...")
     try:
-        result = subprocess.run(['deploy_locally.cmd'], cwd=source_dir, check=True, capture_output=True, text=True)
+        result = subprocess.run(['run_pyinstaller.cmd'], cwd=current_dir, check=True, capture_output=True, text=True)
         print("Deploy script completed successfully")
+        
     except subprocess.CalledProcessError as e:
         print(f"Deploy script failed with return code {e.returncode}")
         print(f"Error output: {e.stderr}")
@@ -82,6 +52,11 @@ def run_pyinstaller():
     except FileNotFoundError:
         print("Warning: deploy_locally.cmd not found")
 
-if __name__ == "__main__":
-    run_pyinstaller()
-    copy_to_deploy()
+if __name__ == "__main__":    
+    kill_process()
+    if len(argv) > 1:
+        if argv[1] == "--install":
+            run_pyinstaller()
+    copy_config_and_resources()
+    start_process()
+    
