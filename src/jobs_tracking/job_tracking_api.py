@@ -36,6 +36,20 @@ class JobTrackingApiResponse:
         # Restore the Enum from its name
         self.code = JobTrackingApiResponseCode[state["code"]]
 
+
+class JobTrackingApiListResponse:
+    def __init__(self, job: List[Dict], code: JobTrackingApiResponseCode):
+        self.jobs = job
+        self.code = code
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Return a JSON-serializable representation."""
+        return {
+            "jobs": self.jobs,
+            "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
+        }
+
+
 class JobTrackingApi(AbstractApi):
     
     def __init__(self, jobTrackingService: JobTrackingService):
@@ -74,4 +88,11 @@ class JobTrackingApi(AbstractApi):
         )
         if response  and response.code == JobTrackingResponseCode.OK:            
             return JobTrackingApiResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
-        return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()    
+        return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+    
+    def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
+        response = self.job_tracking_service.get_positions(user_id, company_name)
+        if response  and response.code == JobTrackingResponseCode.OK:            
+            return JobTrackingApiListResponse(response.jobs, JobTrackingApiResponseCode.OK).to_dict()
+        return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+    

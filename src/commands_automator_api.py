@@ -1,5 +1,6 @@
 import logging
 import os
+from typing import Dict, List
 from dotenv import load_dotenv
 import configparser
 
@@ -150,6 +151,12 @@ class CommandsAutomatorApi:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state,
                                                          contact_name, contact_linkedin, contact_email)
+    
+    def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
+        return self.job_tracking_api.get_positions(user_id, company_name)
+            
 
 
 async def initialize_apis():

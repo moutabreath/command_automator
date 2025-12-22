@@ -117,7 +117,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
     
     # ==================== JOB CRUD ====================
     
-    async def add_or_update_position(self, user_id: str, company_name: str, job_url: str, 
+    async def add_or_update_position(self, user_id: str, company_name: str, job_url: str,  update_time, 
                 job_title: Optional[str], job_state: JobApplicationState, contact_name: Optional[str], 
                 contact_linkedin: Optional[str], contact_email: Optional[str]) -> PersistenceResponse[Dict[str, Any]]:
         """Add or update a job in a company application
@@ -128,7 +128,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         job = {
             "job_url": job_url,
             "job_title": job_title,
-            "update_time": datetime.now(timezone.utc),
+            "update_time": update_time,
             "job_state": job_state.value if hasattr(job_state, 'value') else job_state,
             "contact_name": contact_name,
             "contact_linkedin": contact_linkedin,
@@ -167,7 +167,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             logging.exception(f"MongoDB error occurred: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
     
-    async def get_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
+    async def get_positions(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
         """Get all jobs for a company"""
         try:
             app_response = await self.get_application(user_id, company_name)
