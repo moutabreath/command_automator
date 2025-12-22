@@ -1,7 +1,6 @@
-import datetime
+from datetime import datetime, timezone, date
 from enum import Enum
 import logging
-from time import timezone
 from typing import List, Optional, Dict, Any
 from urllib.parse import urlparse
 from jobs_tracking.models import JobApplicationState
@@ -134,7 +133,7 @@ class JobTrackingService(AbstractPersistenceService):
             return {}
         new_data = data.copy()
         for key, value in new_data.items():
-            if isinstance(value, (datetime.datetime, datetime.date)):
+            if isinstance(value, (datetime, date)):
                 new_data[key] = value.isoformat()
             elif hasattr(value, '__class__') and value.__class__.__name__ == 'ObjectId':
                 new_data[key] = str(value)
