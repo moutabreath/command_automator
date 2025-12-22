@@ -45,6 +45,7 @@ class UserRegistryService(AbstractPersistenceService):
     async def login_or_register_user_async(self, user_email) -> UserRegistryResponse:
         if not user_email or not user_email.strip():
             return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
+        user_email = user_email.strip().lower()
         response = await self.user_persist.create_or_update_user(user_email)
         if response:            
             return UserRegistryResponse(response['_id'], UserRegistryResponseCode.OK)
