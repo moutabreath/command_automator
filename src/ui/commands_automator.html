@@ -5,17 +5,18 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Commands Automator</title>
-    
+
     <!-- Bootstrap CSS -->
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
-    
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
+
     <!-- Custom CSS -->
     <link rel="stylesheet" href="scripts_manager/scripts_manager.css">
     <link rel="stylesheet" href="llm/llm.css">
     <link rel="stylesheet" href="user/user.css">
     <link rel="stylesheet" href="job_tracking/job_tracking.css">
     <link rel="stylesheet" href="spinner.css">
-    
+
 </head>
 
 <body>
@@ -28,14 +29,14 @@
         <!-- Tab Navigation -->
         <ul class="nav nav-tabs mb-4" id="mainTabs" role="tablist">
             <li class="nav-item" role="presentation">
-                <button class="nav-link active" id="tab-automator-btn" data-bs-toggle="tab" 
-                        data-bs-target="#tab-automator" type="button" role="tab">
+                <button class="nav-link active" id="tab-automator-btn" data-bs-toggle="tab"
+                    data-bs-target="#tab-automator" type="button" role="tab">
                     Commands Automator
                 </button>
             </li>
             <li class="nav-item" role="presentation">
-                <button class="nav-link" id="tab-llm-btn" data-bs-toggle="tab" 
-                        data-bs-target="#tab-llm" type="button" role="tab">
+                <button class="nav-link" id="tab-llm-btn" data-bs-toggle="tab" data-bs-target="#tab-llm" type="button"
+                    role="tab">
                     LLM Prompt
                 </button>
             </li>
@@ -51,26 +52,26 @@
                             <label for="script-select" class="form-label">Select Script</label>
                             <select id="script-select" class="form-select"></select>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="script-description" class="form-label">Script Description</label>
                             <textarea id="script-description" class="form-control" readonly rows="3"></textarea>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="additional-text" class="form-label">Command Text (Only If Applicable)</label>
                             <textarea id="additional-text" class="form-control" rows="2"></textarea>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="flags" class="form-label">Additional Arguments/Flags</label>
                             <input id="flags" type="text" class="form-control">
                         </div>
-                        
+
                         <div class="mb-4">
                             <button id="execute-btn" class="btn btn-primary btn-lg">Execute</button>
                         </div>
-                        
+
                         <div class="mb-3">
                             <label for="result" class="form-label">Command Result</label>
                             <textarea id="result" class="form-control" readonly rows="8"></textarea>
@@ -83,23 +84,24 @@
             <div class="tab-pane fade" id="tab-llm" role="tabpanel">
                 <div id="llm-main-content">
                     <div class="llm-response-container mb-4">
-                        <div id="response-box" class="response-box p-3 mb-3" 
-                             style="background-color: #2a2a2a; border-radius: 8px; min-height: 200px; max-height: 400px; overflow-y: auto;"></div>
-                        
+                        <div id="response-box" class="response-box p-3 mb-3"
+                            style="background-color: #2a2a2a; border-radius: 8px; min-height: 200px; max-height: 400px; overflow-y: auto;">
+                        </div>
+
                         <div class="query-box-wrapper">
                             <div class="input-group mb-2">
-                                <textarea id="query-box" class="form-control" rows="3" 
-                                          placeholder="Message LLM"></textarea>
+                                <textarea id="query-box" class="form-control" rows="3"
+                                    placeholder="Message LLM"></textarea>
                                 <button id="send-btn" class="btn btn-primary" title="Send">
                                     <img src="data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjQiIGhlaWdodD0iMjQiIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj4KPHBhdGggZD0iTTIgMTJMMjIgMk0yMiAyTDE1IDIyTDEwIDEyTDIgMTJMMjIgMloiIHN0cm9rZT0iIzIyMiIgc3Ryb2tlLXdpZHRoPSIyIiBzdHJva2UtbGluZWNhcD0icm91bmQiIHN0cm9rZS1saW5lam9pbj0icm91bmQiLz4KPC9zdmc+"
-                                         alt="Send" style="width: 24px; height: 24px;" />
+                                        alt="Send" style="width: 24px; height: 24px;" />
                                 </button>
                                 <button id="select-image-btn" class="btn btn-secondary">+</button>
                             </div>
                             <div id="image-preview" class="image-preview-area"></div>
                         </div>
                     </div>
-                    
+
                     <div class="row mb-3">
                         <div class="col-md-10">
                             <label for="output-file-path" class="form-label">Output File Path</label>
@@ -111,7 +113,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="llm-login-container" class="card bg-dark border-secondary mb-3">
                     <div class="card-body">
                         <div class="row align-items-end">
@@ -125,7 +127,7 @@
                         </div>
                     </div>
                 </div>
-                
+
                 <div id="job-info-row" class="card bg-dark border-secondary" style="display: none;">
                     <div class="card-body">
                         <h5 class="card-title mb-3" style="color: #9EA3F5;">Track Job Application</h5>
@@ -137,7 +139,7 @@
                             <div class="col-md-6">
                                 <label for="position-title" class="form-label">Position Title</label>
                                 <input type="text" id="position-title" class="form-control">
-                             </div>                            
+                            </div>
                             <div class="col-md-6">
                                 <label for="position-url" class="form-label">Position URL</label>
                                 <input type="text" id="position-url" class="form-control">
@@ -150,7 +152,7 @@
                                 <label for="contact-person-linkedin" class="form-label">Contact Linkedin</label>
                                 <input type="text" id="contact-person-linkedin" class="form-control">
                             </div>
-                             <div class="col-md-6">
+                            <div class="col-md-6">
                                 <label for="contact-person-email" class="form-label">Contact Email</label>
                                 <input type="text" id="contact-person-email" class="form-control">
                             </div>
@@ -158,24 +160,35 @@
                                 <label for="job-state" class="form-label">State</label>
                                 <select id="job-state" class="form-select"></select>
                             </div>
-                            <div class="col-md-6 d-flex align-items-end">
-                                <button id="track-job-btn" class="btn btn-primary w-100">Track Job Application</button>
-                            </div>
+                          <div class="col-md-6 d-flex align-items-end">
+    <div class="d-flex gap-2 w-100">
+        <button id="track-job-btn" class="btn btn-primary w-50 d-flex justify-content-center align-items-center"
+            style="padding-top: .375rem; padding-bottom: .375rem;">
+            Track Application
+        </button>
+        <button id="view-jobs-btn" class="btn btn-primary w-50 d-flex justify-content-center align-items-center"
+            style="padding-top: .375rem; padding-bottom: .375rem;">
+            View Applications
+        </button>
+    </div>
+    </div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
-        
+
         <!-- Alert Container -->
         <div id="alert-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
     </div>
 
     <!-- Bootstrap JS -->
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js" integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous" defer></script> 
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"
+        integrity="sha384-C6RzsynM9kWDrMNeT87bh95OGNyZPhcTNXj1NW7RuBCsyN/o0jlpcV8Qyq46cDfL" crossorigin="anonymous"
+        defer></script>
 
     <!-- Custom Scripts -->
-    <script src="commands_automator.js" defer></script>   
+    <script src="commands_automator.js" defer></script>
     <script src="scripts_manager/scripts_manager.js" defer></script>
     <script src="llm/llm.js" defer></script>
     <script src="user/user.js" defer></script>

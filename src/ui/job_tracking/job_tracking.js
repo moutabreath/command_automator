@@ -96,6 +96,7 @@ async function initJobTrackingEventListeners() {
     const positionUrl = document.getElementById('position-url');
     const contactPerson = document.getElementById('contact-person');
     const trackJobBtn = document.getElementById('track-job-btn');
+    const viewJobsBtn = document.getElementById('view-jobs-btn');
 
     if (!trackJobBtn) {
         console.error('Track job button not found');
@@ -133,6 +134,56 @@ async function initJobTrackingEventListeners() {
     trackJobBtn.addEventListener('click', async () => {
         await trackJobApplication();
     });
+
+    if (viewJobsBtn) {
+        viewJobsBtn.addEventListener('click', async () => {
+            await viewJobApplications();
+        });
+    }
+}
+
+async function viewJobApplications() {
+    const companyNameInput = document.getElementById('company-name');
+    const userId = window.userId || window.user_id;
+    if (!userId) {
+        showAlert('Please login first.', 'warning');
+        return;
+    }
+      if (!companyNameInput) {
+        console.error('Fill in company name for getting job infomration');
+        return;
+    }    
+    const companyName = companyNameInput.value.trim();
+    const responseBox = document.getElementById('response-box');
+    const spinner = document.getElementById('spinner');
+    const viewJobsBtn = document.getElementById('view-jobs-btn');
+
+    if (viewJobsBtn) viewJobsBtn.disabled = true;
+    if (spinner) {
+        spinner.classList.add('visible');
+        document.body.classList.add('spinner-active');
+    }
+
+    try {
+        const response = await window.pywebview.api.get_positions(userId, companyName);        
+
+        if (responseBox) {
+            const responseElem = document.createElement('div');
+            responseElem.className = 'llm-response';
+            responseElem.textContent = JSON.stringify(response.jobs, null, 2);
+            responseBox.appendChild(responseElem);
+            responseBox.scrollTop = responseBox.scrollHeight;
+        }
+    } catch (error) {
+        console.error('Error retrieving jobs:', error);
+        showAlert('Failed to retrieve jobs.', 'error');
+    } finally {
+        if (viewJobsBtn) viewJobsBtn.disabled = false;
+        if (spinner) {
+            spinner.classList.remove('visible');
+            document.body.classList.remove('spinner-active');
+        }
+    }
 }
 
 async function trackJobApplication() {
