@@ -1,11 +1,10 @@
 import pytest
 import mongomock
 import uuid
-from datetime import datetime, timezone
-from typing import List, Optional, Dict, Any
-
-from jobs_tracking.models import JobApplicationState
-from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
+from typing import Optional, Dict
+import pymongo.errors as mongo_errors
+from jobs_tracking.services.models import TrackedJob
+from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
 
 
 
@@ -28,53 +27,58 @@ class MockUserMongoPersist:
         self.users.insert_one(new_user)
         return new_user
 
-class MockCompanyMongoPersist:
+class AsyncMockCursor:
+    def __init__(self, cursor):
+        self.cursor = cursor
 
+    def __aiter__(self):
+        return self
+
+    async def __anext__(self):
+        try:
+            return self.cursor.next()
+        except StopIteration:
+            raise StopAsyncIteration
+
+    async def to_list(self, length=None):
+        return list(self.cursor)
+
+class AsyncMockCollection:
+    def __init__(self, collection):
+        self.collection = collection
+
+    async def find_one(self, *args, **kwargs):
+        return self.collection.find_one(*args, **kwargs)
+
+    async def insert_one(self, *args, **kwargs):
+        return self.collection.insert_one(*args, **kwargs)
+
+    async def update_one(self, *args, **kwargs):
+        return self.collection.update_one(*args, **kwargs)
+
+    async def delete_one(self, *args, **kwargs):
+        return self.collection.delete_one(*args, **kwargs)
+    
+    async def create_index(self, *args, **kwargs):
+        return self.collection.create_index(*args, **kwargs)
+
+    def find(self, *args, **kwargs):
+        return AsyncMockCursor(self.collection.find(*args, **kwargs))
+
+    def aggregate(self, *args, **kwargs):
+        return AsyncMockCursor(self.collection.aggregate(*args, **kwargs))
+
+class AsyncMockDatabase:
     def __init__(self, db):
-        self.job_applications = db.job_applications
+        self.db = db
 
-    async def add_or_update_position(self, user_id: str, company_name: str, job_url: str, 
-                job_title: Optional[str], job_state: JobApplicationState, contact_name: Optional[str], 
-                contact_linkedin: Optional[str], contact_email: Optional[str]) -> PersistenceResponse[Dict[str, Any]]:
-        
-        doc = self.job_applications.find_one({"user_id": user_id, "company_name": company_name})
-        
-        state_val = job_state.value if hasattr(job_state, 'value') else job_state
-        
-        job_entry = {
-            "job_url": job_url,
-            "job_title": job_title,
-            "job_state": state_val,
-            "contact_name": contact_name,
-            "contact_linkedin": contact_linkedin,
-            "contact_email": contact_email,
-            "update_time": datetime.now(timezone.utc)
-        }
+    def __getattr__(self, name):
+        return AsyncMockCollection(getattr(self.db, name))
+    
+    def __getitem__(self, name):
+        return AsyncMockCollection(self.db[name])
 
-        if not doc:
-            doc = {
-                "user_id": user_id,
-                "company_name": company_name,
-                "jobs": [job_entry]
-            }
-            self.job_applications.insert_one(doc)
-        else:
-            jobs = doc.get("jobs", [])
-            existing_idx = next((index for index, job in enumerate(jobs) if job["job_url"] == job_url), -1)
-            if existing_idx >= 0:
-                jobs[existing_idx].update(job_entry)
-            else:
-                jobs.append(job_entry)
-            
-            self.job_applications.update_one(
-                {"_id": doc["_id"]},
-                {"$set": {"jobs": jobs}}
-            )
-            
-        return PersistenceResponse(data=job_entry, code=PersistenceErrorCode.SUCCESS)
-
-    async def get_positions(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
-        doc = self.job_applications.find_one({"user_id": user_id, "company_name": company_name})
-        if doc:
-            return PersistenceResponse(data=doc.get("jobs", []), code=PersistenceErrorCode.SUCCESS)
-        return PersistenceResponse([], code=PersistenceErrorCode.SUCCESS)
+class MockCompanyMongoPersist(CompanyMongoPersist):
+    def __init__(self, db):
+        self.async_db = AsyncMockDatabase(db)
+        self._setup_collections()
