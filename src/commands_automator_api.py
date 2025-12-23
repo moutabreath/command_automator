@@ -156,7 +156,11 @@ class CommandsAutomatorApi:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.get_positions(user_id, company_name)
-            
+    
+    def track_position_from_text(self, user_id: str, text:str):
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
+        return self.job_tracking_api.track_position_from_text(user_id, text)
 
 
 async def initialize_apis():

@@ -76,7 +76,8 @@ async def get_resume_files() -> ResumeData:
 
 @mcp.tool()
 async def search_jobs_from_the_internet(job_title: str | None = None, location:str | None = None, 
-                                        remote: bool | None = None) -> list:
+                                        remote: bool | None = None,
+                                        user_id: str | None = None) -> list:
     """
     Search for jobs from multiple sources (LinkedIn and Glassdoor).
     
@@ -85,7 +86,7 @@ async def search_jobs_from_the_internet(job_title: str | None = None, location:s
     """
 
     jobs = []
-    linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
+    linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote, user_id=user_id)
     if linkedin_jobs and len(linkedin_jobs) > 0:
         jobs.extend(linkedin_jobs)
 
@@ -98,14 +99,15 @@ async def search_jobs_from_the_internet(job_title: str | None = None, location:s
 @mcp.tool()
 async def get_jobs_from_linkedin(job_title: str | None = None,
     location: str | None = None,
-    remote: bool | None = None)  -> list:
+    remote: bool | None = None,
+    user_id: str | None = None)  -> list:
     """
     Search for jobs on LinkedIn.    
     
     Returns:
         List of Job objects
     """ 
-    return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
+    return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote, user_id=user_id)
 
 @mcp.tool()
 async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
@@ -142,7 +144,7 @@ async def get_user_applications_for_company(user_id: str, company_name: str) -> 
             "error": str(e)
         }
 
-async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
+async def _run_linkedin_scraper(job_title: str, location: str, remote: bool, user_id: str) -> list:
     """Run the LinkedIn job scraper"""
     container = MCPContainer.get_container()
     linkedin_scraper = container.linkedin_scraper()
@@ -159,19 +161,65 @@ async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> 
             location=location,
             remote=remote,
             forbidden_titles = forbidden_titles,
-            max_pages=max_pages)
+            max_pages=max_pages)        
     except Exception as e:
         logging.error(f"Error finding jobs from linkedin {e}", exc_info=True)
         return []
-    
+    scraped_jobs, applied_jobs = await _filter_jobs(jobs, user_id)
     logging.info(f"Found {len(jobs)} jobs")
     logging.debug("=" * 60)
-    if jobs and len(jobs) > 0:    
-        await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
+    if scraped_jobs and len(scraped_jobs) > 0:    
+        await jobs_saver.save_jobs_to_file(scraped_jobs, 'linkedin_scraped_jobs.json')
+    else:
+        logging.warning("No jobs found from LinkedIn scraper")
+    
+    if applied_jobs and len(applied_jobs) > 0:    
+        await jobs_saver.save_jobs_to_file(applied_jobs, 'linkedin_applied_jobs.json')
     else:
         logging.warning("No jobs found from LinkedIn scraper")
    
     return jobs
+
+async def _filter_jobs(scraped_jobs: list, user_id) -> tuple:
+    """Filter jobs that have already been applied for"""
+    container = MCPContainer.get_container()
+    job_service = container.company_mcp_service()
+    
+    response = await job_service.get_all_user_applications(user_id)
+    
+    existing_urls = set()
+    applied_companies_titles = get_applied_companies_and_titles(response, existing_urls)
+
+    filtered_jobs = []
+    tracked_jobs = []
+
+    for scraped_job in scraped_jobs:
+        scraped_job_url = scraped_job.get('job_url')
+        scraped_job_company = str(scraped_job.get('company', scraped_job.get('company_name', ''))).strip().lower()
+        scraped_job_title = str(scraped_job.get('title', scraped_job.get('job_title', ''))).strip().lower()
+
+        if (scraped_job_url and scraped_job_url in existing_urls) or \
+           (scraped_job_company and scraped_job_title and (scraped_job_company, scraped_job_title) in applied_companies_titles):
+            tracked_jobs.append(scraped_job)
+        else:
+            filtered_jobs.append(scraped_job)
+            
+    return filtered_jobs, tracked_jobs
+
+def get_applied_companies_and_titles(response, existing_urls):
+    applied_companies_titles = set()
+
+    if response.get("success") and response.get("applications"):
+        for user_applications in response["applications"]:
+            company_name = str(user_applications.get("company_name", "")).strip().lower()
+            for scraped_job in user_applications.get("jobs", []):
+                if scraped_job.get("job_url"):
+                    existing_urls.add(scraped_job.get("job_url"))
+                
+                scraped_job_title = str(scraped_job.get("job_title", "")).strip().lower()
+                if company_name and scraped_job_title:
+                    applied_companies_titles.add((company_name, scraped_job_title))
+    return applied_companies_titles
 
 async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, forbidden_titles: list = None) -> List:
     """Run the Glassdoor job scraper"""

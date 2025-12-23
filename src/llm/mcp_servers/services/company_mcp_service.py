@@ -19,6 +19,23 @@ class CompanyMCPService:
             logging.exception(f"Error in CompanyMCPService.initialize: {e}")
             raise
 
+    async def get_all_user_applications(self, user_id: str) -> Dict[str, Any]:
+        """
+        Get all job applications for a specific user.
+        """
+        response = await self.mcp_company_persist.get_all_applications(user_id)
+        if response.code == PersistenceErrorCode.SUCCESS:
+            return {
+                "success": True,
+                "user_id": user_id,
+                "applications": response.data
+            }
+        else:
+            return {
+                "success": False,
+                "error": response.error_message or "Unknown error occurred"
+            }
+        
     async def get_user_applications_for_company(self, user_id: str, company_name: str) -> Dict[str, Any]:
         """
         Get all job applications for a specific user and company.

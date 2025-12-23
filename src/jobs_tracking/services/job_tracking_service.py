@@ -76,6 +76,10 @@ class JobTrackingService(AbstractPersistenceService):
             logging.error("Missing required parameters for add_or_update_position")
             return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
         
+        if contact_name and not contact_name.replace(' ', '').isalpha():
+            logging.error("Contact name must contain only letters")
+            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
+        
         company_name = company_name.lower()
         try:
             job_url = urlparse(job_url).geturl()
@@ -126,7 +130,84 @@ class JobTrackingService(AbstractPersistenceService):
                 return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
         except Exception as e:
             logging.error(f"Failed to get positions for company {company_name}: {e}")
-            return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)            
+            return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
+
+    
+    def track_position_from_text(self, user_id: str, text:str) -> JobTrackingResponse:
+        result = AsyncRunner.run_async(
+            self.track_positions_from_text_async(
+            user_id=user_id,
+            text=text
+            )
+        )
+        return result
+
+    async def track_positions_from_text_async(self, user_id: str, text: str) -> JobTrackingResponse:
+        """Parse text to extract job information and track positions"""
+        import re
+        
+        if not user_id or not text:
+            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
+        
+        # Split text by spaces and newlines
+        parts = re.split(r'\s+', text.strip())
+        
+        job_url = None
+        contact_linkedin = None
+        contact_name = None
+        job_state = JobApplicationState.UNKNOWN
+        job_title_parts = []
+        
+        for part in parts:
+            if self._is_url(part):
+                if 'linkedin.com' in part.lower():
+                    if '/in/' in part:
+                        contact_linkedin = part
+                        # Extract contact name from LinkedIn URL
+                        extracted_name = part.split('/in/')[-1].split('/')[0].replace('-', ' ').title()
+                        if extracted_name.replace(' ', '').isalpha():
+                            contact_name = extracted_name
+                else:
+                    job_url = part
+            elif self._is_job_state(part):
+                try:
+                    job_state = JobApplicationState[part.upper()]
+                except (KeyError, ValueError):
+                    job_state = JobApplicationState.UNKNOWN
+            else:
+                job_title_parts.append(part)
+        
+        if not job_url:
+            return JobTrackingResponse(job={"error": "No job URL found"}, code=JobTrackingResponseCode.ERROR)
+        
+        job_title = ' '.join(job_title_parts) if job_title_parts else "Unknown Position"
+        company_name = self._extract_company_from_url(job_url)
+        
+        return await self.add_or_update_position_async(
+            user_id=user_id,
+            company_name=company_name,
+            job_url=job_url,
+            job_title=job_title,
+            job_state=job_state,
+            contact_name=contact_name,
+            contact_linkedin=contact_linkedin
+        )
+    
+    def _is_url(self, text: str) -> bool:
+        return text.startswith(('http://', 'https://', 'www.'))
+    
+    def _is_job_state(self, text: str) -> bool:
+        return text.upper() in [state.name for state in JobApplicationState]
+    
+    def _extract_company_from_url(self, url: str) -> str:
+        try:
+            parsed = urlparse(url)
+            domain = parsed.netloc.lower()
+            # Remove www. and common TLDs to get company name
+            company = domain.replace('www.', '').split('.')[0]
+            return company.title()
+        except:
+            return "Unknown Company"
 
     def _serialize_dict(self, data: Optional[Dict[str, Any]]) -> Dict[str, Any]:
         if not data:

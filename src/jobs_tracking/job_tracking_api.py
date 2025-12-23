@@ -96,3 +96,8 @@ class JobTrackingApi(AbstractApi):
             return JobTrackingApiListResponse(response.jobs, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
     
+    def track_position_from_text(self, user_id: str, text:str):
+        response = self.job_tracking_service.track_position_from_text(user_id, text)
+        if response  and response.code == JobTrackingResponseCode.OK:            
+            return JobTrackingApiListResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
+        return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
