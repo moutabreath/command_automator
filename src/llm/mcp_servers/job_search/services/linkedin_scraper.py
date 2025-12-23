@@ -7,7 +7,7 @@ import random
 import urllib.parse
 from typing import List, Optional
 
-from llm.mcp_servers.job_search.models import Job
+from llm.mcp_servers.job_search.models import ScrapedJob
 from llm.mcp_servers.job_search.services.abstract_job_scraper import AbstractJobScraper
 
 class LinkedInJobScraper(AbstractJobScraper):
@@ -19,7 +19,7 @@ class LinkedInJobScraper(AbstractJobScraper):
        
     def run_scraper(self, job_title: str, location: str = "", remote: bool = False, 
                     forbidden_titles: List[str] = None, max_pages: int = 3,
-                    job_type: str = "", experience_level: str = "") -> List[Job]:
+                    job_type: str = "", experience_level: str = "") -> List[ScrapedJob]:
         """Run the LinkedIn job scraper with specified parameters
         
         Args:
@@ -86,7 +86,7 @@ class LinkedInJobScraper(AbstractJobScraper):
         
         return base_url + "?" + urllib.parse.urlencode(params)
     
-    def _scrape_job_listings(self, search_url: str, forbidden_titles: List[str], max_pages: int = 3) -> List[Job]:
+    def _scrape_job_listings(self, search_url: str, forbidden_titles: List[str], max_pages: int = 3) -> List[ScrapedJob]:
         """Scrape job listings from LinkedIn search results"""
         jobs = []
         
@@ -121,7 +121,7 @@ class LinkedInJobScraper(AbstractJobScraper):
          
         return jobs
 
-    def _parse_job_card(self, card, forbidden_titles) -> Optional[Job]:
+    def _parse_job_card(self, card, forbidden_titles) -> Optional[ScrapedJob]:
         """Parse individual job card to extract job information"""
         # Create a dictionary to collect all fields first
         job_data = {}
@@ -168,7 +168,7 @@ class LinkedInJobScraper(AbstractJobScraper):
                 job_data['posted_date'] = date.today()
 
             logging.debug(f"Attempting to create Job with data: {job_data}")    
-            job = Job(**job_data)
+            job = ScrapedJob(**job_data)
             return job
             
         except Exception as e:

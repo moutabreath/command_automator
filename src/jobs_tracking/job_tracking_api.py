@@ -1,53 +1,10 @@
-from enum import Enum
 import logging
-from typing import Dict, List, Optional
+from typing import Dict, List, Any
 
-from jobs_tracking.models import JobApplicationState
+from jobs_tracking.models import JobTrackingApiResponse, JobTrackingApiResponseCode, JobTrackingApiListResponse, TrackedJobDto
+from jobs_tracking.services.models import JobApplicationState, TrackedJob
 from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
 from abstract_api import AbstractApi
-from utils import utils
-from typing import Any
-
-
-class JobTrackingApiResponseCode(Enum):
-    OK = 1
-    ERROR = 2
-
-class JobTrackingApiResponse:
-
-    def __init__(self, job: Dict[str, Any], code: JobTrackingApiResponseCode):
-        self.job = job
-        self.code = code
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a JSON-serializable representation."""
-        return {
-            "job": self.job,
-            "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
-        }
-
-    def __getstate__(self) -> Dict[str, Any]:
-        """Support pickling/serialization by returning a dict."""
-        return self.to_dict()
-
-    def __setstate__(self, state: Dict[str, Any]) -> None:
-        """Restore instance from pickled state."""
-        self.job = state["job"]
-        # Restore the Enum from its name
-        self.code = JobTrackingApiResponseCode[state["code"]]
-
-
-class JobTrackingApiListResponse:
-    def __init__(self, job: List[Dict], code: JobTrackingApiResponseCode):
-        self.jobs = job
-        self.code = code
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a JSON-serializable representation."""
-        return {
-            "jobs": self.jobs,
-            "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
-        }
 
 
 class JobTrackingApi(AbstractApi):
@@ -64,29 +21,27 @@ class JobTrackingApi(AbstractApi):
             return []       
     
         
-    def add_job_to_company(self, user_id: str, company_name: str, 
-                           job_url: str, job_title: str, job_state: str, 
-                           contact_name: Optional[str] = None,
-                            contact_linkedin: Optional[str] = None,
-                            contact_email: Optional[str] = None) -> Dict[str, Any]:
-        # Convert string to enum
-        try:
-            job_state = JobApplicationState[job_state.upper()] if job_state else JobApplicationState.UNKNOWN
-        except KeyError:
-            logging.error(f"Invalid job state: {job_state}")
-            job_state = JobApplicationState.UNKNOWN
+    def track_job_application(self, user_id: str, company_name: str, job_dto: TrackedJobDto) -> Dict[str, Any]:
+        
+        if not user_id or not company_name or not job_dto:
+            logging.error("missing company name or user_id")
+            return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+        
+        tracked_job = TrackedJob(
+            job_url=job_dto.job_url,
+            job_title=job_dto.job_title,
+            job_state=job_dto.job_state,
+            contact_name=job_dto.contact_name,
+            contact_linkedin=job_dto.contact_linkedin,
+            contact_email=job_dto.contact_email
+        )
         
         response = self.job_tracking_service.add_or_update_position(
             user_id=user_id,
             company_name=company_name,
-            job_url=job_url,
-            job_title=job_title,
-            job_state=job_state,
-            contact_name=contact_name,
-            contact_linkedin=contact_linkedin,
-            contact_email=contact_email
+            trackedJob=tracked_job
         )
-        if response  and response.code == JobTrackingResponseCode.OK:            
+        if response and response.code == JobTrackingResponseCode.OK:            
             return JobTrackingApiResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
     

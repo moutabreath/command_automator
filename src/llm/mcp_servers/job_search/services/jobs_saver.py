@@ -1,13 +1,13 @@
 import os
 from typing import List
 
-from llm.mcp_servers.job_search.models import Job
+from llm.mcp_servers.job_search.models import ScrapedJob
 from utils import file_utils
 
 
 class JobsSaver:
     
-    async def save_jobs_to_file(self, jobs: List[Job], filename: str) -> bool:
+    async def save_jobs_to_file(self, jobs: List[ScrapedJob], filename: str) -> bool:
         """Save jobs to JSON file
 
         Args:

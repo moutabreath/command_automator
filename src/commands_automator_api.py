@@ -1,11 +1,12 @@
 import logging
 import os
-from typing import Dict, List
+from typing import Any, Dict, List
 from dotenv import load_dotenv
 import configparser
 
 
 from jobs_tracking.job_tracking_api import JobTrackingApi
+from jobs_tracking.models import TrackedJobDto
 from jobs_tracking.services.job_tracking_service import JobTrackingService
 from llm.llm_api import LLMApi
 from llm.services.llm_service import LLMService
@@ -145,12 +146,10 @@ class CommandsAutomatorApi:
         """Get list of job application states"""
         return self.job_tracking_api.get_job_application_states()
     
-    def track_job_application(self, user_id:str, company_name:str, job_url:str, job_title:str, state:str,
-                              contact_name:str, contact_linkedin:str, contact_email:str):
+    def track_job_application(self, user_id: str, company_name: str, job_dto: TrackedJobDto) -> Dict[str, Any]:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.add_job_to_company(user_id, company_name, job_url, job_title, state,
-                                                         contact_name, contact_linkedin, contact_email)
+        return self.job_tracking_api.add_job_to_company(user_id, company_name, job_dto)
     
     def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
         if self.job_tracking_api is None:

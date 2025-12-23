@@ -2,7 +2,7 @@ from datetime import date
 from pydantic import BaseModel, Field, HttpUrl
 from typing import Optional
 
-class Job(BaseModel):
+class ScrapedJob(BaseModel):
     title: str = Field(min_length=1)
     company: str = Field(min_length=1)
     location: str = Field(min_length=1)

@@ -8,7 +8,7 @@ import logging
 from urllib.parse import urlencode
 from datetime import datetime
 
-from llm.mcp_servers.job_search.models import Job
+from llm.mcp_servers.job_search.models import ScrapedJob
 from llm.mcp_servers.job_search.services.abstract_job_scraper import AbstractJobScraper
 
 from utils.file_utils import GLASSDOOR_SELECTORS_FILE
@@ -29,7 +29,7 @@ class GlassdoorJobsScraper(AbstractJobScraper):
             raise Exception(f"Failed to load selectors configuration: {e}") from e
     
     async def run_scraper(self, job_title: str, location: str, forbidden_titles: list[str], 
-                          max_pages: int, max_jobs_per_page: int) -> List[Job]:
+                          max_pages: int, max_jobs_per_page: int) -> List[ScrapedJob]:
         try:
             await self._setup_browser()
             jobs = await self._scrape_jobs(
@@ -78,7 +78,7 @@ class GlassdoorJobsScraper(AbstractJobScraper):
         """)
 
     async def _scrape_jobs(self, job_title: str, location: str, forbidden_titles: list[str],
-                          max_pages: int, max_jobs_per_page: int) -> List[Job] :
+                          max_pages: int, max_jobs_per_page: int) -> List[ScrapedJob] :
         """Main scraping method"""
         logging.info(f"Starting scrape for '{job_title}' jobs in '{location}'")        
         jobs = []
@@ -146,7 +146,7 @@ class GlassdoorJobsScraper(AbstractJobScraper):
         except Exception as e:
             logging.error(f"Popup handling error: {e}", exc_info=True)
     
-    async def _extract_job_details(self, job_element, forbidden_titles: list[str]) -> Job | None:
+    async def _extract_job_details(self, job_element, forbidden_titles: list[str]) -> ScrapedJob | None:
         """Extract details from a single job listing"""
         try:
             job_data = {}
@@ -180,7 +180,7 @@ class GlassdoorJobsScraper(AbstractJobScraper):
         else:
             job_data[field] = None
 
-    async def _scrape_job_page(self, url: str, forbidden_titles: list[str], max_jobs: int) -> List[Job]:
+    async def _scrape_job_page(self, url: str, forbidden_titles: list[str], max_jobs: int) -> List[ScrapedJob]:
         """Scrape jobs from a single page"""        
         jobs = []
         try:
@@ -248,7 +248,7 @@ class GlassdoorJobsScraper(AbstractJobScraper):
         parsed_date = None if isinstance(posted_date_value, str) and posted_date_value.startswith("couldn't extract") else self._calc_date_from_range(posted_date_value)
         
         try:
-            return Job(
+            return ScrapedJob(
                 title=job_data['title'],
                 company=job_data['company'],
                 location=job_data['location'],
