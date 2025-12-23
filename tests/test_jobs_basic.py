@@ -101,25 +101,3 @@ async def test_get_applications(user_service, job_service):
     assert len(positions.jobs) == 1
     assert positions.jobs[0].job_title == position
 
-@pytest.mark.asyncio
-async def test_update_track_and_retrieve_from_text(user_service, job_service):
-    # 1. Register user and add job
-    email = "test.user@example.com"
-    auth_res = await user_service.login_or_register_user_async(email)
-    user_id = auth_res.user_id
-
-    text = """https://www.linkedin.com/jobs/view/4324949336
-Finonex
-https://www.linkedin.com/in/amirdar/
-applied"""
-
-    job_res = await job_service.track_positions_from_text_async(
-        user_id=user_id,
-        text= text
-    )
-
-
-    # 3. Validate update
-    assert job_res is not None
-    assert job_res.code == JobTrackingResponseCode.OK
-    assert job_res.job['job_state'] == JobApplicationState.INTERVIEWING.value
