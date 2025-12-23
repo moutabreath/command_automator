@@ -40,6 +40,14 @@ if exist "%SOURCE_DIR%\llm\mcp_servers\resume\resources" (
     echo Warning: resume resources not found
 )
 
+REM Copy job_titles.json
+if exist "%SOURCE_DIR%\jobs_tracking\config\job_titles_keywords.json" (
+    copy "%SOURCE_DIR%\jobs_tracking\config\job_titles_keywords.json" "%APPDATA_DIR%\jobs_tracking\config\job_titles_keywords.json" /y
+    echo Copied job_titles.json to APPDATA
+) else (
+    echo Warning: job_titles.json not found
+)
+
 REM Copy executable file
 if exist "..\commands_automator_api.exe" (
     copy "..\commands_automator_api.exe" "%APPDATA_DIR%\commands_automator_api.exe" /y
