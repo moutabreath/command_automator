@@ -21,7 +21,7 @@ class ScriptsManagerApi(AbstractApi):
                 logging.error(f"Script not found: {script_name}")
                 return ""
             script_file = name_to_scripts[script_name]
-            return self.scripts_manager_service .get_script_description(script_file)
+            return self.scripts_manager_service.get_script_description(script_file)
         except Exception as e:
             logging.exception(f"Error getting script description for {script_name}: {e}")
             return ""

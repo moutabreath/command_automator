@@ -36,7 +36,7 @@ class UserMongoPersist(AbstractOwnerMongoPersist):
             # Another process created the user concurrently
             return await self.get_user_by_email(email)
         except Exception as e:
-            logging.error(f"Error creating user {email}: {e}")
+            logging.error(f"Error creating user: {e}")
             return None
     
     async def get_user(self, user_id: str) -> Optional[Dict]:

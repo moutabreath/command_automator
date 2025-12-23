@@ -28,9 +28,11 @@ class ApiResponse:
 
     def __setstate__(self, state: Dict[str, Any]) -> None:
         """Restore instance from pickled state."""
-        self.text = state["text"]
-        # Restore the Enum from its name
-        self.code = ApiResponseCode[state["code"]]
+        try:
+            self.text = state["text"]
+            self.code = ApiResponseCode[state["code"]]
+        except KeyError as e:
+            raise ValueError(f"Invalid pickled state: missing or invalid key {e}")
 
 class AbstractApi(ABC):
 

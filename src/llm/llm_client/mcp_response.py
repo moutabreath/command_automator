@@ -14,5 +14,5 @@ class MCPResponseCode(Enum):
 
 @dataclass(frozen=True)
 class MCPResponse:
-   text: str
-   code: MCPResponseCode
+    text: str
+    code: MCPResponseCode
