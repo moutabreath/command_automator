@@ -34,3 +34,9 @@ class JobTrackingListResponse:
         self.jobs = jobs
         self.code = code
 
+
+class JobAndCompanyTrackingResponse:
+    def __init__(self, job: TrackedJob, company_name: str, code: JobTrackingResponseCode):
+        self.job = job
+        self.company_name = company_name
+        self.code = code

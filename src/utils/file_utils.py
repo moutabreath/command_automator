@@ -53,14 +53,14 @@ else:
     # Development mode - use source structure
     RESUME_RESOURCES_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'resume' / 'resources'
     USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
-    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'    
 
 # Common paths
 CONFIG_FILE = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator' / 'commands_automator.config'
 USER_SCRIPTS_CONFIG_FILE = USER_SCRIPTS_DIR / 'config' / 'scripts_config.json'
 RESUME_ADDITIONAL_FILES_DIR = RESUME_RESOURCES_DIR / 'additional_files'
 GLASSDOOR_SELECTORS_FILE = JOB_SEARCH_CONFIG_FILE.parent / 'glassdoor_selectors.json'
-
+JOB_TITLES_CONFIG_FILE = BASE_DIR / 'jobs_tracking' / 'config' / 'job_titles_keywords.json'
 
 
 T = TypeVar('T', bound=BaseModel)
@@ -75,7 +75,7 @@ async def save_file(file_path: str | Path, content: str) -> bool:
             await f.write(content)
         return True
     except (OSError, IOError) as e:
-        logging.error(f"Error saving file {file_path}: {e}", exc_info=True)
+        logging.exception(f"Error saving file {file_path}: {e}")
         return False    
     
 
@@ -95,7 +95,7 @@ def serialize_to_json(obj: Any) -> str | None:
         serializable_obj = make_serializable(obj)
         return json.dumps(serializable_obj, indent=4)
     except Exception as e:
-        logging.error(f"Error serializing to JSON: {e}", exc_info=True)
+        logging.exception(f"Error serializing to JSON: {e}")
         return None
 
 def serialize_objects(objects: List[T]) -> str | None:
@@ -109,7 +109,7 @@ def serialize_objects(objects: List[T]) -> str | None:
     try:
         return json.dumps([obj.model_dump(mode='json') for obj in objects], indent=4)
     except Exception as e:
-        logging.error(f"Error converting list to JSON: {e}", exc_info=True)
+        logging.exception(f"Error converting list to JSON: {e}")
         return None
     
 async def read_json_file(file_path: str) -> dict | None:
@@ -119,7 +119,7 @@ async def read_json_file(file_path: str) -> dict | None:
     try:
         return json.loads(data)
     except (json.JSONDecodeError, OSError) as e:
-        logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
+        logging.exception(f"Error reading JSON file {file_path}: {e}")
         return {}
     
 async def read_text_file(file_path: str | Path) -> str | None:
@@ -129,5 +129,5 @@ async def read_text_file(file_path: str | Path) -> str | None:
         async with aiofiles.open(file_path, 'r', encoding="utf-8") as file:
             content = await file.read()
     except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
-        logging.error(f"Error reading file: {file_path} - {e}", exc_info=True)
+        logging.exception(f"Error reading file: {file_path} - {e}")
     return content

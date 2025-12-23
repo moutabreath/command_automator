@@ -1,0 +1,5 @@
+{
+    "general": ["senior", "junior", "manager", "engineer", "analyst", "administrator", "designer", "writer"],
+    "software_engineer": ["software", "developer", "backend", "frontend", "fullstack"],
+    "data_engineer": ["data", "engineer", "etl"]
+}
