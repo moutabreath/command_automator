@@ -1,7 +1,7 @@
 import pytest
 from user.services.user_registry_service import UserRegistryService
-from jobs_tracking.services.job_tracking_service import JobTrackingService, JobTrackingResponseCode
-from jobs_tracking.models import JobApplicationState
+from jobs_tracking.services.job_tracking_service import JobTrackingService, JobTrackingResponseCode, TrackedJob
+from jobs_tracking.services.models import JobApplicationState, JobTrackingResponse
 
 from tests.mockups.mongo_mockups import MockCompanyMongoPersist, MockUserMongoPersist
 import mongomock
@@ -30,7 +30,7 @@ def job_service(db):
     return JobTrackingService(mock_persist)
 
 @pytest.mark.asyncio
-async def test_track_and_retrieve_dummy_job(user_service, job_service, db):
+async def test_track_and_retrieve_job(user_service, job_service):
     # 1. Register
     email = "dummy.user@example.com"
     auth_res = await user_service.login_or_register_user_async(email)
@@ -42,25 +42,33 @@ async def test_track_and_retrieve_dummy_job(user_service, job_service, db):
     status = JobApplicationState.APPLIED
     url = "http://dummy.company/jobs/1"
     
-    job_res = await job_service.add_or_update_position_async(
-        user_id=user_id,
-        company_name=company,
+    contact_name="John"
+    contact_linkedin="linkedin.com/john"
+    contact_email="john@example.com"
+    tracked_job = TrackedJob(
         job_url=url,
         job_title=position,
         job_state=status,
-        contact_name="John",
-        contact_linkedin="linkedin.com/john",
-        contact_email="john@example.com"
+        contact_name=contact_name,
+        contact_linkedin=contact_linkedin,
+        contact_email=contact_email
+    )
+    job_res: JobTrackingResponse = await job_service.add_or_update_position_async(
+        user_id=user_id,
+        company_name=company,
+        tracked_job=tracked_job
     )
     
     # Validate job_res has valid response
     assert job_res is not None
     assert job_res.code == JobTrackingResponseCode.OK
     assert job_res.job is not None
-    assert job_res.job['job_title'] == position
-    assert job_res.job['job_url'] == url
-    assert job_res.job['job_state'] == status.value
-    assert job_res.job['contact_name'] == "John"
+    assert job_res.job.job_title == position
+    assert job_res.job.job_url == url
+    assert job_res.job.job_state == status
+    assert job_res.job.contact_name == contact_name
+    assert job_res.job.contact_linkedin == contact_linkedin
+    assert job_res.job.contact_email == contact_email
 
 @pytest.mark.asyncio
 async def test_get_applications(user_service, job_service):
@@ -72,9 +80,7 @@ async def test_get_applications(user_service, job_service):
     company = "Test Company"
     position = "Developer"
     
-    await job_service.add_or_update_position_async(
-        user_id=user_id,
-        company_name=company,
+    tracked_job = TrackedJob(
         job_url="http://test.com/job",
         job_title=position,
         job_state=JobApplicationState.APPLIED,
@@ -82,10 +88,38 @@ async def test_get_applications(user_service, job_service):
         contact_linkedin="linkedin.com/jane",
         contact_email="jane@test.com"
     )
+    await job_service.add_or_update_position_async(
+        user_id=user_id,
+        company_name=company,
+        tracked_job=tracked_job
+    )
     
     # 2. Test job retrieval
-    positions = await job_service.get_positions(user_id, company)
+    positions = await job_service.get_positions_async(user_id, company)
     assert positions is not None
     assert positions.code == JobTrackingResponseCode.OK
     assert len(positions.jobs) == 1
-    assert positions.jobs[0]['job_title'] == position
+    assert positions.jobs[0].job_title == position
+
+@pytest.mark.asyncio
+async def test_update_track_and_retrieve_from_text(user_service, job_service):
+    # 1. Register user and add job
+    email = "test.user@example.com"
+    auth_res = await user_service.login_or_register_user_async(email)
+    user_id = auth_res.user_id
+
+    text = """https://www.linkedin.com/jobs/view/4324949336
+Finonex
+https://www.linkedin.com/in/amirdar/
+applied"""
+
+    job_res = await job_service.track_positions_from_text_async(
+        user_id=user_id,
+        text= text
+    )
+
+
+    # 3. Validate update
+    assert job_res is not None
+    assert job_res.code == JobTrackingResponseCode.OK
+    assert job_res.job['job_state'] == JobApplicationState.INTERVIEWING.value
