@@ -42,15 +42,15 @@ if exist "%SOURCE_DIR%\llm\mcp_servers\resume\resources" (
 
 REM Copy job_titles.json
 if exist "%SOURCE_DIR%\jobs_tracking\config\job_titles_keywords.json" (
-    copy "%SOURCE_DIR%\jobs_tracking\config\job_titles_keywords.json" "%APPDATA_DIR%\jobs_tracking\config\job_titles_keywords.json" /y
-    echo Copied job_titles.json to APPDATA
+    copy "%SOURCE_DIR%\jobs_tracking\config\job_titles_keywords.json" "%APPDATA_DIR%\jobs_tracking\config\job_titles_keywords.json" /e /i /y
+    echo Copied job_titles_keywords.json to APPDATA
 ) else (
-    echo Warning: job_titles.json not found
+    echo Warning: job_titles_keywords.json not found
 )
 
 REM Copy executable file
-if exist "..\commands_automator_api.exe" (
-    copy "..\commands_automator_api.exe" "%APPDATA_DIR%\commands_automator_api.exe" /y
+if exist ".\dist\commands_automator_api.exe" (
+    copy ".\dist\commands_automator_api.exe" "%APPDATA_DIR%\commands_automator_api.exe" /y
     echo Copied executable to APPDATA
 ) else (
     echo Warning: executable not found
