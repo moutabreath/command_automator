@@ -137,32 +137,28 @@
                                 <input type="text" id="company-name" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label for="position-title" class="form-label">Position Title</label>
-                                <input type="text" id="position-title" class="form-control">
+                                <label for="job_title" class="form-label">Position Title</label>
+                                <input type="text" id="job_title" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label for="position-url" class="form-label">Position URL</label>
-                                <input type="text" id="position-url" class="form-control">
+                                <label for="job_url" class="form-label">Position URL</label>
+                                <input type="text" id="job_url" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label for="contact-person" class="form-label">Contact</label>
-                                <input type="text" id="contact-person" class="form-control">
+                                <label for="contact_name" class="form-label">Contact</label>
+                                <input type="text" id="contact_name" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label for="contact-person-linkedin" class="form-label">Contact Linkedin</label>
-                                <input type="text" id="contact-person-linkedin" class="form-control">
+                                <label for="contact_linkedin" class="form-label">Contact Linkedin</label>
+                                <input type="text" id="contact_linkedin" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label for="contact-person-email" class="form-label">Contact Email</label>
-                                <input type="text" id="contact-person-email" class="form-control">
+                                <label for="contact_email" class="form-label">Contact Email</label>
+                                <input type="text" id="contact_email" class="form-control">
                             </div>
                             <div class="col-md-6">
-                                <label for="job-state" class="form-label">State</label>
-                                <select id="job-state" class="form-select"></select>
-                            </div>
-                            <div class="col-md-6">
-                                <label for="update-time" class="form-label">Last Updated</label>
-                                <input type="text" id="update-time" class="form-control" readonly>
+                                <label for="job_state" class="form-label">State</label>
+                                <select id="job_state" class="form-select"></select>
                             </div>
                             <div class="col-md-6 d-flex align-items-end">
                                 <div class="d-flex gap-2 w-100">
@@ -178,6 +174,28 @@
                                     </button>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Hidden Job Table -->
+                <div id="job-table-container" class="card bg-dark border-secondary mt-3" style="display: none;">
+                    <div class="card-body">
+                        <h5 class="card-title mb-3" style="color: #9EA3F5;">Job Applications</h5>
+                        <div class="table-responsive">
+                            <table id="job-table" class="table table-dark table-striped">
+                                <thead>
+                                    <tr>
+                                        <th>Title</th>
+                                        <th>Company</th>
+                                        <th>State</th>
+                                        <th>Contact</th>
+                                        <th>Updated</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="job-table-body">
+                                </tbody>
+                            </table>
                         </div>
                     </div>
                 </div>

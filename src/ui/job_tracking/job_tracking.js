@@ -1,5 +1,17 @@
 // Job Tracking JavaScript - Bootstrap Compatible
 
+// Element ID constants
+const ELEMENT_IDS = {
+    COMPANY_NAME: 'company-name',
+    JOB_TITLE: 'job_title',
+    JOB_URL: 'job_url',
+    CONTACT_NAME: 'contact_name',
+    CONTACT_LINKEDIN: 'contact_linkedin',
+    CONTACT_EMAIL: 'contact_email',
+    JOB_STATE: 'job_state',
+    UPDATE_TIME: 'update-time'
+};
+
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
 
@@ -22,10 +34,10 @@ function getStateLabel(enumName) {
 async function loadJobApplicationStates() {
     try {
         const states = await window.pywebview.api.get_job_application_states();
-        const stateSelect = document.getElementById('job-state');
+        const stateSelect = document.getElementById(ELEMENT_IDS.JOB_STATE);
 
         if (!stateSelect) {
-            console.error('job-state element not found');
+            console.error('job_state element not found');
             return;
         }
 
@@ -58,15 +70,21 @@ async function loadJobTrackingConfig() {
         }
 
         // Populate form fields
-        const companyName = document.getElementById('company-name');
-        const positionTitle = document.getElementById('position-title');
-        const positionUrl = document.getElementById('position-url');
-        const contactPerson = document.getElementById('contact-person');
+        const companyName = document.getElementById(ELEMENT_IDS.COMPANY_NAME);
+        const positionTitle = document.getElementById(ELEMENT_IDS.JOB_TITLE);
+        const positionUrl = document.getElementById(ELEMENT_IDS.JOB_URL);
+        const contactName = document.getElementById(ELEMENT_IDS.CONTACT_NAME);
+        const contactLinkedin = document.getElementById(ELEMENT_IDS.CONTACT_LINKEDIN);
+        const contactEmail = document.getElementById(ELEMENT_IDS.CONTACT_EMAIL);
+        const jobState = document.getElementById(ELEMENT_IDS.JOB_STATE);
 
         if (companyName) companyName.value = jobTrackingConfig.company_name || '';
-        if (positionTitle) positionTitle.value = jobTrackingConfig.position_title || '';
-        if (positionUrl) positionUrl.value = jobTrackingConfig.position_url || '';
-        if (contactPerson) contactPerson.value = jobTrackingConfig.contact_person || '';
+        if (positionTitle) positionTitle.value = jobTrackingConfig.job_title || '';
+        if (positionUrl) positionUrl.value = jobTrackingConfig.job_url || '';
+        if (contactName) contactName.value = jobTrackingConfig.contact_name || '';
+        if (contactLinkedin) contactLinkedin.value = jobTrackingConfig.contact_linkedin || '';
+        if (contactEmail) contactEmail.value = jobTrackingConfig.contact_email || '';
+        if (jobState) jobState.value = jobTrackingConfig.job_state || '';
 
         console.log('Job tracking config loaded successfully');
     } catch (error) {
@@ -77,10 +95,13 @@ async function loadJobTrackingConfig() {
 async function saveJobTrackingConfig() {
     try {
         const jobTrackingConfig = {
-            company_name: document.getElementById('company-name')?.value || '',
-            position_title: document.getElementById('position-title')?.value || '',
-            position_url: document.getElementById('position-url')?.value || '',
-            contact_person: document.getElementById('contact-person')?.value || ''
+            company_name: document.getElementById(ELEMENT_IDS.COMPANY_NAME)?.value || '',
+            job_title: document.getElementById(ELEMENT_IDS.JOB_TITLE)?.value || '',
+            job_url: document.getElementById(ELEMENT_IDS.JOB_URL)?.value || '',
+            contact_name: document.getElementById(ELEMENT_IDS.CONTACT_NAME)?.value || '',
+            contact_linkedin: document.getElementById(ELEMENT_IDS.CONTACT_LINKEDIN)?.value || '',
+            contact_email: document.getElementById(ELEMENT_IDS.CONTACT_EMAIL)?.value || '',
+            job_state: document.getElementById(ELEMENT_IDS.JOB_STATE)?.value || ''
         };
 
         await window.pywebview.api.save_job_tracking_configuration(jobTrackingConfig);
@@ -91,10 +112,13 @@ async function saveJobTrackingConfig() {
 }
 
 async function initJobTrackingEventListeners() {
-    const companyName = document.getElementById('company-name');
-    const positionTitle = document.getElementById('position-title');
-    const positionUrl = document.getElementById('position-url');
-    const contactPerson = document.getElementById('contact-person');
+    const companyNameElement = document.getElementById(ELEMENT_IDS.COMPANY_NAME);
+    const jobTitleElement = document.getElementById(ELEMENT_IDS.JOB_TITLE);
+    const jobUrlElement = document.getElementById(ELEMENT_IDS.JOB_URL);
+    const contactNameElement = document.getElementById(ELEMENT_IDS.CONTACT_NAME);
+    const contactLinkedinElement = document.getElementById(ELEMENT_IDS.CONTACT_LINKEDIN);
+    const contactEmailElement = document.getElementById(ELEMENT_IDS.CONTACT_EMAIL);
+    const jobStateElement = document.getElementById(ELEMENT_IDS.JOB_STATE);
     const trackJobBtn = document.getElementById('track-job-btn');
     const viewJobsBtn = document.getElementById('view-jobs-btn');
 
@@ -114,20 +138,32 @@ async function initJobTrackingEventListeners() {
 
     const debouncedSave = debounce(saveJobTrackingConfig, 500);
 
-    if (companyName) {
-        companyName.addEventListener('input', debouncedSave);
+    if (companyNameElement) {
+        companyNameElement.addEventListener('input', debouncedSave);
     }
 
-    if (positionTitle) {
-        positionTitle.addEventListener('input', debouncedSave);
+    if (jobTitleElement) {
+        jobTitleElement.addEventListener('input', debouncedSave);
     }
 
-    if (positionUrl) {
-        positionUrl.addEventListener('input', debouncedSave);
+    if (jobUrlElement) {
+        jobUrlElement.addEventListener('input', debouncedSave);
     }
 
-    if (contactPerson) {
-        contactPerson.addEventListener('input', debouncedSave);
+    if (contactNameElement) {
+        contactNameElement.addEventListener('input', debouncedSave);
+    }
+
+    if (contactLinkedinElement) {
+        contactLinkedinElement.addEventListener('input', debouncedSave);
+    }
+
+    if (contactEmailElement) {
+        contactEmailElement.addEventListener('input', debouncedSave);
+    }
+
+    if (jobStateElement) {
+        jobStateElement.addEventListener('change', debouncedSave);
     }
 
     // Track job button click
@@ -145,13 +181,13 @@ async function initJobTrackingEventListeners() {
     document.addEventListener('keydown', function (event) {
         if (event.ctrlKey && event.altKey && event.key === 'm') {
             event.preventDefault();
-            trackJobApplicationFromtext();
+            trackJobApplicationFromText();
         }
     });
 }
 
 async function viewJobApplications() {
-    const companyNameInput = document.getElementById('company-name');
+    const companyNameInput = document.getElementById(ELEMENT_IDS.COMPANY_NAME);
     const userId = window.userId || window.user_id;
     if (!userId) {
         showAlert('Please login first.', 'warning');
@@ -175,7 +211,9 @@ async function viewJobApplications() {
     try {
         const response = await window.pywebview.api.get_positions(userId, companyName);
 
-        if (responseBox) {
+        if (response && response.jobs) {
+            displayJobsTable(response.jobs);
+        } else {
             const responseElem = document.createElement('div');
             responseElem.className = 'llm-response';
             responseElem.textContent = JSON.stringify(response.jobs, null, 2);
@@ -195,16 +233,15 @@ async function viewJobApplications() {
 }
 
 async function trackJobApplication() {
-    const companyNameInput = document.getElementById('company-name');
-    const jobUrlInput = document.getElementById('position-url');
-    const jobTitleInput = document.getElementById('position-title');
-    const contactPersonInput = document.getElementById('contact-person');
-    const contactPersonLinkedinInput = document.getElementById('contact-person-linkedin');
-    const contactPersonEmailInput = document.getElementById('contact-person-email');
-    const jobStateSelect = document.getElementById('job-state');
-    const trackJobBtn = document.getElementById('track-job-btn');
+    const companyNameInput = document.getElementById(ELEMENT_IDS.COMPANY_NAME);
+    const jobTitleInput = document.getElementById(ELEMENT_IDS.JOB_TITLE);
+    const jobUrlInput = document.getElementById(ELEMENT_IDS.JOB_URL);
+    const contactNameInput = document.getElementById(ELEMENT_IDS.CONTACT_NAME);
+    const contactLinkedinInput = document.getElementById(ELEMENT_IDS.CONTACT_LINKEDIN);
+    const contactEmailInput = document.getElementById(ELEMENT_IDS.CONTACT_EMAIL);
+    const jobStateElement = document.getElementById(ELEMENT_IDS.JOB_STATE);
 
-    if (!companyNameInput || !jobUrlInput || !jobTitleInput || !jobStateSelect) {
+    if (!companyNameInput || !jobUrlInput || !jobTitleInput || !jobStateElement) {
         console.error('Required job tracking elements not found');
         return;
     }
@@ -212,11 +249,11 @@ async function trackJobApplication() {
     const companyName = companyNameInput.value.trim();
     const jobUrl = jobUrlInput.value.trim();
     const jobTitle = jobTitleInput.value.trim();
-    const contactPerson = contactPersonInput ? contactPersonInput.value.trim() : '';
-    const contactPersonLinkedin = contactPersonLinkedinInput ? contactPersonLinkedinInput.value.trim() : '';
-    const contactPersonEmail = contactPersonEmailInput ? contactPersonEmailInput.value.trim() : '';
-    const jobState = jobStateSelect.value;
-
+    const contactName = contactNameInput ? contactNameInput.value.trim() : '';
+    const contactLinkedin = contactLinkedinInput ? contactLinkedinInput.value.trim() : '';
+    const contactEmail = contactEmailInput ? contactEmailInput.value.trim() : '';
+    const jobState = jobStateElement.value;
+    const trackJobBtn = document.getElementById('track-job-btn');
     // Validation
     if (!companyName || !jobUrl) {
         showAlert('Please fill in Company Name and Position URL.', 'warning');
@@ -227,7 +264,7 @@ async function trackJobApplication() {
 
     if (!jobState) {
         showAlert('Please select a Job State.', 'warning');
-        jobStateSelect.focus();
+        jobStateElement.focus();
         return;
     }
 
@@ -248,17 +285,23 @@ async function trackJobApplication() {
         spinner.classList.add('visible');
         document.body.classList.add('spinner-active');
     }
+    
+        const jobDto = {
+            job_url: jobUrl,
+            job_title: jobTitle,
+            job_state: jobState,
+            contact_name: contactName || null,
+            contact_linkedin: contactLinkedin || null,
+            contact_email: contactEmail || null
+        };
 
     try {
+     
+
         const response = await window.pywebview.api.track_job_application(
             userId,
             companyName,
-            jobUrl,
-            jobTitle,
-            jobState,
-            contactPerson || null,
-            contactPersonLinkedin || null,
-            contactPersonEmail || null
+            jobDto
         );
 
         if (response && response.code === 'OK') {
@@ -267,7 +310,7 @@ async function trackJobApplication() {
             // Fill in the tracking pane fields with response data
             const job = response.job;
             if (job) {
-                fillJobTrackingFields(job)
+                displayJobsTable([job]);
             }
         } else {
             showAlert('Failed to track job application.', 'error');
@@ -290,7 +333,7 @@ async function trackJobApplication() {
     }
 }
 
-async function trackJobApplicationFromtext() {
+async function trackJobApplicationFromText() {
     const queryBox = document.getElementById('query-box');
     const query = queryBox ? queryBox.value.trim() : '';
     const userId = window.userId || window.user_id;
@@ -309,7 +352,7 @@ async function trackJobApplicationFromtext() {
     const spinner = document.getElementById('spinner');
 
     try {
-        const response = await window.pywebview.api.track_position_from_text(
+        const response = await window.pywebview.api.track_job_application_from_text(
             userId,
             query
         );
@@ -320,7 +363,7 @@ async function trackJobApplicationFromtext() {
             // Fill in the tracking pane fields with response data
             const job = response.job;
             if (job) {
-                fillJobTrackingFields(job)
+                displayJobsTable([job]);
             }
         } else {
             showAlert('Failed to track job application.', 'error');
@@ -343,22 +386,28 @@ async function trackJobApplicationFromtext() {
     }
 }
 
-function fillJobTrackingFields(job) {
-    const companyNameInput = document.getElementById('company-name');
-    const jobUrlInput = document.getElementById('position-url');
-    const jobTitleInput = document.getElementById('position-title');
-    const contactPersonInput = document.getElementById('contact-person');
-    const contactPersonLinkedinInput = document.getElementById('contact-person-linkedin');
-    const contactPersonEmailInput = document.getElementById('contact-person-email');
-    const jobStateSelect = document.getElementById('job-state');
-    const updateTimeInput = document.getElementById('update-time');
-
-    if (companyNameInput && job.company_name) companyNameInput.value = job.company_name;
-    if (jobUrlInput && job.job_url) jobUrlInput.value = job.job_url;
-    if (jobTitleInput && job.job_title) jobTitleInput.value = job.job_title;
-    if (contactPersonInput && job.contact_name) contactPersonInput.value = job.contact_name;
-    if (contactPersonLinkedinInput && job.contact_linkedin) contactPersonLinkedinInput.value = job.contact_linkedin;
-    if (contactPersonEmailInput && job.contact_email) contactPersonEmailInput.value = job.contact_email;
-    if (jobStateSelect && job.job_state) jobStateSelect.value = job.job_state;
-    if (updateTimeInput && job.update_time) updateTimeInput.value = job.update_time;
+function displayJobsTable(jobs) {
+    const tableContainer = document.getElementById('job-table-container');
+    const tableBody = document.getElementById('job-table-body');
+    
+    if (!tableContainer || !tableBody) return;
+    
+    // Clear existing rows
+    tableBody.innerHTML = '';
+    
+    // Add jobs to table
+    jobs.forEach(job => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+            <td>${job.job_title || 'N/A'}</td>
+            <td>${job.company_name || 'N/A'}</td>
+            <td>${getStateLabel(job.job_state) || 'N/A'}</td>
+            <td>${job.contact_name || 'N/A'}</td>
+            <td>${job.update_time ? new Date(job.update_time).toLocaleDateString() : 'N/A'}</td>
+        `;
+        tableBody.appendChild(row);
+    });
+    
+    // Show table
+    tableContainer.style.display = 'block';
 }
