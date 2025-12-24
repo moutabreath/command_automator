@@ -263,6 +263,12 @@ async function trackJobApplication() {
 
         if (response && response.code === 'OK') {
             showAlert('Job application tracked successfully!', 'success');
+            
+            // Fill in the tracking pane fields with response data
+            const job = response.job;
+            if (job) {
+                fillJobTrackingFields(job)
+            }
         } else {
             showAlert('Failed to track job application.', 'error');
         }
@@ -345,6 +351,7 @@ function fillJobTrackingFields(job) {
     const contactPersonLinkedinInput = document.getElementById('contact-person-linkedin');
     const contactPersonEmailInput = document.getElementById('contact-person-email');
     const jobStateSelect = document.getElementById('job-state');
+    const updateTimeInput = document.getElementById('update-time');
 
     if (companyNameInput && job.company_name) companyNameInput.value = job.company_name;
     if (jobUrlInput && job.job_url) jobUrlInput.value = job.job_url;
@@ -353,4 +360,5 @@ function fillJobTrackingFields(job) {
     if (contactPersonLinkedinInput && job.contact_linkedin) contactPersonLinkedinInput.value = job.contact_linkedin;
     if (contactPersonEmailInput && job.contact_email) contactPersonEmailInput.value = job.contact_email;
     if (jobStateSelect && job.job_state) jobStateSelect.value = job.job_state;
+    if (updateTimeInput && job.update_time) updateTimeInput.value = job.update_time;
 }
