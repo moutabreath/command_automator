@@ -146,20 +146,28 @@ class CommandsAutomatorApi:
         """Get list of job application states"""
         return self.job_tracking_api.get_job_application_states()
     
-    def track_job_application(self, user_id: str, company_name: str, job_dto: TrackedJobDto) -> Dict[str, Any]:
+    def track_job_application(self, user_id: str, company_name: str, job_dto_dict: Dict) -> Dict[str, Any]:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.add_job_to_company(user_id, company_name, job_dto)
+        job_dto = TrackedJobDto(
+             job_title=job_dto_dict['job_url'],
+            job_url= job_dto_dict['job_title'],
+            contact_linkedin=job_dto_dict['contact_linkedin'],
+            contact_name=job_dto_dict['contact_name'],
+            job_state=job_dto_dict['job_state'],
+            contact_email=job_dto_dict['contact_email']
+        )
+        return self.job_tracking_api.track_job_application(user_id, company_name, job_dto)
     
     def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.get_positions(user_id, company_name)
     
-    def track_position_from_text(self, user_id: str, text:str):
+    def track_job_application_from_text(self, user_id: str, text:str):
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.track_position_from_text(user_id, text)
+        return self.job_tracking_api.track_job_application_from_text(user_id, text)
 
 
 async def initialize_apis():
@@ -214,7 +222,7 @@ def main():
         logging.info("Starting webview...")
         webview.start(icon='ui/resources/Commands_Automator.ico')
     except Exception as ex:
-        logging.error(f"Fatal error in main: {ex}", exc_info=True)
+        logging.exception(f"Fatal error in main: {ex}")
         raise
 
 if __name__ == '__main__':

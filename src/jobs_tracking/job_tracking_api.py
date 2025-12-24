@@ -54,13 +54,13 @@ class JobTrackingApi(AbstractApi):
             return JobTrackingApiListResponse(serialized_jobs, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
     
-    def track_position_from_text(self, user_id: str, text:str):
+    def track_job_application_from_text(self, user_id: str, text:str):
         response = self.job_tracking_service.track_position_from_text(user_id, text)
-        if response  and response.code == JobTrackingResponseCode.OK:            
+        if response and response.code == JobTrackingResponseCode.OK:            
             return JobTrackingApiListResponse(self._get_job_dict_from_tracked_job(response.job), JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
 
-    def _get_job_dict_from_tracked_job(self, job):
+    def _get_job_dict_from_tracked_job(self, job: TrackedJob):
         job_dict = asdict(job)
         job_dict['job_state'] = job.job_state.name  # Convert enum to string
         if job_dict.get('update_time'):
