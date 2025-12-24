@@ -165,6 +165,7 @@ async def _run_linkedin_scraper(job_title: str, location: str, remote: bool, use
     except Exception as e:
         logging.error(f"Error finding jobs from linkedin {e}", exc_info=True)
         return []
+    
     scraped_jobs, applied_jobs = await _filter_jobs(jobs, user_id)
     logging.info(f"Found {len(jobs)} jobs")
     logging.debug("=" * 60)
@@ -223,8 +224,6 @@ def get_applied_companies_and_titles(response, existing_urls):
 
 async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, forbidden_titles: list = None) -> List:
     """Run the Glassdoor job scraper"""
-    max_pages: int = 3
-    max_jobs_per_page: int = 20
     container = MCPContainer.get_container()
     glassdoor_scraper = container.glassdoor_scraper()
     job_saver = container.job_saver()
@@ -234,9 +233,7 @@ async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, fo
         jobs = await glassdoor_scraper.run_scraper(
             job_title=job_title,
             location=location,
-            forbidden_titles=forbidden_titles,
-            max_pages=max_pages,
-            max_jobs_per_page=max_jobs_per_page)
+            forbidden_titles=forbidden_titles)
 
         if jobs and len(jobs) > 0:
             await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')

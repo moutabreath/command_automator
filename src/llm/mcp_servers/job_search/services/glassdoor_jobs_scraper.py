@@ -9,12 +9,12 @@ from urllib.parse import urlencode
 from datetime import datetime
 
 from llm.mcp_servers.job_search.models import ScrapedJob
-from llm.mcp_servers.job_search.services.abstract_job_scraper import AbstractJobScraper
+from llm.mcp_servers.job_search.services.abstract_jobs_scraper import AbstractJobsScraper
 
 from utils.file_utils import GLASSDOOR_SELECTORS_FILE
 
 
-class GlassdoorJobsScraper(AbstractJobScraper):
+class GlassdoorJobsScraper(AbstractJobsScraper):
     def __init__(self):
         super().__init__()
         self.base_url = "https://www.glassdoor.com"
@@ -28,8 +28,15 @@ class GlassdoorJobsScraper(AbstractJobScraper):
         except Exception as e:
             raise Exception(f"Failed to load selectors configuration: {e}") from e
     
-    async def run_scraper(self, job_title: str, location: str, forbidden_titles: list[str], 
-                          max_pages: int, max_jobs_per_page: int) -> List[ScrapedJob]:
+    async def run_scraper(self, job_title: str, location: str, forbidden_titles: List[str] = None, 
+                          max_pages: int = 3, max_jobs_per_page: int = 20) -> List[ScrapedJob]:
+        if job_title is None or location is None:
+            logging.error("Job title and location must be provided.")
+            return []
+        
+        if not(forbidden_titles):
+            forbidden_titles = []
+
         try:
             await self._setup_browser()
             jobs = await self._scrape_jobs(

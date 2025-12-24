@@ -8,9 +8,9 @@ import urllib.parse
 from typing import List, Optional
 
 from llm.mcp_servers.job_search.models import ScrapedJob
-from llm.mcp_servers.job_search.services.abstract_job_scraper import AbstractJobScraper
+from llm.mcp_servers.job_search.services.abstract_jobs_scraper import AbstractJobsScraper
 
-class LinkedInJobScraper(AbstractJobScraper):
+class LinkedInJobsScraper(AbstractJobsScraper):
     def __init__(self):
         super().__init__()
         self.session = requests.Session()
@@ -34,7 +34,11 @@ class LinkedInJobScraper(AbstractJobScraper):
         Returns:
             List of Job objects
         """
-        if forbidden_titles is None:
+        if not (job_title) or job_title == "" or not(location) or location == "":
+            logging.error("Job title and location must be provided.")
+            return []
+
+        if not(forbidden_titles):
             forbidden_titles = []
         
         search_url = self._build_search_url(

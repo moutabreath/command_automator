@@ -4,7 +4,7 @@ from dependency_injector import providers
 from llm.mcp_servers.persistence.mcp_company_mongo_persist import MCPCompanyMongoPersist
 from llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
 from llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
-from llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
+from llm.mcp_servers.job_search.services.linkedin_jobs_scraper import LinkedInJobsScraper
 from llm.mcp_servers.services.company_mcp_service import CompanyMCPService
 from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
 from utils.dependency_container import Container
@@ -20,7 +20,7 @@ class MCPContainer(Container):
     
     # Services
     resume_loader_service = providers.Factory(ResumeLoaderService)
-    linkedin_scraper = providers.Factory(LinkedInJobScraper)
+    linkedin_scraper = providers.Factory(LinkedInJobsScraper)
     glassdoor_scraper = providers.Factory(GlassdoorJobsScraper)
     job_saver = providers.Factory(JobsSaver)
     

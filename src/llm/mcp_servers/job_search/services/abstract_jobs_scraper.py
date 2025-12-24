@@ -1,4 +1,4 @@
-class AbstractJobScraper:
+class AbstractJobsScraper:
 
     def __init__(self):
         self.headers = {
