@@ -5,6 +5,7 @@ from jobs_tracking.models import JobTrackingApiResponse, JobTrackingApiResponseC
 from jobs_tracking.services.models import JobApplicationState, TrackedJob
 from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
 from abstract_api import AbstractApi
+from dataclasses import asdict
 
 
 class JobTrackingApi(AbstractApi):
@@ -41,18 +42,28 @@ class JobTrackingApi(AbstractApi):
             company_name=company_name,
             trackedJob=tracked_job
         )
-        if response and response.code == JobTrackingResponseCode.OK:            
-            return JobTrackingApiResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
+        if response and response.code == JobTrackingResponseCode.OK:
+            job_dict = self._get_job_dict_from_tracked_job(response.job)
+            return JobTrackingApiResponse(job_dict, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
-    
+
     def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
         response = self.job_tracking_service.get_positions(user_id, company_name)
-        if response  and response.code == JobTrackingResponseCode.OK:            
-            return JobTrackingApiListResponse(response.jobs, JobTrackingApiResponseCode.OK).to_dict()
+        if response and response.code == JobTrackingResponseCode.OK:
+            serialized_jobs = [self._get_job_dict_from_tracked_job(job) for job in response.jobs]
+            return JobTrackingApiListResponse(serialized_jobs, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
     
     def track_position_from_text(self, user_id: str, text:str):
         response = self.job_tracking_service.track_position_from_text(user_id, text)
         if response  and response.code == JobTrackingResponseCode.OK:            
-            return JobTrackingApiListResponse(response.job, JobTrackingApiResponseCode.OK).to_dict()
+            return JobTrackingApiListResponse(self._get_job_dict_from_tracked_job(response.job), JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+
+    def _get_job_dict_from_tracked_job(self, job):
+        job_dict = asdict(job)
+        job_dict['job_state'] = job.job_state.name  # Convert enum to string
+        if job_dict.get('update_time'):
+            job_dict['update_time'] = job_dict['update_time'].isoformat() if hasattr(job_dict['update_time'], 'isoformat') else str(job_dict['update_time'])
+        return job_dict
+    

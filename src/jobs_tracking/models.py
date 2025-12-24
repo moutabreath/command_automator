@@ -34,8 +34,8 @@ class JobTrackingApiResponse:
         self.code = JobTrackingApiResponseCode[state["code"]]
 
 class JobTrackingApiListResponse:
-    def __init__(self, job: List[Dict], code: JobTrackingApiResponseCode):
-        self.jobs = job
+    def __init__(self, jobs: List[Dict], code: JobTrackingApiResponseCode):
+        self.jobs = jobs
         self.code = code
 
     def to_dict(self) -> Dict[str, Any]:
