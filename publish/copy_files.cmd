@@ -48,6 +48,14 @@ if exist "%SOURCE_DIR%\jobs_tracking\config\job_titles_keywords.json" (
     echo Warning: job_titles_keywords.json not found
 )
 
+REM Copy .env.local file
+if exist "..\.env.local" (
+    copy "..\.env.local" "%APPDATA_DIR%\.env.local" /y
+    echo Copied .env.local to APPDATA
+) else (
+    echo Warning: .env.local not found
+)
+
 REM Copy executable file
 if exist ".\dist\commands_automator_api.exe" (
     copy ".\dist\commands_automator_api.exe" "%APPDATA_DIR%\commands_automator_api.exe" /y
