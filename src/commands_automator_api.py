@@ -50,13 +50,17 @@ class CommandsAutomatorApi:
         self._config_cache = None
         
 
-    def save_config(self, config_data):
+    def save_configuration(self, config_data, section):
         """Save unified configuration to commands_automator.config"""
         config = configparser.ConfigParser()
+        if os.path.exists(self.config_path):
+            config.read(self.config_path)
         
-        # Parse the config_data and write to sections
-        for section, values in config_data.items():
-            config[section] = values
+        if not config.has_section(section):
+            config.add_section(section)
+            
+        for key, value in config_data.items():
+            config.set(section, key, str(value))
             
         os.makedirs(os.path.dirname(self.config_path), exist_ok=True)
         with open(self.config_path, 'w') as f:
@@ -65,7 +69,7 @@ class CommandsAutomatorApi:
         # Invalidate cache after saving
         self._invalidate_config_cache()
             
-    def load_config(self):
+    def get_configuration(self):
         """Load unified configuration from commands_automator.config"""
         return self._load_config_once()
 
@@ -76,16 +80,6 @@ class CommandsAutomatorApi:
     def get_script_description(self, script_name):
         return self.scripts_manager_api.get_script_description(script_name)
         
-    def load_commands_configuration(self):
-        """Load commands configuration from unified config"""
-        config = self.load_config()
-        return config.get('scripts_manager', {})
-
-    def save_commands_configuration(self, config):
-        """Save commands configuration to unified config"""
-        full_config = self.load_config()
-        full_config['scripts_manager'] = config
-        self.save_config(full_config)
         
     def execute_script(self, script_name, additional_text, flags):
         return self.scripts_manager_api.execute_script(script_name, additional_text, flags)
@@ -95,16 +89,6 @@ class CommandsAutomatorApi:
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None):
         return self.llm_api.call_llm(prompt, image_data, output_file_path, user_id)
     
-    def load_llm_configuration(self):
-        """Load LLM configuration from unified config"""
-        config = self.load_config()
-        return config.get('llm', {})
-
-    def save_llm_configuration(self, config):
-        """Save LLM configuration to unified config"""
-        full_config = self.load_config()
-        full_config['llm'] = config
-        self.save_config(full_config)
     
     def select_folder(self):
         if not webview.windows:
@@ -112,14 +96,7 @@ class CommandsAutomatorApi:
             return None
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
     
-    
-    def load_user_config(self):
-        """Load user configuration from unified config"""
-        if self.user_api is None:
-            return {"error": "User API not available - MongoDB configuration missing"}
-        config = self.load_config()
-        return config.get('user', {})
-    
+        
     def login_or_register(self, email:str):
         if self.user_api is None:
             return {"error": "User API not available - MongoDB configuration missing"}
@@ -130,16 +107,9 @@ class CommandsAutomatorApi:
         """Load job tracking configuration from unified config"""
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        config = self.load_config()
+        config = self.get_configuration()
         return config.get('job_tracking', {})
     
-    def save_job_tracking_configuration(self, config):
-        """Save job tracking configuration to unified config"""
-        if self.job_tracking_api is None:
-            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        full_config = self.load_config()
-        full_config['job_tracking'] = config
-        self.save_config(full_config)
     
     
     def get_job_application_states(self):
@@ -220,7 +190,7 @@ def main():
         )
         
         logging.info("Starting webview...")
-        webview.start(icon='ui/resources/Commands_Automator.ico')
+        webview.start(icon='ui/resources/Commands_Automator.ico', debug=True)
     except Exception as ex:
         logging.exception(f"Fatal error in main: {ex}")
         raise
