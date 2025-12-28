@@ -42,23 +42,27 @@ class JobTrackingApi(AbstractApi):
             company_name=company_name,
             trackedJob=tracked_job
         )
-        if response and response.code == JobTrackingResponseCode.OK:
-            job_dict = self._get_job_dict_from_tracked_job(response.job)
-            return JobTrackingApiResponse(job_dict, JobTrackingApiResponseCode.OK).to_dict()
-        return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+        return self._create_job_response(response, company_name)
 
     def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
         response = self.job_tracking_service.get_positions(user_id, company_name)
         if response and response.code == JobTrackingResponseCode.OK:
             serialized_jobs = [self._get_job_dict_from_tracked_job(job) for job in response.jobs]
+            serialized_jobs['company_name'] = company_name
             return JobTrackingApiListResponse(serialized_jobs, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
     
     def track_job_application_from_text(self, user_id: str, text:str):
         response = self.job_tracking_service.track_position_from_text(user_id, text)
-        if response and response.code == JobTrackingResponseCode.OK:            
-            return JobTrackingApiListResponse(self._get_job_dict_from_tracked_job(response.job), JobTrackingApiResponseCode.OK).to_dict()
-        return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+        company_name = getattr(response, 'company_name', None)
+        return self._create_job_response(response, company_name)
+
+    def _create_job_response(self, response, company_name: str) -> Dict[str, Any]:
+        if response and response.code == JobTrackingResponseCode.OK:
+            job_dict = self._get_job_dict_from_tracked_job(response.job)
+            job_dict['company_name'] = company_name
+            return JobTrackingApiResponse(job_dict, JobTrackingApiResponseCode.OK).to_dict()
+        return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
 
     def _get_job_dict_from_tracked_job(self, job: TrackedJob):
         job_dict = asdict(job)
