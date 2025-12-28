@@ -150,6 +150,8 @@ class JobTrackingService(AbstractPersistenceService):
                     else:
                         # linkedin url is job's linkedin
                         job_url = line
+                else:
+                    job_url = line
                 continue
             if self._is_job_state(line):
                 job_state = self._get_job_state(line)
@@ -215,11 +217,14 @@ class JobTrackingService(AbstractPersistenceService):
         # 1. Extract the slug
         slug = re.search(r"(?<=linkedin\.com\/in\/)[^\/\?#]+", url).group()
 
-        # 2. Remove trailing numbers and dashes
-        clean_slug = re.sub(r"[\d-]+$", "", slug)
+        # 2. Get split by dash
+        slug_parts = slug.split('-')
 
-        # 3. Replace remaining dashes with spaces
-        final_name = re.sub(r"-", " ", clean_slug).strip()
+        # 3. Construct raw first and last name
+        first_and_last = slug_parts[0] + ' ' + slug_parts[1]
+
+        # 4. Remove trailing numbers and dashes
+        final_name = re.sub(r"[\d-]+$", "", first_and_last).strip()
 
         return final_name
     
