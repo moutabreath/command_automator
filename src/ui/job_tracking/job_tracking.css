@@ -188,3 +188,13 @@
 #job-table .btn.w-100 {
     flex: 1;
 }
+
+/* Delete row button styling */
+#job-table .delete-row {
+    opacity: 0;
+    transition: opacity 0.2s ease;
+}
+
+#job-table tr:hover .delete-row {
+    opacity: 1;
+}

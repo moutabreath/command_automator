@@ -4,6 +4,23 @@ async function initJobTracking() {
     
     populateStateSelect(document.getElementById('job_state'));
     
+    // Add event listeners for main form buttons
+    const trackJobBtn = document.getElementById('track-job-btn');
+    const viewJobsBtn = document.getElementById('view-jobs-btn');
+    
+    if (trackJobBtn) {
+        trackJobBtn.addEventListener('click', async () => {
+            await trackJobApplication(getFormData(), true);
+        });
+    }
+    
+    if (viewJobsBtn) {
+        viewJobsBtn.addEventListener('click', async () => {
+            const formData = getFormData();
+            await viewJobApplications(formData.company_name);
+        });
+    }
+    
     await loadJobTrackingConfig();
 }
 
@@ -48,7 +65,7 @@ function addJobToTable(job, companyName) {
     const row = document.createElement('tr');
     
     row.innerHTML = `
-        <td><input type="text" class="form-control form-control-sm company-name" value="${companyName || ''}"></td>
+        <td><span class="delete-row" style="cursor: pointer; color: red; font-weight: bold; margin-right: 8px;">×</span><input type="text" class="form-control form-control-sm company-name" value="${companyName || ''}" style="display: inline-block; width: calc(100% - 20px);"></td>
         <td><input type="text" class="form-control form-control-sm job-title" value="${job.job_title || ''}"></td>
         <td><input type="text" class="form-control form-control-sm job-url" value="${job.job_url || ''}"></td>
         <td class="state-cell"></td>
@@ -68,19 +85,36 @@ function addJobToTable(job, companyName) {
     const stateCell = row.querySelector('.state-cell');
     stateCell.appendChild(stateSelect);
 
-    // Set the select value (or default to first option)
+    // Set the select value
     if (job.job_state && stateSelect.querySelector(`option[value="${job.job_state}"]`)) {
         stateSelect.value = job.job_state;
     }
 
     // Add event listeners
-    row.querySelector('.track-job-row-btn').addEventListener('click', async () => {
-        await trackJobApplicationFromRow(getRowData(row));
-    });
-
-    row.querySelector('.view-jobs-row-btn').addEventListener('click', async () => {
-        await viewJobApplicationsFromRow(getRowData(row).company_name);
-    });
+    const trackBtn = row.querySelector('.track-job-row-btn');
+    const viewBtn = row.querySelector('.view-jobs-row-btn');
+    const deleteBtn = row.querySelector('.delete-row');
+    
+    if (trackBtn) {
+        trackBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await trackJobApplication(getRowData(row));
+        });
+    }
+    
+    if (viewBtn) {
+        viewBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await viewJobApplications(getRowData(row).company_name);
+        });
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            row.remove();
+        });
+    }
 
     tableBody.prepend(row);
 }
@@ -97,8 +131,120 @@ function getStateLabel(enumName) {
     return stateLabels[enumName] || enumName;
 }
 
+function getFormData() {
+    return {
+        company_name: document.getElementById('company-name').value.trim(),
+        job_title: document.getElementById('job_title').value.trim(),
+        job_url: document.getElementById('job_url').value.trim(),
+        job_state: document.getElementById('job_state').value,
+        contact_name: document.getElementById('contact_name').value.trim(),
+        contact_linkedin: document.getElementById('contact_linkedin').value.trim(),
+        contact_email: document.getElementById('contact_email').value.trim()
+    };
+}
 
+function clearForm() {
+    document.getElementById('company-name').value = '';
+    document.getElementById('job_title').value = '';
+    document.getElementById('job_url').value = '';
+    document.getElementById('contact_name').value = '';
+    document.getElementById('contact_linkedin').value = '';
+    document.getElementById('contact_email').value = '';
+    document.getElementById('job_state').selectedIndex = 0;
+}
 
+async function trackJobApplication(rowData, isFromForm = false) {
+    const userId = window.userId || window.user_id;
+    if (!userId) {
+        showAlert('Please login first.', 'warning');
+        return;
+    }
+
+    if (!rowData.company_name || !rowData.job_url) {
+        showAlert('Please fill in Company Name and Job URL.', 'warning');
+        return;
+    }
+
+    const jobDto = {
+        job_url: rowData.job_url,
+        job_title: rowData.job_title,
+        job_state: rowData.job_state,
+        contact_name: rowData.contact_name || null,
+        contact_linkedin: rowData.contact_linkedin || null,
+        contact_email: rowData.contact_email || null
+    };
+
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.classList.add('visible');
+        document.body.classList.add('spinner-active');
+    }
+
+    try {
+        const response = await window.pywebview.api.track_job_application(
+            userId,
+            rowData.company_name,
+            jobDto
+        );
+
+        if (response && response.code === 'OK') {
+            showAlert('Job application tracked successfully!', 'success');
+            
+            if (isFromForm) {
+                clearForm();
+                if (response.job) {
+                    addJobToTable(response.job, rowData.company_name);
+                }
+            } else {
+                await saveJobTrackingConfig(rowData);
+            }
+        } else {
+            showAlert('Failed to track job application.', 'error');
+        }
+    } catch (error) {
+        console.error('Track job failed:', error);
+        showAlert('Failed to track job. Please check the console for details.', 'error');
+    } finally {
+        if (spinner) {
+            spinner.classList.remove('visible');
+            document.body.classList.remove('spinner-active');
+        }
+    }
+}
+
+async function viewJobApplications(companyName) {
+    const userId = window.userId || window.user_id;
+    if (!userId) {
+        showAlert('Please login first.', 'warning');
+        return;
+    }
+
+    if (!companyName) {
+        showAlert('Please enter a company name.', 'warning');
+        return;
+    }
+
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.classList.add('visible');
+        document.body.classList.add('spinner-active');
+    }
+
+    try {
+        const response = await window.pywebview.api.get_positions(userId, companyName);
+        if (response && response.jobs) {
+            displayJobsTable(response.jobs, companyName);
+        }
+    } catch (error) {
+        console.error('Error retrieving jobs:', error);
+        showAlert('Failed to retrieve jobs.', 'error');
+    } finally {
+        if (spinner) {
+            spinner.classList.remove('visible');
+            document.body.classList.remove('spinner-active');
+        }
+    }
+}
 
 async function saveJobTrackingConfig(jobData) {
     const jobTrackingConfig = {
