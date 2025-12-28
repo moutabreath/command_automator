@@ -205,8 +205,8 @@ def main():
             'Commands Automator',
             'ui/commands_automator.html',
             js_api=api,
-            width=1000,
-            height=800
+            width=1500,
+            height=1000
         )
         
         logging.info("Starting webview...")
