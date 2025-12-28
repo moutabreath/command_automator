@@ -6,14 +6,9 @@ async function initLLM() {
 }
 
 async function loadLLMConfig() {
-    try {
-        let llmConfig = await window.pywebview.api.load_llm_configuration();
-        const outputPath = document.getElementById('output-file-path');
-        if (outputPath) {
-            outputPath.value = llmConfig.output_file_path || '';
-        }
-    } catch (error) {
-        console.log('Error loading LLM config:', error);
+    const outputPath = document.getElementById('output-file-path');
+    if (outputPath) {
+        outputPath.value = config.llm.output_file_path || '';
     }
 }
 
@@ -23,7 +18,7 @@ async function saveLLMConfig() {
         const outputPathElement = document.getElementById('output-file-path');
         if (outputPathElement) {
             llmConfig.output_file_path = outputPathElement.value;
-            await window.pywebview.api.save_llm_configuration(llmConfig);
+            await window.pywebview.api.save_configuration(llmConfig, 'llm');
         }
     } catch (error) {
         console.log('Error saving LLM config:', error);
@@ -150,7 +145,7 @@ function removeImageThumbnail() {
 function updateImagePreviewSize() {
     const imagePreviewDiv = document.getElementById('image-preview');
     const queryBox = document.getElementById('query-box');
-    
+
     if (queryBox && imagePreviewDiv && imagePreviewDiv.style.display !== 'none') {
         const queryBoxWidth = queryBox.offsetWidth;
         const thumbnailSize = Math.min(200, queryBoxWidth / 4);
@@ -200,7 +195,7 @@ async function callLLM() {
     const query = queryBox ? queryBox.value.trim() : '';
     const folderInput = document.getElementById('output-file-path');
     const outputPath = folderInput ? folderInput.value : '';
-    
+
     if (!query) return;
 
     const sendBtn = document.getElementById('send-btn');

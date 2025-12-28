@@ -60,15 +60,7 @@ async function loadJobApplicationStates() {
 }
 
 async function loadJobTrackingConfig() {
-    try {
-        let jobTrackingConfig = await window.pywebview.api.load_job_tracking_configuration();
-
-        // Check if config is empty or invalid
-        if (!jobTrackingConfig || Object.keys(jobTrackingConfig).length === 0) {
-            console.log('No job tracking config found');
-            return;
-        }
-
+    
         // Populate form fields
         const companyName = document.getElementById(ELEMENT_IDS.COMPANY_NAME);
         const positionTitle = document.getElementById(ELEMENT_IDS.JOB_TITLE);
@@ -78,18 +70,15 @@ async function loadJobTrackingConfig() {
         const contactEmail = document.getElementById(ELEMENT_IDS.CONTACT_EMAIL);
         const jobState = document.getElementById(ELEMENT_IDS.JOB_STATE);
 
-        if (companyName) companyName.value = jobTrackingConfig.company_name || '';
-        if (positionTitle) positionTitle.value = jobTrackingConfig.job_title || '';
-        if (positionUrl) positionUrl.value = jobTrackingConfig.job_url || '';
-        if (contactName) contactName.value = jobTrackingConfig.contact_name || '';
-        if (contactLinkedin) contactLinkedin.value = jobTrackingConfig.contact_linkedin || '';
-        if (contactEmail) contactEmail.value = jobTrackingConfig.contact_email || '';
-        if (jobState) jobState.value = jobTrackingConfig.job_state || '';
+        if (companyName) companyName.value = config.job_tracking.company_name || '';
+        if (positionTitle) positionTitle.value = config.job_tracking.job_title || '';
+        if (positionUrl) positionUrl.value = config.job_tracking.job_url || '';
+        if (contactName) contactName.value = config.job_tracking.contact_name || '';
+        if (contactLinkedin) contactLinkedin.value = config.job_tracking.contact_linkedin || '';
+        if (contactEmail) contactEmail.value = config.job_tracking.contact_email || '';
+        if (jobState) jobState.value = config.job_tracking.job_state || '';
 
         console.log('Job tracking config loaded successfully');
-    } catch (error) {
-        console.log('Error loading job tracking config:', error);
-    }
 }
 
 async function saveJobTrackingConfig() {
@@ -104,7 +93,7 @@ async function saveJobTrackingConfig() {
             job_state: document.getElementById(ELEMENT_IDS.JOB_STATE)?.value || ''
         };
 
-        await window.pywebview.api.save_job_tracking_configuration(jobTrackingConfig);
+        await window.pywebview.api.save_configuration(jobTrackingConfig, 'job_tracking');
         console.log('Job tracking config saved');
     } catch (error) {
         console.log('Error saving job tracking config:', error);

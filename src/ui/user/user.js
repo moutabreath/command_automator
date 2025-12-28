@@ -11,14 +11,9 @@ async function initUser() {
 }
 
 async function loadUserConfig() {
-    try {
-        let userConfig = await window.pywebview.api.load_user_config();
-        const userEmail = document.getElementById('user-email');
-        if (userEmail && userConfig) {
-            userEmail.value = userConfig.email || '';
-        }
-    } catch (error) {
-        console.log('Error loading user config:', error);
+    const userEmail = document.getElementById('user-email');
+    if (userEmail && config) {
+        userEmail.value = config.user.email || '';
     }
 }
 
@@ -29,7 +24,7 @@ async function saveUserConfig() {
             const userConfig = {
                 email: userEmail.value.trim()
             };
-            await window.pywebview.api.save_user_config(userConfig);
+            await window.pywebview.api.save_configuration(userConfig, 'user');
         }
     } catch (error) {
         console.log('Error saving user config:', error);
@@ -69,7 +64,7 @@ async function initUserEventListeners() {
 async function registerOrLogin() {
     if (isLoggingIn) {
         return;
-    } 
+    }
     const emailInput = document.getElementById('user-email');
     const loginBtn = document.getElementById('login-btn');
 
@@ -79,7 +74,7 @@ async function registerOrLogin() {
     }
 
     let userEmail = emailInput.value.trim();
-    
+
     if (!userEmail) {
         showAlert('Please enter your email.', 'warning');
         emailInput.focus();
@@ -105,21 +100,21 @@ async function registerOrLogin() {
         document.body.classList.add('spinner-active');
     }
 
-    try {        
+    try {
         isLoggingIn = true;
         const response = await window.pywebview.api.login_or_register(userEmail);
-        
+
         if (response && response.code === 'OK') {
             window.userId = response.text;
-            
+
             // Hide login container and show job tracking
             const loginContainer = document.getElementById('llm-login-container');
             const jobInfoRow = document.getElementById('job-info-row');
-            
+
             if (loginContainer) {
                 loginContainer.style.display = 'none';
             }
-            
+
             if (jobInfoRow) {
                 jobInfoRow.style.display = 'block';
             }
@@ -133,13 +128,13 @@ async function registerOrLogin() {
             console.log('User logged in successfully:', window.userId);
         } else {
             isLoggingIn = false;
-            throw new Error(response?.text || 'Login failed');            
+            throw new Error(response?.text || 'Login failed');
         }
     } catch (error) {
         console.error('Login failed:', error);
         showAlert('Login failed. Please try again.', 'error');
         isLoggingIn = false;
-    } finally {        
+    } finally {
         // Re-enable button
         if (loginBtn) {
             loginBtn.disabled = false;

@@ -43,27 +43,19 @@ async function updateDescription() {
 }
 
 async function loadScriptsManagerConfig() {
-    try {
-        let scriptsManagerConfig = await window.pywebview.api.load_commands_configuration();
-        if (!scriptsManagerConfig || scriptsManagerConfig === "" || scriptsManagerConfig === " ") {
-            return;
-        }
-        document.getElementById('script-select').value = scriptsManagerConfig.selected_script || '';
-        document.getElementById('additional-text').value = scriptsManagerConfig.additional_text || '';
-        document.getElementById('flags').value = scriptsManagerConfig.flags || '';
-        await updateDescription();
-    } catch (error) {
-        console.log('Error loading config:', error);
-    }
+    document.getElementById('script-select').value = config.scripts_manager.selected_script || '';
+    document.getElementById('additional-text').value = config.scripts_manager.additional_text || '';
+    document.getElementById('flags').value = config.scripts_manager.flags || '';
+    await updateDescription();
 }
 
-async function saveAutomatorConfig() {
+async function saveScriptsManagerConfig() {
     try {
         let scriptsManagerConfig = {};
         scriptsManagerConfig.selected_script = document.getElementById('script-select').value;
         scriptsManagerConfig.additional_text = document.getElementById('additional-text').value;
         scriptsManagerConfig.flags = document.getElementById('flags').value;
-        await window.pywebview.api.save_commands_configuration(scriptsManagerConfig);
+        await window.pywebview.api.save_configuration(scriptsManagerConfig, 'scripts_manager');
     } catch (error) {
         console.log('Error saving config:', error);
     }
@@ -100,7 +92,7 @@ async function initScriptsManager() {
     try {
         // Validate required DOM elements exist
         const requiredElements = [
-            'script-select', 'script-description', 'additional-text', 
+            'script-select', 'script-description', 'additional-text',
             'flags', 'result', 'execute-btn', 'spinner'
         ];
         const missingElements = requiredElements.filter(id => !document.getElementById(id));
@@ -108,7 +100,7 @@ async function initScriptsManager() {
             console.error('Missing required DOM elements:', missingElements);
             return false;
         }
-        
+
         // Clear any previous error messages
         const resultElement = document.getElementById('result');
         if (resultElement.value.includes('Error:')) {
@@ -140,10 +132,10 @@ function debounce(func, wait) {
 async function initScriptsManagerEventHandlers() {
     document.getElementById('script-select').addEventListener('change', async () => {
         await updateDescription();
-        await saveAutomatorConfig();
+        await saveScriptsManagerConfig();
     });
 
-    const debouncedSave = debounce(saveAutomatorConfig, 500);
+    const debouncedSave = debounce(saveScriptsManagerConfig, 500);
     document.getElementById('additional-text').addEventListener('input', () => {
         debouncedSave();
     });
@@ -155,10 +147,10 @@ async function initScriptsManagerEventHandlers() {
     });
 
     document.getElementById('additional-text').addEventListener('input', async () => {
-        await saveAutomatorConfig();
+        await saveScriptsManagerConfig();
     });
     document.getElementById('flags').addEventListener('input', async () => {
-        await saveAutomatorConfig();
+        await saveScriptsManagerConfig();
     });
     document.getElementById('execute-btn').addEventListener('click', async () => {
         await executeScript();

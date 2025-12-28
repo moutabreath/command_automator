@@ -23,11 +23,11 @@ async function tryInitApp() {
         }
     }
 }
-
+config = null
 
 async function initApp() {
     console.log('Initializing application modules...');
-
+    config =  await window.pywebview.api.get_configuration()
     await initScriptsManager();
     await initLLM();
     await initUser();
