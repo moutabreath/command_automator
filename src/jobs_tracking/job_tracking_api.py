@@ -44,12 +44,11 @@ class JobTrackingApi(AbstractApi):
         )
         return self._create_job_response(response, company_name)
 
-    def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
+    def get_positions(self, user_id: str, company_name: str) -> Dict[str, Any]:
         response = self.job_tracking_service.get_positions(user_id, company_name)
         if response and response.code == JobTrackingResponseCode.OK:
             serialized_jobs = [self._get_job_dict_from_tracked_job(job) for job in response.jobs]
-            serialized_jobs['company_name'] = company_name
-            return JobTrackingApiListResponse(serialized_jobs, JobTrackingApiResponseCode.OK).to_dict()
+            return JobTrackingApiListResponse(serialized_jobs, company_name, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
     
     def track_job_application_from_text(self, user_id: str, text:str):

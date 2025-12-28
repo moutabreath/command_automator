@@ -34,14 +34,16 @@ class JobTrackingApiResponse:
         self.code = JobTrackingApiResponseCode[state["code"]]
 
 class JobTrackingApiListResponse:
-    def __init__(self, jobs: List[Dict], code: JobTrackingApiResponseCode):
+    def __init__(self, jobs: List[Dict], company_name:str, code: JobTrackingApiResponseCode):
         self.jobs = jobs
+        self.company_name = company_name
         self.code = code
 
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON-serializable representation."""
         return {
             "jobs": self.jobs,
+            "comapny_name" : self.company_name,
             "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
         }
 
