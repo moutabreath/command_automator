@@ -299,7 +299,7 @@ async function trackJobApplication() {
             // Fill in the tracking pane fields with response data
             const job = response.job;
             if (job) {
-                displayJobsTable([job]);
+                addJobToTable(job);
             }
         } else {
             showAlert('Failed to track job application.', 'error');
@@ -352,7 +352,7 @@ async function trackJobApplicationFromText() {
             // Fill in the tracking pane fields with response data
             const job = response.job;
             if (job) {
-                displayJobsTable([job]);
+                addJobToTable(job);
             }
         } else {
             showAlert('Failed to track job application.', 'error');
@@ -376,7 +376,7 @@ async function trackJobApplicationFromText() {
 }
 
 function displayJobsTable(jobs) {
-    const tableContainer = document.getElementById('job-table-container');
+    const tableContainer = document.getElementById('job-tracking-container');
     const tableBody = document.getElementById('job-table-body');
     
     if (!tableContainer || !tableBody) return;
@@ -386,17 +386,35 @@ function displayJobsTable(jobs) {
     
     // Add jobs to table
     jobs.forEach(job => {
-        const row = document.createElement('tr');
-        row.innerHTML = `
-            <td>${job.job_title || 'N/A'}</td>
-            <td>${job.company_name || 'N/A'}</td>
-            <td>${getStateLabel(job.job_state) || 'N/A'}</td>
-            <td>${job.contact_name || 'N/A'}</td>
-            <td>${job.update_time ? new Date(job.update_time).toLocaleDateString() : 'N/A'}</td>
-        `;
-        tableBody.appendChild(row);
+        addJobToTable(job);
     });
     
     // Show table
     tableContainer.style.display = 'block';
+}
+
+function addJobToTable(job) {
+    const tableBody = document.getElementById('job-table-body');
+    const row = document.createElement('tr');
+    
+    // Get options from the main state selector
+    const mainStateSelect = document.getElementById(ELEMENT_IDS.JOB_STATE);
+    const stateOptions = mainStateSelect ? mainStateSelect.innerHTML : '';
+
+    row.innerHTML = `
+        <td><input type="text" class="form-control form-control-sm" value="${job.company_name || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm" value="${job.job_title || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm" value="${job.job_url || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm" value="${job.contact_name || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm" value="${job.contact_email || ''}"></td>
+        <td><input type="text" class="form-control form-control-sm" value="${job.contact_linkedin || ''}"></td>
+        <td><select class="form-select form-select-sm">${stateOptions}</select></td>
+        <td><button class="btn btn-primary btn-sm w-100">Save</button></td>
+    `;
+    
+    const select = row.querySelector('select');
+    if (select && job.job_state) select.value = job.job_state;
+
+    // Insert at the top of the data rows
+    tableBody.insertBefore(row, tableBody.firstChild);
 }

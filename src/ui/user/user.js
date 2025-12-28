@@ -109,14 +109,14 @@ async function registerOrLogin() {
 
             // Hide login container and show job tracking
             const loginContainer = document.getElementById('llm-login-container');
-            const jobInfoRow = document.getElementById('job-info-row');
+            const jobTrackingContainer = document.getElementById('job-tracking-container');
 
             if (loginContainer) {
                 loginContainer.style.display = 'none';
             }
 
-            if (jobInfoRow) {
-                jobInfoRow.style.display = 'block';
+            if (jobTrackingContainer) {
+                jobTrackingContainer.style.display = 'block';
             }
 
             // Initialize job tracking

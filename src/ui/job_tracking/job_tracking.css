@@ -135,13 +135,13 @@
         font-size: 1.1rem;
         margin-bottom: 15px;
     }
-    
+
     #job-info-row .form-control,
     #job-info-row .form-select {
         font-size: 0.9rem;
         padding: 6px 10px;
     }
-    
+
     #track-job-btn {
         padding: 8px 16px;
         font-size: 0.95rem;
@@ -152,13 +152,23 @@
     #job-info-row .card-body {
         padding: 15px;
     }
-    
+
     #job-info-row .g-3 {
         --bs-gutter-x: 0.75rem;
         --bs-gutter-y: 0.75rem;
     }
-    
+
     #job-info-row .form-label {
         font-size: 0.85rem;
     }
+}
+
+#job-table td, #job-table th {
+    user-select: text !important;
+    -webkit-user-select: text !important;
+    min-width: 250px;
+}
+
+#job-table th:last-child, #job-table td:last-child {
+    min-width: 150px;
 }
