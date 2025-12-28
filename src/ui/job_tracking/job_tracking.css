@@ -172,3 +172,19 @@
 #job-table th:last-child, #job-table td:last-child {
     min-width: 150px;
 }
+
+/* Ensure consistent button sizing in job table */
+#job-table .btn {
+    font-size: 0.875rem;
+    padding: 0.25rem 0.5rem;
+    white-space: nowrap;
+    height: auto;
+}
+
+#job-table .d-flex {
+    align-items: stretch;
+}
+
+#job-table .btn.w-100 {
+    flex: 1;
+}
