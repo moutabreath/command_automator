@@ -1,7 +1,7 @@
 import json
 import aiohttp
 import logging
-from mcp.client.streamable_http import streamablehttp_client
+from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
 from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMAgentResponse, LLMResponseCode
@@ -17,13 +17,13 @@ class SmartMCPClient:
         # MCP server settings
         self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
        
-        self.gemini_agent: GeminiClientWrapper = GeminiClientWrapper()
-        self.resume_chat = self.gemini_agent.init_chat()
-        self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_agent)
-        self.job_search_service = JobSearchService(self.gemini_agent)
+        self.gemini_client_wrapper: GeminiClientWrapper = GeminiClientWrapper()
+        self.resume_chat = self.gemini_client_wrapper.init_chat()
+        self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_client_wrapper)
+        self.job_search_service = JobSearchService(self.gemini_client_wrapper)
         
         self.session_tools = None
-        self.available_tools = [] 
+        self.available_tools = []
 
     async def process_query( self,  query: str, base64_decoded: str = None, output_file_path: str = None, user_id: str = None) -> MCPResponse:
         """
@@ -39,10 +39,10 @@ class SmartMCPClient:
         """
         try:
             if not await self._is_mcp_server_ready():
-                llm_response:LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                llm_response:LLMAgentResponse = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                 return self._convert_llm_response_to_mcp_response(llm_response)
 
-            async with streamablehttp_client(self.mcp_server_url) as (
+            async with streamable_http_client(self.mcp_server_url) as (
                 read_stream,
                 write_stream,
                 _,
@@ -63,7 +63,7 @@ class SmartMCPClient:
                 if selected_tool:
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
                 else:
-                    agent_response = await self.gemini_agent.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                    agent_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                     return self._convert_llm_response_to_mcp_response(agent_response)
         except Exception as e:
             logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
@@ -126,7 +126,7 @@ class SmartMCPClient:
         try:
             messages = self._init_messages(query, user_id)
             
-            selected_tool, args = self.gemini_agent.get_mcp_tool_json(prompt=messages,
+            selected_tool, args = self.gemini_client_wrapper.get_mcp_tool_json(prompt=messages,
                                                                 chat=self.resume_chat,
                                                                 available_tools=self.available_tools)
             if selected_tool != {}:
@@ -155,16 +155,12 @@ class SmartMCPClient:
     
     def _init_system_prompt(self, available_descriptions:dict, query:str, user_id:str):
         return f"""You are a tool selection assistant. 
-Based on the user's query, determine if any of these available tools should be used:
+Based on the user's query, determine if any of the available tools should be used.
 {json.dumps(available_descriptions, indent=2)}
-
-IMPORTANT: Only use a tool if the query is asking about one of the following:
+IMPORTANT: Use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
+ 2. Searching for jobs on the internet.
  3. Getting information about jobs I have already applied to. Infer the company name if possible.
- The user id is {user_id}. The user id is {user_id}.
-If you have already used a tool before, infer if you should use it again. For example if the user query is
-'again', and you have used a tool in the previous query, you may decide to use the tool you previously
-used just before this query.
 
 If a tool should be used, respond in JSON format:
 {{
