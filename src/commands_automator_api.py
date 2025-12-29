@@ -121,8 +121,8 @@ class CommandsAutomatorApi:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         job_dto = TrackedJobDto(
-             job_title=job_dto_dict['job_url'],
-            job_url= job_dto_dict['job_title'],
+            job_title=job_dto_dict['job_title'],
+            job_url= job_dto_dict['job_url'],
             contact_linkedin=job_dto_dict['contact_linkedin'],
             contact_name=job_dto_dict['contact_name'],
             job_state=JobApplicationState.from_string(job_dto_dict['job_state']),
