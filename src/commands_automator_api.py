@@ -8,6 +8,7 @@ import configparser
 from jobs_tracking.job_tracking_api import JobTrackingApi
 from jobs_tracking.models import TrackedJobDto
 from jobs_tracking.services.job_tracking_service import JobTrackingService
+from jobs_tracking.services.models import JobApplicationState
 from llm.llm_api import LLMApi
 from llm.services.llm_service import LLMService
 from scripts_manager.scripts_manager_api import ScriptsManagerApi
@@ -124,7 +125,7 @@ class CommandsAutomatorApi:
             job_url= job_dto_dict['job_title'],
             contact_linkedin=job_dto_dict['contact_linkedin'],
             contact_name=job_dto_dict['contact_name'],
-            job_state=job_dto_dict['job_state'],
+            job_state=JobApplicationState.from_string(job_dto_dict['job_state']),
             contact_email=job_dto_dict['contact_email']
         )
         return self.job_tracking_api.track_job_application(user_id, company_name, job_dto)

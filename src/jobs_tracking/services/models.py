@@ -9,6 +9,14 @@ class JobApplicationState(Enum):
     EMAIL_SENT = 3
     APPLIED = 4
     UNKNOWN = 5
+    
+    @classmethod
+    def from_string(cls, state_str: str) -> 'JobApplicationState':
+        """Create JobApplicationState from string"""
+        try:
+            return cls[state_str.upper()]
+        except KeyError:
+            return cls.UNKNOWN
 
 @dataclass
 class TrackedJob:
