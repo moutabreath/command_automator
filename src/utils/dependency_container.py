@@ -1,4 +1,5 @@
 import logging
+import asyncio
 from dependency_injector import containers, providers
 
 
@@ -7,6 +8,7 @@ class Container(containers.DeclarativeContainer):
 
     # Global container instance
     _container = None
+    _lock = asyncio.Lock()
 
     # Configuration
     config = providers.Configuration()
@@ -24,6 +26,7 @@ class Container(containers.DeclarativeContainer):
     @classmethod
     async def init_container(cls) -> 'Container':
         """Initialize the dependency injection container"""
+
         
         logging.info("Initializing DI container in MCP subprocess")
         

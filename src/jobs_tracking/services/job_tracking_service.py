@@ -48,10 +48,9 @@ class JobTrackingService(AbstractPersistenceService):
             logging.error("Missing required parameters for add_or_update_position")
             return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
         
-        if tracked_job.contact_name and not tracked_job.contact_name.replace(' ', '').isalpha():
+        if tracked_job.contact_name and not all(c.isalpha() or c in (' ', '-', "'") for c in tracked_job.contact_name):
             logging.error("Contact name must contain only letters")
             return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
-        
         company_name = company_name.lower()
         try:
             job_url = urlparse(tracked_job.job_url).geturl()
@@ -85,8 +84,8 @@ class JobTrackingService(AbstractPersistenceService):
         """Get all positions for a user at a specific company"""
         if not user_id or not company_name:
             logging.error("Missing required parameters for get_positions")
-            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
-        
+            return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
+            
         company_name = company_name.lower()
         
         try:
@@ -113,10 +112,3 @@ class JobTrackingService(AbstractPersistenceService):
         titles.extend(job_title_keywords.get("general", []))
 
         return titles
-    
-    def _get_contact_name_and_linkedin(self, part):
-        contact_linkedin = part
-                        # Extract contact name from LinkedIn URL
-        contact_name = self._get_contact_name_from_linkedin(part)
-        return contact_linkedin, contact_name
-    
