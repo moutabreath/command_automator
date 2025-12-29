@@ -25,12 +25,6 @@
       "free_text_required": true
     },
     {
-      "script_name": "kill_process_on_port.cmd",
-      "short_description": "Kill process holding port",
-      "detailed_description": "Kill the process that is holding the port from the argument",
-      "free_text_required": true
-    },
-    {
       "script_name": "anonymize.py",
       "short_description": "Anonymize",
       "detailed_description": "Given a file and a list of tokens, replace the value after the tokens with 'dummy'",
