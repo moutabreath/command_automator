@@ -1,3 +1,5 @@
+export { trackPositionsFromText };
+
 async function trackPositionsFromText(userId, text) {
     if (!userId || !text) {
         return { job: {}, company_name: "" };
@@ -16,12 +18,9 @@ async function trackPositionsFromText(userId, text) {
 
     for (const line of lines) {
         const trimmedLine = line.trim();
-        if (!trimmedLine) continue;
-
-        if (trimmedLine.includes("@")) {
-            if (trimmedLine.split('@').length === 2 && trimmedLine.split('@')[1].includes('.')) {
-                contactEmail = trimmedLine;
-            }
+        const emailMatch = trimmedLine.match(/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/);
+        if (emailMatch) {
+            contactEmail = emailMatch[0];
             continue;
         }
 
@@ -47,7 +46,7 @@ async function trackPositionsFromText(userId, text) {
             if (knownJobTitlesKeywords.some(keyword => trimmedLine.toLowerCase().includes(keyword))) {
                 jobTitle = trimmedLine;
             } else {
-                const companyName = trimmedLine.replace(/[^a-zA-Z0-9 ]/g, '').trim() || contactName;
+                const companyName = trimmedLine.replace(/[^a-zA-Z0-9 ]/g, '').trim();
                 if (companyName) potentialCompanyNames.push(companyName);
             }
         } else {

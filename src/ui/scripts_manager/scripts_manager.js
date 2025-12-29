@@ -112,7 +112,7 @@ async function initScriptsManager() {
         await initScriptsManagerEventHandlers();
         return true;
     } catch (error) {
-        console.error('Error initializing Commands Automator:', error);
+        console.error('Error initializing Scripts Manager:', error);
         return false;
     }
 }
@@ -141,16 +141,6 @@ async function initScriptsManagerEventHandlers() {
     });
     document.getElementById('flags').addEventListener('input', () => {
         debouncedSave();
-    });
-    document.getElementById('execute-btn').addEventListener('click', async () => {
-        await executeScript();
-    });
-
-    document.getElementById('additional-text').addEventListener('input', async () => {
-        await saveScriptsManagerConfig();
-    });
-    document.getElementById('flags').addEventListener('input', async () => {
-        await saveScriptsManagerConfig();
     });
     document.getElementById('execute-btn').addEventListener('click', async () => {
         await executeScript();
