@@ -36,13 +36,19 @@ class AsyncMockCursor:
 
     async def __anext__(self):
         try:
-            return self.cursor.next()
+            return next(self.cursor)
         except StopIteration:
             raise StopAsyncIteration
-
     async def to_list(self, length=None):
-        return list(self.cursor)
-
+        if length is None:
+            return list(self.cursor)
+        result = []
+        for i, doc in enumerate(self.cursor):
+            if i >= length:
+                break
+            result.append(doc)
+        return result
+    
 class AsyncMockCollection:
     def __init__(self, collection):
         self.collection = collection

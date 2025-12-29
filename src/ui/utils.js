@@ -53,7 +53,11 @@ function escapeHtml(text) {
 
 function showAlert(message, type = 'info', duration = 5000) {
     const alertContainer = document.getElementById('alert-container');
-    const alertId = 'alert-' + Date.now() + '-' + Math.random().toString(36).substr(2, 9);
+    if (!alertContainer) {
+        console.error('Alert container not found');
+        return;
+    }
+    const alertId = 'alert-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
     const alertClass = {
         'success': 'alert-success',
         'error': 'alert-danger',

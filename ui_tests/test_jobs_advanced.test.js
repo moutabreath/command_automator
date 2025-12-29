@@ -1,3 +1,5 @@
+import { trackPositionsFromText } from '../path/to/trackPositionsFromText';
+
 // Mock data
 const jobLink = "https://www.linkedin.com/jobs/view/4324949336";
 const jobState = "applied";
