@@ -8,7 +8,15 @@ async function tryInitApp() {
     console.log(`Initialization attempt ${initAttempts}`);
 
     if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
-        await initApp();
+        try {
+            await initApp();
+        } catch (error) {
+            console.error('Failed to initialize application:', error);
+            const resultElement = document.getElementById('result');
+            if (resultElement) {
+                resultElement.value = `Error: ${error.message || 'Failed to initialize application'}`;
+            }
+        }
     }
     else {
         if (initAttempts < maxInitAttempts) {
@@ -23,6 +31,7 @@ async function tryInitApp() {
         }
     }
 }
+
 config = null
 
 async function initApp() {

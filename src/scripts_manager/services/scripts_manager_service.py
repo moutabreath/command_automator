@@ -109,7 +109,7 @@ class ScriptsManagerService:
             if '..' in other_script_name_as_input or os.path.isabs(other_script_name_as_input):
                 logging.error(f"Invalid script name contains path traversal: {other_script_name_as_input}")
                 return None
-            base_dir = os.path.dirname(os.path.dirname(SCRIPTS_DIR))
+            base_dir = os.path.dirname(os.path.dirname(USER_SCRIPTS_DIR))
             cleaners_path = os.path.join(base_dir, 'cleaners')
             files = glob.glob(f'{cleaners_path}/**/{other_script_name_as_input}', recursive=True)
             if files:
@@ -169,10 +169,10 @@ class ScriptsManagerService:
                 logging.log(logging.DEBUG, "encoding is None")
                 str_result = ""
         if err is not None:
-            if isinstance(err, str):
-                logging.error(f"Error during execution: {err}")
-                str_result = str_result + " " + err
-
+            if isinstance(err, bytes):
+                err = err.decode('utf-8', errors='replace')
+            logging.error(f"Error during execution: {err}")
+            str_result = str_result + "\n" + err
         if len(str_result) == 0:
             str_result = "Execution Done"
         return str_result
@@ -203,7 +203,7 @@ class ScriptsManagerService:
         args = self.get_arguments_for_script(script_path, additional_text, flags)
         if args is None:
             return "error : Missing argument. Please fill the text box for Additional Text"
-        new_venv = self.get_updated_venv(args[0])
+        new_venv = self.get_updated_venv(args[0]) or os.environ.copy()
         output, err  = self.run_internal(args, new_venv)
         return self.get_string_from_thread_result(output, err)
 

@@ -103,6 +103,24 @@ class SmartMCPClient:
         self.available_tools = [tool.name for tool in self.session_tools.tools]
         logging.debug(f"Available tools: {self.available_tools}")
         
+    def _is_greeting_query(self, query: str) -> bool:
+        """Check if query is a simple greeting that shouldn't use tools"""
+        single_word_greetings = ["hello", "hi", "hey", "greetings", "howdy"]
+        multi_word_greetings = ["good morning", "good afternoon", "how are you", "what's up"]
+        
+        query_lower = query.lower().strip()
+        query_words = query_lower.split()
+        
+        # Check single-word greetings
+        if query_words and query_words[0] in single_word_greetings and len(query_words) <= 3:
+            return True
+        
+        # Check multi-word greetings
+        if any(query_lower.startswith(greeting) for greeting in multi_word_greetings) and len(query_words) <= 4:
+            return True
+            
+        return False
+
     async def _decide_tool_usage(self, query:str, user_id:str):
         """
         Use LLM to decide which tool to use based on the query
@@ -114,15 +132,10 @@ class SmartMCPClient:
             tuple: (tool_name, tool_args) or (None, None) if no tool should be used
         """
         # Quick filter for common greetings and chitchat - never use tools for these
-        common_greetings = ["hello", "hi", "hey", "greetings", "good morning", "good afternoon", 
-                           "how are you", "what's up", "howdy"]
-        
-        # If query is just a simple greeting, don't use a tool
-        query_lower = query.lower().strip()
-        query_words = query_lower.split()
-        if query_words and query_words[0] in common_greetings and len(query_words) <= 3:
-             logging.debug("Query appears to be a simple greeting or too short - not using tools")
-             return None, None
+        if self._is_greeting_query(query):
+            logging.debug("Query appears to be a simple greeting or too short - not using tools")
+            return None, None
+            
         try:
             messages = self._init_messages(query, user_id)
             
