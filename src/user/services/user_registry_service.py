@@ -47,6 +47,7 @@ class UserRegistryService(AbstractPersistenceService):
             return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
         user_email = user_email.strip().lower()
         response = await self.user_persist.create_or_update_user(user_email)
-        if response:            
+        if response and '_id' in response:            
             return UserRegistryResponse(response['_id'], UserRegistryResponseCode.OK)
-        return UserRegistryResponse("Error registering or logging in", UserRegistryResponseCode.ERROR)
+        logging.error(f"Failed to create or update user: {response}")
+        return UserRegistryResponse("", UserRegistryResponseCode.ERROR)

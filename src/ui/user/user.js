@@ -12,11 +12,10 @@ async function initUser() {
 
 async function loadUserConfig() {
     const userEmail = document.getElementById('user-email');
-    if (userEmail && config) {
+    if (userEmail && typeof config !== 'undefined' && config) {
         userEmail.value = config.user.email || '';
     }
 }
-
 async function saveUserConfig() {
     try {
         const userEmail = document.getElementById('user-email');
@@ -31,8 +30,13 @@ async function saveUserConfig() {
     }
 }
 let isLoggingIn = false;
+let listenersInitialized = false;
 
 async function initUserEventListeners() {
+    if (listenersInitialized) {
+        return;
+    }
+
     const loginBtn = document.getElementById('login-btn');
     const userEmail = document.getElementById('user-email');
     if (!loginBtn) {
@@ -59,6 +63,8 @@ async function initUserEventListeners() {
             await saveUserConfig();
         });
     }
+
+    listenersInitialized = true;
 }
 
 async function registerOrLogin() {
