@@ -17,10 +17,9 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
         self.job_applications = self.async_db.job_applications
 
     def _init_motor_client(self):
-         self.async_client = AsyncIOMotorClient(
+        self.async_client = AsyncIOMotorClient(
             self.connection_string
         )
-
     
     async def close(self):
         """Close MongoDB connection."""
@@ -43,6 +42,11 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
                     data=result,
                     code=PersistenceErrorCode.SUCCESS
                 )
+            return PersistenceResponse(
+                data=None,
+                code=PersistenceErrorCode.NOT_FOUND,
+                error_message="Application not found"
+            )
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
@@ -128,7 +132,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
             return PersistenceResponse(data=results, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
+            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
         except mongo_errors.ConnectionFailure as e:
             logging.exception(f"MongoDB connection failed: {e}")
             return PersistenceResponse(

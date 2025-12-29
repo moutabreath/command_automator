@@ -29,7 +29,7 @@ class ResumeRefinerService:
         
         if refined_resume_response.code == MCPResponseCode.OK:
             return await self.save_resume_and_cover_letter(output_file_path, resume_data_dict, refined_resume_response)
-        return MCPResponse(text="Error while trying to generate resume", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+        return refined_resume_response 
     
     async def save_resume_and_cover_letter(self, output_file_path, resume_data_dict, refined_resume_response):
         applicant_name = resume_data_dict.get('applicant_name', '')

@@ -25,9 +25,9 @@ class JobTrackingApi(AbstractApi):
     def track_job_application(self, user_id: str, company_name: str, job_dto: TrackedJobDto) -> Dict[str, Any]:
         
         if not user_id or not company_name or not job_dto:
-            logging.error("missing company name or user_id")
+            logging.error("Missing required parameter: user_id, company_name, or job_dto")
             return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
-        
+               
         tracked_job = TrackedJob(
             job_url=job_dto.job_url,
             job_title=job_dto.job_title,
@@ -45,11 +45,15 @@ class JobTrackingApi(AbstractApi):
         return self._create_job_response(response, company_name)
 
     def get_positions(self, user_id: str, company_name: str) -> Dict[str, Any]:
+        if not user_id or not company_name:
+            logging.error("Missing required parameter: user_id or company_name")
+            return JobTrackingApiListResponse(None, None, JobTrackingApiResponseCode.ERROR).to_dict()
+        
         response = self.job_tracking_service.get_positions(user_id, company_name)
         if response and response.code == JobTrackingResponseCode.OK:
             serialized_jobs = [self._get_job_dict_from_tracked_job(job) for job in response.jobs]
             return JobTrackingApiListResponse(serialized_jobs, company_name, JobTrackingApiResponseCode.OK).to_dict()
-        return JobTrackingApiListResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
+        return JobTrackingApiListResponse(None, company_name, JobTrackingApiResponseCode.ERROR).to_dict()
     
     def track_job_application_from_text(self, user_id: str, text:str):
         response = self.job_tracking_service.track_position_from_text(user_id, text)

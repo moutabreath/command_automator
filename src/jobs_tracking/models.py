@@ -43,10 +43,10 @@ class JobTrackingApiListResponse:
         """Return a JSON-serializable representation."""
         return {
             "jobs": self.jobs,
-            "comapny_name" : self.company_name,
+            "company_name": self.company_name,
             "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
         }
-
+    
 @dataclass
 class TrackedJobDto:
     job_url: str
