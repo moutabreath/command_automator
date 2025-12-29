@@ -66,7 +66,7 @@ class SmartMCPClient:
                     agent_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                     return self._convert_llm_response_to_mcp_response(agent_response)
         except Exception as e:
-            logging.error(f"Error communicating with Gemini or MCP server {e}", exc_info=True)
+            logging.exception(f"Error communicating with Gemini or MCP server {e}")
             return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
     def _convert_llm_response_to_mcp_response(self, llm_response: LLMAgentResponse) -> MCPResponse:
@@ -87,7 +87,7 @@ class SmartMCPClient:
                 # You can check for a specific status code if needed
                 return resp.status == 406 # (= Not Accepatable) Server is probably reacheable.
         except Exception as e:
-            logging.error(f"MCP server not ready {e}", exc_info=True)
+            logging.exception(f"MCP server not ready {e}")
             return False
         
     async def _init_session_tools(self, session: ClientSession):
@@ -136,7 +136,7 @@ class SmartMCPClient:
                 logging.debug("LLM decided not to use any tools")
                 return None, None
         except Exception as e:
-            logging.error(f"Error using LLM for tool decision {e}", exc_info=True)
+            logging.exception(f"Error using LLM for tool decision {e}")
             return None, None
             
     def _init_messages(self, query: str, user_id:str):
@@ -172,7 +172,7 @@ If the tool definition has no parameters respond in JSON format:
   "tool": "tool_name",
   "args": {{}}
 }}
-
+For tools that require user_id use: {user_id}
 Be selective and conservative with tool usage. Be concise. Only output valid JSON.
 If no tool should be selected, respond to the query directly. Query: {query}
 """
@@ -188,6 +188,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
                 return MCPResponse("Tool execution returned empty response", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if response.isError:
                 error_msg = response.content[0].text if response and response.content and len(response.content) > 0  else "Unknown error"
+                logging.error(f"Tool execution returned error: {error_msg}")
                 return MCPResponse(f"Tool execution returned error: {error_msg}", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
 
             tool_result = response.content[0].text
@@ -196,7 +197,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
             return await self._use_tool_result(selected_tool, tool_result, output_file_path)
             
         except Exception as e:
-            logging.error(f"Error using tool: {e}", exc_info=True)
+            logging.exception(f"Error using tool: {e}")
             return MCPResponse("Sorry, I couldn't execute tool.", MCPResponseCode.ERROR_COMMUNICATING_WITH_TOOL)
         
     async def _use_tool_result(self, selected_tool, tool_result, output_file_path) -> MCPResponse:
