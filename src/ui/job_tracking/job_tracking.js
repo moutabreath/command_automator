@@ -1,7 +1,7 @@
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
     states = await window.pywebview.api.get_job_application_states();
-    
+     
     populateStateSelect(document.getElementById('job_state'));
     
     // Add event listeners for main form buttons
@@ -59,7 +59,8 @@ async function loadJobTrackingConfig() {
         'contact_name': config.job_tracking.contact_name || '',
         'contact_linkedin': config.job_tracking.contact_linkedin || '',
         'contact_email': config.job_tracking.contact_email || '',
-        'job_state': config.job_tracking.job_state || ''
+        'job_state': config.job_tracking.job_state || '',
+        'date_time': config.job_tracking.date_time || ''
     };
 
     addJobToTable(job, companyName);
@@ -80,6 +81,7 @@ function addJobToTable(job, companyName) {
         <td><input type="text" class="form-control form-control-sm job-title" value="${job.job_title || ''}"></td>
         <td><input type="text" class="form-control form-control-sm job-url" value="${job.job_url || ''}"></td>
         <td class="state-cell"></td>
+        <td><input type="text" class="form-control form-control-sm job-date-time" value="${job.date_time || ''}" readonly></td>
         <td><input type="text" class="form-control form-control-sm contact-name" value="${job.contact_name || ''}"></td>        
         <td><input type="text" class="form-control form-control-sm contact-linkedin" value="${job.contact_linkedin || ''}"></td>
         <td><input type="text" class="form-control form-control-sm contact-email" value="${job.contact_email || ''}"></td>
@@ -149,6 +151,7 @@ function getFormData() {
         job_url: document.getElementById('job_url').value.trim(),
         job_state: document.getElementById('job_state').value,
         contact_name: document.getElementById('contact_name').value.trim(),
+        date_time: document.getElementById('job_date_time').value.trim(),
         contact_linkedin: document.getElementById('contact_linkedin').value.trim(),
         contact_email: document.getElementById('contact_email').value.trim()
     };
@@ -161,6 +164,7 @@ function clearForm() {
     document.getElementById('contact_name').value = '';
     document.getElementById('contact_linkedin').value = '';
     document.getElementById('contact_email').value = '';
+    document.getElementById('job_date_time').value = '';
     document.getElementById('job_state').selectedIndex = 0;
 }
 
@@ -265,7 +269,8 @@ async function saveJobTrackingConfig(jobData) {
         contact_name: jobData.contact_name || '',
         contact_linkedin: jobData.contact_linkedin || '',
         contact_email: jobData.contact_email || '',
-        job_state: jobData.job_state || ''
+        job_state: jobData.job_state || '',
+        date_time: jobData.date_time || ''
     };
     try {
 
@@ -332,7 +337,8 @@ function getRowData(row) {
         job_state: row.querySelector('.state-cell select').value,
         contact_name: row.querySelector('.contact-name').value,
         contact_linkedin: row.querySelector('.contact-linkedin').value,
-        contact_email: row.querySelector('.contact-email').value
+        contact_email: row.querySelector('.contact-email').value,
+        date_time: row.querySelector('.job-date-time').value
     };
 }
 
