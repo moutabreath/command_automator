@@ -1,8 +1,6 @@
-import re
 from datetime import datetime, timezone
 import logging
 from urllib.parse import urlparse
-from jobs_tracking.services.models import JobApplicationState
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
 from jobs_tracking.services.models import TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode, JobAndCompanyTrackingResponse
 from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
@@ -106,96 +104,6 @@ class JobTrackingService(AbstractPersistenceService):
             return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
 
     
-    def track_position_from_text(self, user_id: str, text:str) -> JobTrackingResponse:
-        result = AsyncRunner.run_async(
-            self.track_positions_from_text_async(
-            user_id=user_id,
-            text=text
-            )
-        )
-        return result
-
-    async def track_positions_from_text_async(self, user_id: str, text: str) -> JobAndCompanyTrackingResponse:
-        """Parse text to extract job information and track positions"""
-        
-        if not user_id or not text:
-            return JobAndCompanyTrackingResponse(job={}, company_name="", code=JobTrackingResponseCode.ERROR)
-        
-        # Split text by newlines only
-        lines = text.strip().split('\n')
-        
-        known_job_titles_keywords = await self._get_job_title_keyword()
-        job_url = None
-        contact_linkedin = None
-        contact_name = None
-        job_state = JobApplicationState.UNKNOWN
-        contact_email = None
-        potential_company_names = []
-        job_title = "Unknown Position"
-        
-        for line in lines:
-            line = line.strip()
-            if not line:
-                continue
-            if "@" in line:
-                if line.count('@') == 1 and '.' in line.split('@')[1]:
-                    contact_email = line
-                continue
-                
-            if self._is_url(line):
-                if 'linkedin.com' in line.lower():
-                    if '/in/' in line:
-                        # linkedin url is person's linkedin
-                        contact_linkedin, contact_name = self._get_contact_name_and_linkedin(line)
-                    else:
-                        # linkedin url is job's linkedin
-                        job_url = line
-                else:
-                    job_url = line
-                continue
-            if self._is_job_state(line):
-                job_state = self._get_job_state(line)
-                continue
-            
-            # If line contains spaces, check for job title keywords
-            if ' ' in line:
-                if any(keyword in line.lower() for keyword in known_job_titles_keywords):
-                    job_title = line
-                else:
-                    company_name = line if line.replace(' ', '').isalnum() else contact_name
-            else:
-                potential_company_names.append(line)
-                
-        if not job_url:
-            return JobTrackingResponse(job={"error": "No job URL found"}, code=JobTrackingResponseCode.ERROR)
-        if not ('linkedin.com' in job_url):
-            company_name = self._extract_company_from_url(job_url)
-        else:
-            company_name = self._extract_company_name(potential_company_names, job_url)
-        
-        tracked_job = TrackedJob(job_url=job_url, job_title=job_title, job_state=job_state,contact_name=contact_name,
-            contact_linkedin=contact_linkedin, contact_email=contact_email)
-
-        job_tracking_response = await self.add_or_update_position_async(user_id=user_id, company_name=company_name,
-            tracked_job=tracked_job
-        )
-        if job_tracking_response.code == JobTrackingResponseCode.OK:
-            return JobAndCompanyTrackingResponse(job=job_tracking_response.job, company_name=company_name, code=JobTrackingResponseCode.OK)
-        return JobAndCompanyTrackingResponse(job={}, company_name="", code=JobTrackingResponseCode.ERROR)
-    
-    def _extract_company_name(self, potential_company_names, contact_name):
-        for name in potential_company_names:
-            if name != contact_name:
-                return name
-        return "Unknown Company"
-
-    def _get_job_state(self, line):
-        try:
-            job_state = JobApplicationState[line.upper()]
-        except (KeyError, ValueError):
-            job_state = JobApplicationState.UNKNOWN
-        return job_state
-
     async def _get_job_title_keyword(self):
         job_title_keywords = await file_utils.read_json_file(file_utils.JOB_TITLES_CONFIG_FILE)        
         if job_title_keywords == {}:            
@@ -212,34 +120,3 @@ class JobTrackingService(AbstractPersistenceService):
         contact_name = self._get_contact_name_from_linkedin(part)
         return contact_linkedin, contact_name
     
-    def _get_contact_name_from_linkedin(self, url):
-
-        # 1. Extract the slug
-        slug = re.search(r"(?<=linkedin\.com\/in\/)[^\/\?#]+", url).group()
-
-        # 2. Get split by dash
-        slug_parts = slug.split('-')
-
-        # 3. Construct raw first and last name
-        first_and_last = slug_parts[0] + ' ' + slug_parts[1]
-
-        # 4. Remove trailing numbers and dashes
-        final_name = re.sub(r"[\d-]+$", "", first_and_last).strip()
-
-        return final_name
-    
-    def _is_url(self, text: str) -> bool:
-        return text.startswith(('http://', 'https://', 'www.'))
-    
-    def _is_job_state(self, text: str) -> bool:
-        return text.upper() in [state.name for state in JobApplicationState]
-    
-    def _extract_company_from_url(self, url: str) -> str:
-        try:
-            parsed = urlparse(url)
-            domain = parsed.netloc.lower()
-            # Remove www. and common TLDs to get company name
-            company = domain.replace('www.', '').split('.')[0]
-            return company.title()
-        except:
-            return "Unknown Company"

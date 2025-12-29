@@ -21,6 +21,14 @@ async function initJobTracking() {
         });
     }
     
+    // Add keyboard shortcut
+    document.addEventListener('keydown', (e) => {
+        if (e.ctrlKey && e.altKey && e.key === 'm') {
+            e.preventDefault();
+            trackFromText();
+        }
+    });
+    
     await loadJobTrackingConfig();
 }
 
@@ -270,7 +278,7 @@ async function saveJobTrackingConfig(jobData) {
 
 async function trackJobApplicationFromText() {
     const queryBox = document.getElementById('query-box');
-    const query = queryBox ? queryBox.value.trim() : '';
+    const text = queryBox ? queryBox.value.trim() : '';
     const userId = window.userId || window.user_id;
 
     if (!userId) {
@@ -278,46 +286,23 @@ async function trackJobApplicationFromText() {
         return;
     }
 
-    if (!query) {
+    if (!text) {
         showAlert('Please enter text in the query box.', 'warning');
         return;
     }
 
-    const trackJobBtn = document.getElementById('track-job-btn');
-    const spinner = document.getElementById('spinner');
-
     try {
-        const response = await window.pywebview.api.track_job_application_from_text(
-            userId,
-            query
-        );
-
-        if (response && response.code === 'OK') {
-            showAlert('Job application tracked successfully!', 'success');
-
-            // Fill in the tracking pane fields with response data
-            const job = response.job;
-            if (job) {
-                addJobToTable(job, response.company_name);
-            }
+        const result = await trackPositionsFromText(userId, text);
+        
+        if (result.job && result.company_name) {
+            addJobToTable(result.job, result.company_name);
+            showAlert('Job parsed and added to table!', 'success');
         } else {
-            showAlert('Failed to track job application.', 'error');
+            showAlert('Failed to parse job from text.', 'error');
         }
     } catch (error) {
-        console.error('Track job failed:', error);
-        showAlert('Failed to track job. Please check the console for details.', 'error');
-    } finally {
-        // Re-enable button
-        if (trackJobBtn) {
-            trackJobBtn.disabled = false;
-            trackJobBtn.textContent = 'Track Job Application';
-        }
-
-        // Hide spinner
-        if (spinner) {
-            spinner.classList.remove('visible');
-            document.body.classList.remove('spinner-active');
-        }
+        console.error('Track from text failed:', error);
+        showAlert('Failed to parse job from text.', 'error');
     }
 }
 
