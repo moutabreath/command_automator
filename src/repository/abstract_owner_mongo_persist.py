@@ -9,11 +9,10 @@ from repository.abstract_mongo_persist import AbstractMongoPersist
 class AbstractOwnerMongoPersist(AbstractMongoPersist):
     """
     Base class for the mongo collections owners. They initialize the collection and indexes.
-    They are executed before other mongo connection classes for their respected collections.
+    They are executed before other mongo connection classes for their respective collections.
     Apart from instantiating the collections for the first time, they use an existing event loop for motor (mongo async).
-    See users and job applications (non MCP) flows.    
+    See users and job applications (non MCP) flows.
     """    
-
     async def initialize_connection(self):
         """
         Internal initialization logic. 

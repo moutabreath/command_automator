@@ -19,5 +19,14 @@ call copy_files.cmd
 
 REM Start the process
 call start_process.cmd
+if errorlevel 1 (
+    echo Failed to start process
+    exit /b 1
+)
+
+echo Deployment completed successfully
+
+REM Start the process
+call start_process.cmd
 
 echo Deployment completed successfully
