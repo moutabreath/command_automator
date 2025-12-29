@@ -1,5 +1,19 @@
 
 
+.delete-spacer {
+    visibility: hidden;
+    display: inline-block;
+    margin-right: 0.5rem;
+    vertical-align: middle;
+    width: 1ch;
+}
+
+.company-input {
+    display: inline-block;
+    width: calc(100% - 1.5rem);
+    vertical-align: middle;
+}
+
 #job-table td, #job-table th {
     user-select: text !important;
     -webkit-user-select: text !important;
@@ -30,7 +44,13 @@
 #job-table .delete-row {
     opacity: 0;
     transition: opacity 0.2s ease;
+    cursor: pointer;
+    color: red;
+    font-weight: bold;
+    display: inline-block;
+    vertical-align: middle;
     margin-right: 0.5rem;
+    width: 1ch;
 }
 
 #job-table tbody:not(#job-input-body) tr:hover .delete-row {

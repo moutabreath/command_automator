@@ -65,7 +65,10 @@ function addJobToTable(job, companyName) {
     const row = document.createElement('tr');
     
     row.innerHTML = `
-        <td><span class="delete-row" style="cursor: pointer; color: red; font-weight: bold; margin-right: 8px;">×</span><input type="text" class="form-control form-control-sm company-name" value="${companyName || ''}" style="display: inline-block; width: calc(100% - 20px);"></td>
+        <td>
+            <span class="delete-row">×</span>
+            <input type="text" class="form-control form-control-sm company-name company-input" value="${companyName || ''}">
+        </td>
         <td><input type="text" class="form-control form-control-sm job-title" value="${job.job_title || ''}"></td>
         <td><input type="text" class="form-control form-control-sm job-url" value="${job.job_url || ''}"></td>
         <td class="state-cell"></td>
