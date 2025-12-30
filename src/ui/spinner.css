@@ -45,3 +45,10 @@
 body.spinner-active {
     overflow: hidden;
 }
+
+/* Exclude elements from spinner pointer-events blocking */
+.spinner-exclude {
+    position: relative;
+    z-index: 10000;
+    pointer-events: auto;
+}
