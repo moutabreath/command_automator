@@ -45,10 +45,11 @@ async function initLLMEventListeners() {
         await callLLM();
     });
 
-    cancelButton.addEventListener('click', async () => {
-        await cancelLLMJob();
-    });
-
+    if (cancelButton) {
+        cancelButton.addEventListener('click', async () => {
+            await cancelLLMJob();
+        });
+    }
     // Enter key to send (Shift+Enter for new line)
     queryBox.addEventListener('keydown', async function (e) {
         if (e.key === 'Enter' && !e.shiftKey) {
@@ -208,14 +209,11 @@ function autoResize() {
     queryBox.style.height = 'auto';
     queryBox.style.height = Math.max(MIN_HEIGHT, queryBox.scrollHeight) + 'px';
 }
-
 async function cancelLLMJob() {
     try {
-        let resp = await window.pywebview.api.cancel_llm_operation();
-    }
-    catch (error) {
+        await window.pywebview.api.cancel_llm_operation();
+    } catch (error) {
         console.error('LLM cancel failed:', error);
-        response = 'Error: Failed to cancel LLM';
     }
 }
 
