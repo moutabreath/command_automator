@@ -19,13 +19,21 @@ class UserApi(AbstractApi):
         self.user_registry_service = user_registry_service   
 
 
-    def login_or_register(self, user_email:str) -> Dict[str, Any]:
-        response = self.user_registry_service.login_or_register(user_email)        
+    def login_or_register(self, user_email: str) -> Dict[str, Any]:
+        if not user_email or not user_email.strip():
+            logging.error("Invalid email provided")
+            return UserApiResponse(error_message="Invalid email address", code=UserApiResponseCode.ERROR).to_dict()
         
-        if not response:
-            logging.error("No response from user registry service")
+        try:
+            response = self.user_registry_service.login_or_register(user_email)
+        except Exception as e:
+            logging.error(f"Exception calling user registry service: {e}")
+            return UserApiResponse(error_message="Service unavailable", code=UserApiResponseCode.ERROR).to_dict()
+         
+        if not response: 
             return UserApiResponse(error_message="Unknown error occurred", code=UserApiResponseCode.ERROR).to_dict()
         if response.code == UserRegistryResponseCode.OK:
             return UserApiResponse( user_id=response.user_id, code=UserApiResponseCode.OK).to_dict()
-        logging.error(f"Failed to login or register user: {response}")
-        return UserApiResponse(error_message="Error registering or logging in user", code=UserApiResponseCode.ERROR).to_dict()
+        error_detail = getattr(response, 'error_message', 'Unknown error')
+        logging.error(f"Failed to login or register user: {error_detail}")
+        return UserApiResponse(error_message=f"Error registering or logging in user: {error_detail}", code=UserApiResponseCode.ERROR).to_dict()

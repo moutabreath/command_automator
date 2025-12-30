@@ -60,6 +60,8 @@ class UserMongoPersist(AbstractOwnerMongoPersist):
 
     async def delete_user(self, user_id: str) -> bool:
         """Delete user and all their applications"""
-        await self.applications.delete_many({"user_id": user_id})
-        result = await self.users.delete_one({"_id": user_id})
-        return result.deleted_count > 0
+        async with await self.async_db.client.start_session() as session:
+            async with session.start_transaction():
+                await self.applications.delete_many({"user_id": user_id}, session=session)
+                result = await self.users.delete_one({"_id": user_id}, session=session)
+                return result.deleted_count > 0
