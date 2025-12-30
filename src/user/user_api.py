@@ -11,7 +11,7 @@ class UserApiResponseCode(Enum):
 
 class UserApiResponse(ApiResponse):
     def __init__(self, code: UserApiResponseCode, user_id: str = None, error_message: str = None):
-        super().__init__(result=user_id, error_message=error_message, code=code)
+        super().__init__(result_text=user_id, error_message=error_message, code=code)
 
 class UserApi(AbstractApi):
 

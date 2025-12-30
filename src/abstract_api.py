@@ -6,19 +6,18 @@ from typing import Any, Dict
 from services.configuration_service import ConfigurationService
 
 
-class ApiResponseCode(Enum):
-    OK = 1
-    ERROR_RUNNING_ASYNC_METHOD = 2
 
 class ApiResponse:
-    def __init__(self, text: str, code: ApiResponseCode):
-        self.text = text
+    def __init__(self,  code: Enum, result_text: str = None, error_message: str = None):
+        self.text = result_text
+        self.error_message = error_message
         self.code = code
         
     def to_dict(self) -> Dict[str, Any]:
         """Return a JSON-serializable representation."""
         return {
             "text": self.text,
+            "error_message": self.error_message,
             "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
         }
 
@@ -30,7 +29,8 @@ class ApiResponse:
         """Restore instance from pickled state."""
         try:
             self.text = state["text"]
-            self.code = ApiResponseCode[state["code"]]
+            self.code = state["code"]
+            self.error_message = state["error_message"]
         except KeyError as e:
             raise ValueError(f"Invalid pickled state: missing or invalid key {e}")
 

@@ -16,8 +16,8 @@ class LLMApiResponseCode(Enum):
     ERROR_MODEL_QUOTA_EXCEEDED = 5
 
 class LLMApiResponse(ApiResponse):
-    def __init__(self, text: str, code: LLMApiResponseCode):
-        super().__init__(text, code)
+    def __init__(self, code: LLMApiResponseCode, error_message: str = "", result_text: str = ""):
+        super().__init__(result_text=result_text, code=code, error_message=error_message)
 
 class LLMApi(AbstractApi):
 
@@ -39,7 +39,7 @@ class LLMApi(AbstractApi):
                 decoded_data = base64.b64decode(encoded)            
             except Exception as e:
                 logging.exception(f"Error processing image data: {e}")
-                resp = LLMApiResponse("Error loading image", LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)
+                resp = LLMApiResponse(error_message="Error loading image", code = LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)
                 return resp.to_dict()
 
         result: MCPResponse = run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path, user_id)
@@ -48,11 +48,11 @@ class LLMApi(AbstractApi):
         
         match result.code:
             case MCPResponseCode.OK:
-                resp = LLMApiResponse(result.text, LLMApiResponseCode.OK)
+                resp = LLMApiResponse(result_text=result.text, code=LLMApiResponseCode.OK)
             case MCPResponseCode.ERROR_MODEL_OVERLOADED:
-                resp = LLMApiResponse("Model overloaded", LLMApiResponseCode.ERROR_MODEL_OVERLOADED)
+                resp = LLMApiResponse(error_message="Model overloaded", code =LLMApiResponseCode.ERROR_MODEL_OVERLOADED)
             case MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED:
-                resp = LLMApiResponse("Model Exhausted", LLMApiResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
+                resp = LLMApiResponse(error_message="Model Exhausted", code=LLMApiResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
             case _:
-                resp = LLMApiResponse("Error communicating with LLM", LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+                resp = LLMApiResponse(error_message="Error communicating with LLM", code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         return resp.to_dict()
