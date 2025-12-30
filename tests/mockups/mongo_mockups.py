@@ -15,10 +15,10 @@ def db():
 class MockUserMongoPersist:
 
     def __init__(self, db):
-        self.users = db.users
+        self.users = AsyncMockCollection(db.users)
 
     async def create_or_update_user(self, email: str) -> Optional[Dict]:
-        user = self.users.find_one({"email": email})
+        user = await self.users.find_one({"email": email})
         if user:
             return user
         
