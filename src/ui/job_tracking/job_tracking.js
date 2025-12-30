@@ -1,3 +1,25 @@
+async function trackFromUrl() {
+    try {
+        const clipboardText = await navigator.clipboard.readText();
+        if (clipboardText && clipboardText.includes('linkedin.com/jobs')) {
+            const result = await window.pywebview.api.extract_job_title_and_company(clipboardText);
+            if (result && result.job_title && result.company_name) {
+                document.getElementById('job_title').value = result.job_title;
+                document.getElementById('company-name').value = result.company_name;
+                document.getElementById('job_url').value = clipboardText;
+                showAlert('Job details extracted from URL!', 'success');
+            } else {
+                showAlert('Could not extract job details from URL', 'warning');
+            }
+        } else {
+            showAlert('Please copy a LinkedIn job URL to clipboard', 'warning');
+        }
+    } catch (error) {
+        console.error('Error extracting from URL:', error);
+        showAlert('Failed to extract job details', 'error');
+    }
+}
+
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
     states = await window.pywebview.api.get_job_application_states();
@@ -25,7 +47,7 @@ async function initJobTracking() {
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.altKey && e.key === 'm') {
             e.preventDefault();
-            trackFromText();
+            trackFromUrl();
         }
     });
     
@@ -73,34 +95,63 @@ function addJobToTable(job, companyName) {
     const tableBody = document.getElementById('job-table-body');
     const row = document.createElement('tr');
     
-    row.innerHTML = `
-        <td>
-            <span class="delete-row">×</span>
-            <input type="text" class="form-control form-control-sm company-name company-input" value="${companyName || ''}">
-        </td>
-        <td><input type="text" class="form-control form-control-sm job-title" value="${job.job_title || ''}"></td>
-        <td><input type="text" class="form-control form-control-sm job-url" value="${job.job_url || ''}"></td>
-        <td class="state-cell"></td>
-        <td><input type="text" class="form-control form-control-sm job-date-time" value="${job.date_time || ''}" readonly></td>
-        <td><input type="text" class="form-control form-control-sm contact-name" value="${job.contact_name || ''}"></td>        
-        <td><input type="text" class="form-control form-control-sm contact-linkedin" value="${job.contact_linkedin || ''}"></td>
-        <td><input type="text" class="form-control form-control-sm contact-email" value="${job.contact_email || ''}"></td>
-        <td>
-            <div class="d-flex gap-2">
-                <button class="btn btn-primary btn-sm w-100 track-job-row-btn">Track</button>
-                <button class="btn btn-secondary btn-sm w-100 view-jobs-row-btn">View</button>
-            </div>
-        </td>
-    `;
+    // Create cells
+    const companyCell = document.createElement('td');
+    const deleteSpan = document.createElement('span');
+    deleteSpan.className = 'delete-row';
+    deleteSpan.textContent = '×';
+    const companyInput = document.createElement('input');
+    companyInput.type = 'text';
+    companyInput.className = 'form-control form-control-sm company-name company-input';
+    companyInput.value = companyName || '';
+    companyCell.appendChild(deleteSpan);
+    companyCell.appendChild(companyInput);
+    
+    const createInputCell = (value, className) => {
+        const cell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = `form-control form-control-sm ${className}`;
+        input.value = value || '';
+        cell.appendChild(input);
+        return cell;
+    };
+    
+    row.appendChild(companyCell);
+    row.appendChild(createInputCell(job.job_title, 'job-title'));
+    row.appendChild(createInputCell(job.job_url, 'job-url'));
+    
+    const newStateCell = document.createElement('td');
+    newStateCell.className = 'state-cell';
+    row.appendChild(newStateCell);
+    
+    row.appendChild(createInputCell(job.contact_name, 'contact-name'));
+    row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
+    row.appendChild(createInputCell(job.contact_email, 'contact-email'));
+    
+    const actionCell = document.createElement('td');
+    const actionDiv = document.createElement('div');
+    actionDiv.className = 'd-flex gap-2';
+    const newTrackBtn = document.createElement('button');
+    newTrackBtn.className = 'btn btn-primary btn-sm w-100 track-job-row-btn';
+    newTrackBtn.textContent = 'Track';
+
+    const newViewBtn = document.createElement('button');
+    newViewBtn.className = 'btn btn-secondary btn-sm w-100 view-jobs-row-btn';
+    newViewBtn.textContent = 'View';
+    actionDiv.appendChild(newTrackBtn);
+    actionDiv.appendChild(newViewBtn);
+    actionCell.appendChild(actionDiv);
+    row.appendChild(actionCell);
 
     // Create and insert the select element
-    const stateSelect = createStateSelect();
+    const stateSelectElement = createStateSelect();
     const stateCell = row.querySelector('.state-cell');
-    stateCell.appendChild(stateSelect);
+    stateCell.appendChild(stateSelectElement);
 
     // Set the select value
-    if (job.job_state && stateSelect.querySelector(`option[value="${job.job_state}"]`)) {
-        stateSelect.value = job.job_state;
+    if (job.job_state && stateSelectElement.querySelector(`option[value="${job.job_state}"]`)) {
+        stateSelectElement.value = job.job_state;
     }
 
     // Add event listeners
