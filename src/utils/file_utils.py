@@ -114,7 +114,7 @@ def serialize_objects(objects: List[T]) -> str | None:
     
 async def read_json_file(file_path: str) -> dict:
     data = await read_text_file(file_path)
-    if not (data):
+    if data == "":
         return {}
     try:
         return json.loads(data)

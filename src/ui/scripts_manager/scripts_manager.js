@@ -103,10 +103,9 @@ async function initScriptsManager() {
 
         // Clear any previous error messages
         const resultElement = document.getElementById('result');
-        if (resultElement.value.includes('Error:')) {
+        if (resultElement.value.toLowerCase().includes('error')) {
             resultElement.value = '';
         }
-
         await loadScripts();
         await loadScriptsManagerConfig();
         await initScriptsManagerEventHandlers();

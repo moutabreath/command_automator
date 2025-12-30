@@ -8,6 +8,8 @@ class ConfigurationService:
     def __init__(self, config_path: Path | str) -> None:
         """Initialize configuration service with a path to the config file"""
         self.config_path = str(config_path) if isinstance(config_path, Path) else config_path
+        self._config = {}
+
 
     def __getstate__(self) -> Dict[str, Any]:
         """Custom serialization for the class"""
