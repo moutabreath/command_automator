@@ -1,46 +1,51 @@
 import asyncio
 import threading
 import logging
-from typing import TypeVar, Any, Coroutine, Optional, Callable
+from typing import TypeVar, Any, Coroutine, Optional, Callable, Set
 
 
 
 T = TypeVar('T')
 
-_current_task: Optional[asyncio.Task] = None
+_active_tasks: Set[asyncio.Task] = set()
 _task_lock = threading.Lock()
 
 def cancel_current_async_operation():
-    """Cancel the currently running async operation"""
-    global _current_task
+    """Cancel all currently running async operations"""
+    global _active_tasks
     with _task_lock:
-        if _current_task and not _current_task.done():
-            _current_task.cancel()
-            logging.debug("Cancelled current async operation")
+        for task in _active_tasks.copy():
+            if not task.done():
+                task.cancel()
+        logging.debug(f"Cancelled {len(_active_tasks)} async operations")
+        _active_tasks.clear()
 
-def run_async_method(async_method: Callable[..., Coroutine[Any, Any, T]], *args, **kwargs) -> T:
+def run_async_method(async_method: Callable[..., Coroutine[Any, Any, T]], *args, **kwargs) ->  Optional[T]:
     """
-    Runs an async method synchronously. Raises on error after logging.
+     Runs an async method synchronously. Returns None on error after logging.
     """
-    global _current_task
+    global _active_tasks
     try:
         async def _wrapped_method():
             return await async_method(*args, **kwargs)
         
-        with _task_lock:
-            _current_task = None
-        
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)
         try:
+            task = loop.create_task(_wrapped_method())
             with _task_lock:
-                _current_task = loop.create_task(_wrapped_method())
-            return loop.run_until_complete(_current_task)
+                _active_tasks.add(task)
+            
+            try:
+                return loop.run_until_complete(task)
+            finally:
+                with _task_lock:
+                    _active_tasks.discard(task)
         finally:
             loop.close()
     except asyncio.CancelledError:
         logging.debug("Async operation was cancelled")
-        return None
+        raise
     except Exception as e:
         logging.error(f"Error running async method {e}", exc_info=True)
         return None # Caller must handle None return
@@ -67,8 +72,8 @@ class AsyncRunner:
         with cls._lock:
             if cls._started:
                 return
-
-        def _start_background_loop(loop: asyncio.AbstractEventLoop):
+            
+            def _start_background_loop(loop: asyncio.AbstractEventLoop):
                 asyncio.set_event_loop(loop)
                 try:
                     loop.run_forever()
@@ -80,16 +85,17 @@ class AsyncRunner:
                     except Exception as e:
                         logging.error(f"Error closing loop: {e}")
 
-        cls._loop = asyncio.new_event_loop()
-        cls._loop_thread = threading.Thread(
-            target=_start_background_loop, 
-            args=(cls._loop,), 
-            daemon=True,
-            name="AsyncBackgroundLoop"
-        )
-        cls._loop_thread.start()
-        cls._started = True
-        logging.info("AsyncRunner: Background event loop started.")
+            cls._loop = asyncio.new_event_loop()
+            cls._loop_thread = threading.Thread(
+                target=_start_background_loop, 
+                args=(cls._loop,), 
+                daemon=True,
+                name="AsyncBackgroundLoop"
+            )
+            cls._loop_thread.start()
+            cls._started = True
+            logging.info("AsyncRunner: Background event loop started.")
+    
       
     @classmethod
     def get_loop(cls) -> asyncio.AbstractEventLoop:
@@ -127,15 +133,17 @@ class AsyncRunner:
     def shutdown(cls):
         """Stops the background loop gracefully."""
         if cls._loop and cls._loop.is_running():
-            logging.info("AsyncRunner: Stopping background loop...")
-            cls._loop.call_soon_threadsafe(cls._loop.stop)
-            
+             logging.info("AsyncRunner: Stopping background loop...")
+             cls._loop.call_soon_threadsafe(cls._loop.stop)
+             
         if cls._loop_thread:
-            cls._loop_thread.join(timeout=2.0)
-            if cls._loop_thread.is_alive():
-               logging.warning("AsyncRunner: Background thread did not terminate within timeout.")
-           # Reset state to allow restart
-        cls._loop = None
-        cls._loop_thread = None
-        cls._started = False
+             cls._loop_thread.join(timeout=2.0)
+             if cls._loop_thread.is_alive():
+                logging.warning("AsyncRunner: Background thread did not terminate within timeout.")
+        
+            # Reset state to allow restart
+        with cls._lock:
+            cls._loop = None
+            cls._loop_thread = None
+            cls._started = False
         logging.info("AsyncRunner: Shutdown complete.")

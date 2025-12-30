@@ -4,11 +4,18 @@ from dependency_injector import containers, providers
 
 
 class Container(containers.DeclarativeContainer):
-    """Dependency injection container"""        
+    """Dependency injection container"""
+
+    @classmethod
+    def _get_lock(cls):
+        """Lazily initialize the lock"""
+        if cls._lock is None:
+            cls._lock = asyncio.Lock()
+        return cls._lock
+        
 
     # Global container instance
     _container = None
-    _lock = asyncio.Lock()
 
     # Configuration
     config = providers.Configuration()
@@ -26,9 +33,11 @@ class Container(containers.DeclarativeContainer):
     @classmethod
     async def init_container(cls) -> 'Container':
         """Initialize the dependency injection container"""
-
-        
-        logging.info("Initializing DI container in MCP subprocess")
+        async with cls._get_lock():
+            if cls._container is not None:
+                return cls._container
+         
+            logging.info("Initializing DI container in MCP subprocess")
         
         # Create and configure container
         container = Container()
