@@ -4,7 +4,7 @@ import logging
 from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
-from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMAgentResponse, LLMResponseCode
+from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
 from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
 from llm.llm_client.services.job_search_service import JobSearchService
 from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
@@ -39,7 +39,7 @@ class SmartMCPClient:
         """
         try:
             if not await self._is_mcp_server_ready():
-                llm_response:LLMAgentResponse = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
+                llm_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                 return self._convert_llm_response_to_mcp_response(llm_response)
 
             async with streamable_http_client(self.mcp_server_url) as (
@@ -69,7 +69,7 @@ class SmartMCPClient:
             logging.exception(f"Error communicating with Gemini or MCP server {e}")
             return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
-    def _convert_llm_response_to_mcp_response(self, llm_response: LLMAgentResponse) -> MCPResponse:
+    def _convert_llm_response_to_mcp_response(self, llm_response: LLMResponse) -> MCPResponse:
         match llm_response.code:
             case LLMResponseCode.OK:
                 return MCPResponse(llm_response.text, MCPResponseCode.OK)

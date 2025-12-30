@@ -2,7 +2,7 @@ import json
 import logging
 from google.genai.chats import Chat
 
-from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMAgentResponse, LLMResponseCode
+from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
 from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
 from llm.llm_client.services.resume_saver_service import ResumeSaverService
 
@@ -58,7 +58,7 @@ class ResumeRefinerService:
     
     async def get_refined_resume(self, resume_data_dict: dict) -> MCPResponse:
         prompt = self.format_prompts_for_resume(resume_data_dict)
-        resume_response: LLMAgentResponse = await self.gemini_agent.get_response_from_gemini(prompt=prompt,
+        resume_response: LLMResponse = await self.gemini_agent.get_response_from_gemini(prompt=prompt,
                                                                       chat=self.resume_chat)
         if resume_response.code == LLMResponseCode.OK:
             return MCPResponse(resume_response.text, MCPResponseCode.OK)
