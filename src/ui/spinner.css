@@ -49,6 +49,6 @@ body.spinner-active {
 /* Exclude elements from spinner pointer-events blocking */
 .spinner-exclude {
     position: relative;
-    z-index: 10000;
-    pointer-events: auto;
+    z-index: 10000 !important;
+    pointer-events: auto !important;
 }

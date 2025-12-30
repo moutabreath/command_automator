@@ -7,12 +7,40 @@ from typing import TypeVar, Any, Coroutine, Optional, Callable
 
 T = TypeVar('T')
 
+_current_task: Optional[asyncio.Task] = None
+_task_lock = threading.Lock()
+
+def cancel_current_async_operation():
+    """Cancel the currently running async operation"""
+    global _current_task
+    with _task_lock:
+        if _current_task and not _current_task.done():
+            _current_task.cancel()
+            logging.debug("Cancelled current async operation")
+
 def run_async_method(async_method: Callable[..., Coroutine[Any, Any, T]], *args, **kwargs) -> T:
     """
     Runs an async method synchronously. Raises on error after logging.
     """
+    global _current_task
     try:
-        return asyncio.run(async_method(*args, **kwargs))
+        async def _wrapped_method():
+            return await async_method(*args, **kwargs)
+        
+        with _task_lock:
+            _current_task = None
+        
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+        try:
+            with _task_lock:
+                _current_task = loop.create_task(_wrapped_method())
+            return loop.run_until_complete(_current_task)
+        finally:
+            loop.close()
+    except asyncio.CancelledError:
+        logging.debug("Async operation was cancelled")
+        return None
     except Exception as e:
         logging.error(f"Error running async method {e}", exc_info=True)
         return None # Caller must handle None return
@@ -25,6 +53,7 @@ class AsyncRunner:
     coroutines on that background loop thread-safely.
     """
     
+    _lock = threading.Lock()
     _loop: Optional[asyncio.AbstractEventLoop] = None
     _loop_thread: Optional[threading.Thread] = None
     _started = False
@@ -35,20 +64,21 @@ class AsyncRunner:
         Starts the persistent event loop in a daemon thread.
         This must be called BEFORE webview.start().
         """
-        if cls._started:
-            return
+        with cls._lock:
+            if cls._started:
+                return
 
         def _start_background_loop(loop: asyncio.AbstractEventLoop):
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_forever()
-            finally:
-                # Clean up generators, etc.
+                asyncio.set_event_loop(loop)
                 try:
-                    loop.run_until_complete(loop.shutdown_asyncgens())
-                    loop.close()
-                except Exception as e:
-                    logging.error(f"Error closing loop: {e}")
+                    loop.run_forever()
+                finally:
+                    # Clean up generators, etc.
+                    try:
+                        loop.run_until_complete(loop.shutdown_asyncgens())
+                        loop.close()
+                    except Exception as e:
+                        logging.error(f"Error closing loop: {e}")
 
         cls._loop = asyncio.new_event_loop()
         cls._loop_thread = threading.Thread(
@@ -60,12 +90,14 @@ class AsyncRunner:
         cls._loop_thread.start()
         cls._started = True
         logging.info("AsyncRunner: Background event loop started.")
-
+      
     @classmethod
     def get_loop(cls) -> asyncio.AbstractEventLoop:
         """Returns the running background loop."""
-        if not cls._loop:
+        if not cls._started or not cls._loop:
             raise RuntimeError("AsyncRunner not initialized. Call AsyncRunner.start() first.")
+        if not cls._loop.is_running():
+            raise RuntimeError("AsyncRunner loop is not running.")
         return cls._loop
 
     @classmethod
@@ -100,3 +132,10 @@ class AsyncRunner:
             
         if cls._loop_thread:
             cls._loop_thread.join(timeout=2.0)
+            if cls._loop_thread.is_alive():
+               logging.warning("AsyncRunner: Background thread did not terminate within timeout.")
+           # Reset state to allow restart
+        cls._loop = None
+        cls._loop_thread = None
+        cls._started = False
+        logging.info("AsyncRunner: Shutdown complete.")

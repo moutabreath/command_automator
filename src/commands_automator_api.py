@@ -90,6 +90,9 @@ class CommandsAutomatorApi:
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None):
         return self.llm_api.call_llm(prompt, image_data, output_file_path, user_id)
     
+    def cancel_llm_operation(self):
+        self.llm_api.cancel_operation()
+    
     
     def select_folder(self):
         if not webview.windows:
@@ -139,6 +142,9 @@ class CommandsAutomatorApi:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.track_job_application_from_text(user_id, text)
+    
+    def extract_job_title_and_company(self, url:str):
+        return self.job_tracking_api.extract_job_title_and_company(url)
 
 
 def load_environment():

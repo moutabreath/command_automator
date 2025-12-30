@@ -31,6 +31,7 @@ async function initLLMEventListeners() {
     const selectFolderBtn = document.getElementById('select-folder-btn');
     const selectImageBtn = document.getElementById('select-image-btn');
     const outputFilePath = document.getElementById('output-file-path');
+    const cancelButton = document.getElementById('cancel-btn');
 
     if (!sendBtn || !queryBox) {
         console.error('Required LLM elements not found');
@@ -42,6 +43,10 @@ async function initLLMEventListeners() {
     // Send button click
     sendBtn.addEventListener('click', async () => {
         await callLLM();
+    });
+
+    cancelButton.addEventListener('click', async () => {
+        await cancelLLMJob();
     });
 
     // Enter key to send (Shift+Enter for new line)
@@ -68,7 +73,7 @@ async function initLLMEventListeners() {
 
     // Output file path change
     if (outputFilePath) {
-         outputFilePath.addEventListener('input', debounce(async function () {
+        outputFilePath.addEventListener('input', debounce(async function () {
             await saveLLMConfig();
         }, 500));
     }
@@ -204,6 +209,16 @@ function autoResize() {
     queryBox.style.height = Math.max(MIN_HEIGHT, queryBox.scrollHeight) + 'px';
 }
 
+async function cancelLLMJob() {
+    try {
+        let resp = await window.pywebview.api.cancel_llm_operation();
+    }
+    catch (error) {
+        console.error('LLM cancel failed:', error);
+        response = 'Error: Failed to cancel LLM';
+    }
+}
+
 async function callLLM() {
     const queryBox = document.getElementById('query-box');
     const query = queryBox ? queryBox.value.trim() : '';
@@ -244,6 +259,10 @@ async function callLLM() {
     spinner.classList.add('visible');
     document.body.classList.add('spinner-active');
 
+    // Show cancel button
+    let cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'block';
+
     let response = '';
     try {
         response = await getMessageFromLLMResponse(query, imageData, outputPath);
@@ -255,6 +274,10 @@ async function callLLM() {
     // Hide spinner
     spinner.classList.remove('visible');
     document.body.classList.remove('spinner-active');
+
+    // Hide cancel button
+    cancelBtn = document.getElementById('cancel-btn');
+    if (cancelBtn) cancelBtn.style.display = 'none';
 
     // Create response element
     const responseElem = document.createElement('div');
@@ -327,7 +350,7 @@ function showToast(message, type = 'info') {
     toast.textContent = message;
     toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px;background:#333;color:#fff;border-radius:4px;z-index:9999;';
     document.body.appendChild(toast);
-    
+
     setTimeout(() => {
         toast.style.opacity = '0';
         toast.style.transition = 'opacity 0.3s';
