@@ -60,6 +60,9 @@ class JobTrackingApi(AbstractApi):
         company_name = getattr(response, 'company_name', None)
         return self._create_job_response(response, company_name)
 
+    def extract_job_title_and_company(self, url:str):
+        return self.job_tracking_service.extract_job_title_and_company(url)
+
     def _create_job_response(self, response, company_name: str) -> Dict[str, Any]:
         if response and response.code == JobTrackingResponseCode.OK:
             job_dict = self._get_job_dict_from_tracked_job(response.job)

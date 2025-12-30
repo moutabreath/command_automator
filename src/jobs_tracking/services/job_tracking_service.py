@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 import logging
 from urllib.parse import urlparse
+from jobs_tracking.job_tracking_linkedin_parser import extract_linkedin_job
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
 from jobs_tracking.services.models import TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode, JobAndCompanyTrackingResponse
 from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
@@ -102,6 +103,8 @@ class JobTrackingService(AbstractPersistenceService):
             logging.error(f"Failed to get positions for company {company_name}: {e}")
             return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
 
+    def extract_job_title_and_company(self, url:str):
+        return extract_linkedin_job(url)        
     
     async def _get_job_title_keyword(self):
         job_title_keywords = await file_utils.read_json_file(file_utils.JOB_TITLES_CONFIG_FILE)        
