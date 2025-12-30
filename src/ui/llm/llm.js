@@ -8,7 +8,7 @@ async function initLLM() {
 async function loadLLMConfig() {
     const outputPath = document.getElementById('output-file-path');
     if (outputPath) {
-        outputPath.value = config.llm.output_file_path || '';
+        outputPath.value = (window.config?.llm?.output_file_path) || '';
     }
 }
 
@@ -68,10 +68,9 @@ async function initLLMEventListeners() {
 
     // Output file path change
     if (outputFilePath) {
-        outputFilePath.addEventListener('input', async function (e) {
-            console.log('Output path changed:', e.target.value);
+         outputFilePath.addEventListener('input', debounce(async function () {
             await saveLLMConfig();
-        });
+        }, 500));
     }
 
     // Window resize handler for image preview
@@ -81,6 +80,18 @@ async function initLLMEventListeners() {
             updateImagePreviewSize();
         }
     });
+}
+
+function debounce(func, wait) {
+    let timeout;
+    return function executedFunction(...args) {
+        const later = () => {
+            clearTimeout(timeout);
+            func(...args);
+        };
+        clearTimeout(timeout);
+        timeout = setTimeout(later, wait);
+    };
 }
 
 async function initFolderUploadEvent() {
@@ -103,7 +114,10 @@ async function initImageUploadEvent() {
     const fileInput = document.createElement('input');
     fileInput.type = 'file';
     fileInput.accept = 'image/*';
-    fileInput.onchange = handleImageUpload;
+    fileInput.onchange = (event) => {
+        handleImageUpload(event);
+        fileInput.remove();
+    };
     fileInput.click();
 }
 
@@ -308,6 +322,15 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
 }
 
 function showToast(message, type = 'info') {
-    // Simple alert fallback (you can replace with Bootstrap toast if needed)
-    alert(message);
+    const toast = document.createElement('div');
+    toast.className = `toast toast-${type}`;
+    toast.textContent = message;
+    toast.style.cssText = 'position:fixed;top:20px;right:20px;padding:15px;background:#333;color:#fff;border-radius:4px;z-index:9999;';
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.opacity = '0';
+        toast.style.transition = 'opacity 0.3s';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
 }
