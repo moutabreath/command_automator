@@ -74,6 +74,10 @@ function createStateSelect() {
 }
 
 async function loadJobTrackingConfig() {
+     if (!config || !config.job_tracking) {
+        console.log('No job tracking config found');
+        return;
+    }
     const companyName = config.job_tracking.company_name || '';
     const job = {
         'job_title': config.job_tracking.job_title || '',
@@ -90,6 +94,18 @@ async function loadJobTrackingConfig() {
     console.log('Job tracking config loaded successfully');
 }
 
+
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return '';
+    return new Date(dateTimeString).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+}
 
 function addJobToTable(job, companyName) {
     const tableBody = document.getElementById('job-table-body');
@@ -124,9 +140,11 @@ function addJobToTable(job, companyName) {
     const newStateCell = document.createElement('td');
     newStateCell.className = 'state-cell';
     row.appendChild(newStateCell);
+
+    row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time'));
     
-    row.appendChild(createInputCell(job.contact_name, 'contact-name'));
     row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
+    row.appendChild(createInputCell(job.contact_name, 'contact-name'));    
     row.appendChild(createInputCell(job.contact_email, 'contact-email'));
     
     const actionCell = document.createElement('td');
