@@ -1,6 +1,6 @@
+states = []
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
-    let states = []
     states = await window.pywebview.api.get_job_application_states();
      
     populateStateSelect(document.getElementById('job_state'));
@@ -195,11 +195,11 @@ function addJobToTable(job, companyName) {
     trackBtn.className = 'btn btn-primary btn-sm w-100 track-job-row-btn';
     trackBtn.textContent = 'Track';
 
-    const viewButton = document.createElement('button');
-    viewButton.className = 'btn btn-secondary btn-sm w-100 view-jobs-row-btn';
-    viewButton.textContent = 'View';
-    actionDiv.appendChild(viewButton);
-    actionDiv.appendChild(viewButton);
+    const viewBtn = document.createElement('button');
+    viewBtn.className = 'btn btn-secondary btn-sm w-100 view-jobs-row-btn';
+    viewBtn.textContent = 'View';
+    actionDiv.appendChild(trackBtn);
+    actionDiv.appendChild(viewBtn);
     actionCell.appendChild(actionDiv);
     row.appendChild(actionCell);
 
@@ -262,42 +262,49 @@ async function saveJobTrackingConfig(jobData) {
 
 async function trackFromUrl() {
     try {
-        const tableBody = document.getElementById('job-table-body');
-        const rows = tableBody.querySelectorAll('tr');
+        // Find currently focused element or use blank form
+        const activeElement = document.activeElement;
+        let targetRow = null;
         
-        for (const row of rows) {
-            const companyInput = row.querySelector('.company-name');
-            const jobTitleInput = row.querySelector('.job-title');
-            const jobUrlInput = row.querySelector('.job-url');
-            const contactNameInput = row.querySelector('.contact-name');
-            const contactLinkedInInput = row.querySelector('.contact-linkedin');
-            
-            // 1.1 Fill company name from LinkedIn URL
-            if (!companyInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
-                const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
-                if (result && result.company_name) {
-                    companyInput.value = result.company_name;
-                }
-            }
-            
-            // 1.2 Extract name from LinkedIn profile URL
-            if (!contactNameInput.value && contactLinkedInInput.value && contactLinkedInInput.value.includes('linkedin.com/in/')) {
-                const contactName = getContactNameFromLinkedin(contactLinkedInInput.value);
-                if (contactName) {
-                    contactNameInput.value = contactName;
-                }
-            }
-            
-            // 1.3 Fill job title from LinkedIn URL
-            if (!jobTitleInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
-                const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
-                if (result && result.job_title) {
-                    jobTitleInput.value = result.job_title;
-                }
+        if (activeElement && activeElement.closest('tr')) {
+            // Use the row containing the focused element
+            targetRow = activeElement.closest('tr');
+        } else {
+            // Use the blank form row
+            targetRow = document.querySelector('#job-input-body tr');
+        }
+        
+        if (!targetRow) return;
+        
+        const companyInput = targetRow.querySelector('.company-name, #company-name');
+        const jobTitleInput = targetRow.querySelector('.job-title, #job_title');
+        const jobUrlInput = targetRow.querySelector('.job-url, #job_url');
+        const contactNameInput = targetRow.querySelector('.contact-name, #contact_name');
+        const contactLinkedInInput = targetRow.querySelector('.contact-linkedin, #contact_linkedin');
+        
+        // 1.1 Fill company name from LinkedIn URL
+        if (!companyInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
+            const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
+            if (result && result.company_name) {
+                companyInput.value = result.company_name;
             }
         }
         
-        showAlert('Job details updated from URLs!', 'success');
+        // 1.2 Extract name from LinkedIn profile URL
+        if (!contactNameInput.value && contactLinkedInInput.value && contactLinkedInInput.value.includes('linkedin.com/in/')) {
+            const contactName = getContactNameFromLinkedin(contactLinkedInInput.value);
+            if (contactName) {
+                contactNameInput.value = contactName;
+            }
+        }
+        
+        // 1.3 Fill job title from LinkedIn URL
+        if (!jobTitleInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
+            const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
+            if (result && result.job_title) {
+                jobTitleInput.value = result.job_title;
+            }
+        }
     } catch (error) {
         console.error('Error updating from URLs:', error);
         showAlert('Failed to update job details', 'error');

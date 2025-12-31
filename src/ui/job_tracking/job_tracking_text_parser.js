@@ -127,15 +127,6 @@ function getContactNameFromLinkedin(url) {
         .join(' ');
 }
 
-function extractCompanyFromUrl(url) {
-    try {
-        const domain = new URL(url).hostname;
-        return domain.replace('www.', '').split('.')[0];
-    } catch {
-        return "Unknown Company";
-    }
-}
-
 function extractCompanyName(potentialCompanyNames, contactName) {
     for (const name of potentialCompanyNames) {
         if (name !== contactName) {

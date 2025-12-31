@@ -82,6 +82,15 @@ function showAlert(message, type = 'info', duration = 5000) {
             const bsAlert = new bootstrap.Alert(alertElement);
             bsAlert.close();
         }
-    }, duration);
+    }, duration);    
+}
+
+function getContactNameFromLinkedin(url) {
+    const match = url.match(/linkedin\.com\/in\/([^/?]+)/);
+    if (!match) return null;
     
+    const slug = match[1];
+    return slug.split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
 }
