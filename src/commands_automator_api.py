@@ -131,7 +131,7 @@ class CommandsAutomatorApi:
             job_state=JobApplicationState.from_string(job_dto_dict['job_state']),
             contact_email=job_dto_dict['contact_email']
         )
-        return self.job_tracking_api.track_job_application(user_id, company_name, job_dto)
+        return self.job_tracking_api.track_job_application(user_id=user_id, company_name=company_name, job_dto=job_dto)
     
     def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
         if self.job_tracking_api is None:

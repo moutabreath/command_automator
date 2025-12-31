@@ -1,6 +1,7 @@
 import json
 import aiohttp
 import logging
+import asyncio
 from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
@@ -65,6 +66,9 @@ class SmartMCPClient:
                 else:
                     agent_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                     return self._convert_llm_response_to_mcp_response(agent_response)
+        except asyncio.CancelledError:
+            logging.debug("MCP query was cancelled")
+            return MCPResponse("Operation was cancelled", MCPResponseCode.OPERATION_CANCELLED)
         except Exception as e:
             logging.exception(f"Error communicating with Gemini or MCP server {e}")
             return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
