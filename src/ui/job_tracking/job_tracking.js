@@ -136,6 +136,9 @@ async function viewJobApplications(companyName) {
         if (response && response.jobs) {
             displayJobsTable(response.jobs, companyName);
         }
+        else {
+            showAlert('No jobs found for the company {companyName}.', 'info');
+        }
     } catch (error) {
         console.error('Error retrieving jobs:', error);
         showAlert('Failed to retrieve jobs.', 'error');

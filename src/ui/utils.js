@@ -94,3 +94,35 @@ function getContactNameFromLinkedin(url) {
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 }
+
+function getCompanyFromUrl(url) {
+    if (url.includes('comeet.com')) {
+        const match = url.match(/comeet\.com\/jobs\/([^/]+)/);
+        if (match) {
+            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        }
+    }
+    
+    if (url.includes('smartrecruiters.com')) {
+        const match = url.match(/jobs\.smartrecruiters\.com\/([^/]+)/);
+        if (match) {
+            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+        }
+    }
+    
+    if (url.includes('gh_jid=')) {
+        if (url.includes('www.')) {
+            const match = url.match(/www\.([^.]+)/);
+            if (match) {
+                return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+            }
+        } else {
+            const match = url.match(/https:\/\/([^.]+)/);
+            if (match) {
+                return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+            }
+        }
+    }
+    
+    return "";
+}
