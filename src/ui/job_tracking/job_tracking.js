@@ -22,11 +22,19 @@ async function initJobTracking() {
         });
     }
     
-    // Add keyboard shortcut
+    // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.altKey && e.key === 'm') {
             e.preventDefault();
             trackFromUrl();
+        }
+        if (e.ctrlKey && e.altKey && e.key === 't') {
+            e.preventDefault();
+            trackCurrentRow();
+        }
+        if (e.ctrlKey && e.altKey && e.key === 'v') {
+            e.preventDefault();
+            viewCurrentRow();
         }
     });
     
@@ -260,6 +268,56 @@ async function saveJobTrackingConfig(jobData) {
         console.log('Job tracking config saved');
     } catch (error) {
         console.log('Error saving job tracking config:', error);
+    }
+}
+
+async function viewCurrentRow() {
+    try {
+        // Find currently focused element or use blank form
+        const activeElement = document.activeElement;
+        let targetRow = null;
+        
+        if (activeElement && activeElement.closest('tr')) {
+            // Use the row containing the focused element
+            targetRow = activeElement.closest('tr');
+        } else {
+            // Use the blank form row
+            targetRow = document.querySelector('#job-input-body tr');
+        }
+        
+        if (!targetRow) return;
+        
+        // Get row data and view applications
+        const rowData = getRowData(targetRow) || getFormData();
+        await viewJobApplications(rowData.company_name);
+    } catch (error) {
+        console.error('Error viewing current row applications:', error);
+        showAlert('Failed to view job applications', 'error');
+    }
+}
+
+async function trackCurrentRow() {
+    try {
+        // Find currently focused element or use blank form
+        const activeElement = document.activeElement;
+        let targetRow = null;
+        
+        if (activeElement && activeElement.closest('tr')) {
+            // Use the row containing the focused element
+            targetRow = activeElement.closest('tr');
+        } else {
+            // Use the blank form row
+            targetRow = document.querySelector('#job-input-body tr');
+        }
+        
+        if (!targetRow) return;
+        
+        // Get row data and track it
+        const rowData = getRowData(targetRow) || getFormData();
+        await trackJobApplication(rowData);
+    } catch (error) {
+        console.error('Error tracking current row:', error);
+        showAlert('Failed to track job application', 'error');
     }
 }
 
