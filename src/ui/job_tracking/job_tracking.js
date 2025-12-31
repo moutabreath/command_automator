@@ -1,27 +1,6 @@
-async function trackFromUrl() {
-    try {
-        const clipboardText = await navigator.clipboard.readText();
-        if (clipboardText && clipboardText.includes('linkedin.com/jobs')) {
-            const result = await window.pywebview.api.extract_job_title_and_company(clipboardText);
-            if (result && result.job_title && result.company_name) {
-                document.getElementById('job_title').value = result.job_title;
-                document.getElementById('company-name').value = result.company_name;
-                document.getElementById('job_url').value = clipboardText;
-                showAlert('Job details extracted from URL!', 'success');
-            } else {
-                showAlert('Could not extract job details from URL', 'warning');
-            }
-        } else {
-            showAlert('Please copy a LinkedIn job URL to clipboard', 'warning');
-        }
-    } catch (error) {
-        console.error('Error extracting from URL:', error);
-        showAlert('Failed to extract job details', 'error');
-    }
-}
-
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
+    let states = []
     states = await window.pywebview.api.get_job_application_states();
      
     populateStateSelect(document.getElementById('job_state'));
@@ -54,25 +33,6 @@ async function initJobTracking() {
     await loadJobTrackingConfig();
 }
 
-function populateStateSelect(selectElement) {
-    if (selectElement && states && Array.isArray(states)) {
-        selectElement.innerHTML = '';
-        states.forEach(state => {
-            const option = document.createElement('option');
-            option.value = state;
-            option.textContent = getStateLabel(state);
-            selectElement.appendChild(option);
-        });
-    }
-}
-
-function createStateSelect() {
-    const stateSelect = document.createElement('select');
-    stateSelect.className = 'form-select form-select-sm';
-    populateStateSelect(stateSelect);
-    return stateSelect;
-}
-
 async function loadJobTrackingConfig() {
      if (!config || !config.job_tracking) {
         console.log('No job tracking config found');
@@ -92,149 +52,6 @@ async function loadJobTrackingConfig() {
     addJobToTable(job, companyName);
 
     console.log('Job tracking config loaded successfully');
-}
-
-
-function formatDateTime(dateTimeString) {
-    if (!dateTimeString) return '';
-    return new Date(dateTimeString).toLocaleString('en-GB', {
-        day: '2-digit',
-        month: '2-digit', 
-        year: 'numeric',
-        hour: '2-digit',
-        minute: '2-digit',
-        hour12: false
-    });
-}
-
-function addJobToTable(job, companyName) {
-    const tableBody = document.getElementById('job-table-body');
-    const row = document.createElement('tr');
-    
-    // Create cells
-    const companyCell = document.createElement('td');
-    const deleteSpan = document.createElement('span');
-    deleteSpan.className = 'delete-row';
-    deleteSpan.textContent = '×';
-    const companyInput = document.createElement('input');
-    companyInput.type = 'text';
-    companyInput.className = 'form-control form-control-sm company-name company-input';
-    companyInput.value = companyName || '';
-    companyCell.appendChild(deleteSpan);
-    companyCell.appendChild(companyInput);
-    
-    const createInputCell = (value, className) => {
-        const cell = document.createElement('td');
-        const input = document.createElement('input');
-        input.type = 'text';
-        input.className = `form-control form-control-sm ${className}`;
-        input.value = value || '';
-        cell.appendChild(input);
-        return cell;
-    };
-    
-    row.appendChild(companyCell);
-    row.appendChild(createInputCell(job.job_title, 'job-title'));
-    row.appendChild(createInputCell(job.job_url, 'job-url'));
-    
-    const newStateCell = document.createElement('td');
-    newStateCell.className = 'state-cell';
-    row.appendChild(newStateCell);
-
-    row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time'));
-    
-    row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
-    row.appendChild(createInputCell(job.contact_name, 'contact-name'));    
-    row.appendChild(createInputCell(job.contact_email, 'contact-email'));
-    
-    const actionCell = document.createElement('td');
-    const actionDiv = document.createElement('div');
-    actionDiv.className = 'd-flex gap-2';
-    const newTrackBtn = document.createElement('button');
-    newTrackBtn.className = 'btn btn-primary btn-sm w-100 track-job-row-btn';
-    newTrackBtn.textContent = 'Track';
-
-    const newViewBtn = document.createElement('button');
-    newViewBtn.className = 'btn btn-secondary btn-sm w-100 view-jobs-row-btn';
-    newViewBtn.textContent = 'View';
-    actionDiv.appendChild(newTrackBtn);
-    actionDiv.appendChild(newViewBtn);
-    actionCell.appendChild(actionDiv);
-    row.appendChild(actionCell);
-
-    // Create and insert the select element
-    const stateSelectElement = createStateSelect();
-    const stateCell = row.querySelector('.state-cell');
-    stateCell.appendChild(stateSelectElement);
-
-    // Set the select value
-    if (job.job_state && stateSelectElement.querySelector(`option[value="${job.job_state}"]`)) {
-        stateSelectElement.value = job.job_state;
-    }
-
-    // Add event listeners
-    const trackBtn = row.querySelector('.track-job-row-btn');
-    const viewBtn = row.querySelector('.view-jobs-row-btn');
-    const deleteBtn = row.querySelector('.delete-row');
-    
-    if (trackBtn) {
-        trackBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await trackJobApplication(getRowData(row));
-        });
-    }
-    
-    if (viewBtn) {
-        viewBtn.addEventListener('click', async (e) => {
-            e.preventDefault();
-            await viewJobApplications(getRowData(row).company_name);
-        });
-    }
-    
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            row.remove();
-        });
-    }
-
-    tableBody.prepend(row);
-}
-
-
-function getStateLabel(enumName) {
-    const stateLabels = {
-        'CONNECTION_REQUESTED': 'Request Sent',
-        'MESSAGE_SENT': 'Message Sent',
-        'EMAIL_SENT': 'Email Sent',
-        'APPLIED': 'Applied',
-        'UNKNOWN': 'Unknown'
-    };
-    return stateLabels[enumName] || enumName;
-}
-
-function getFormData() {
-    return {
-        company_name: document.getElementById('company-name').value.trim(),
-        job_title: document.getElementById('job_title').value.trim(),
-        job_url: document.getElementById('job_url').value.trim(),
-        job_state: document.getElementById('job_state').value,
-        contact_name: document.getElementById('contact_name').value.trim(),
-        date_time: document.getElementById('job_date_time').value.trim(),
-        contact_linkedin: document.getElementById('contact_linkedin').value.trim(),
-        contact_email: document.getElementById('contact_email').value.trim()
-    };
-}
-
-function clearForm() {
-    document.getElementById('company-name').value = '';
-    document.getElementById('job_title').value = '';
-    document.getElementById('job_url').value = '';
-    document.getElementById('contact_name').value = '';
-    document.getElementById('contact_linkedin').value = '';
-    document.getElementById('contact_email').value = '';
-    document.getElementById('job_date_time').value = '';
-    document.getElementById('job_state').selectedIndex = 0;
 }
 
 async function trackJobApplication(rowData, isFromForm = false) {
@@ -330,6 +147,99 @@ async function viewJobApplications(companyName) {
     }
 }
 
+
+function addJobToTable(job, companyName) {
+    const tableBody = document.getElementById('job-table-body');
+    const row = document.createElement('tr');
+    
+    // Create cells
+    const companyCell = document.createElement('td');
+    const deleteSpan = document.createElement('span');
+    deleteSpan.className = 'delete-row';
+    deleteSpan.textContent = '×';
+    const companyInput = document.createElement('input');
+    companyInput.type = 'text';
+    companyInput.className = 'form-control form-control-sm company-name company-input';
+    companyInput.value = companyName || '';
+    companyCell.appendChild(deleteSpan);
+    companyCell.appendChild(companyInput);
+    
+    const createInputCell = (value, className) => {
+        const cell = document.createElement('td');
+        const input = document.createElement('input');
+        input.type = 'text';
+        input.className = `form-control form-control-sm ${className}`;
+        input.value = value || '';
+        cell.appendChild(input);
+        return cell;
+    };
+    
+    row.appendChild(companyCell);
+    row.appendChild(createInputCell(job.job_title, 'job-title'));
+    row.appendChild(createInputCell(job.job_url, 'job-url'));
+    
+    const newStateCell = document.createElement('td');
+    newStateCell.className = 'state-cell';
+    row.appendChild(newStateCell);
+
+    row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time'));
+    
+    row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
+    row.appendChild(createInputCell(job.contact_name, 'contact-name'));    
+    row.appendChild(createInputCell(job.contact_email, 'contact-email'));
+    
+    const actionCell = document.createElement('td');
+    const actionDiv = document.createElement('div');
+    actionDiv.className = 'd-flex gap-2';
+    const trackBtn = document.createElement('button');
+    trackBtn.className = 'btn btn-primary btn-sm w-100 track-job-row-btn';
+    trackBtn.textContent = 'Track';
+
+    const viewButton = document.createElement('button');
+    viewButton.className = 'btn btn-secondary btn-sm w-100 view-jobs-row-btn';
+    viewButton.textContent = 'View';
+    actionDiv.appendChild(viewButton);
+    actionDiv.appendChild(viewButton);
+    actionCell.appendChild(actionDiv);
+    row.appendChild(actionCell);
+
+    // Create and insert the select element
+    const stateSelectElement = createStateSelect();
+    const stateCell = row.querySelector('.state-cell');
+    stateCell.appendChild(stateSelectElement);
+
+    // Set the select value
+    if (job.job_state && stateSelectElement.querySelector(`option[value="${job.job_state}"]`)) {
+        stateSelectElement.value = job.job_state;
+    }
+
+    // Add event listeners
+    const deleteBtn = row.querySelector('.delete-row');
+    
+    if (trackBtn) {
+        trackBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await trackJobApplication(getRowData(row));
+        });
+    }
+    
+    if (viewBtn) {
+        viewBtn.addEventListener('click', async (e) => {
+            e.preventDefault();
+            await viewJobApplications(getRowData(row).company_name);
+        });
+    }
+    
+    if (deleteBtn) {
+        deleteBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            row.remove();
+        });
+    }
+
+    tableBody.prepend(row);
+}
+
 async function saveJobTrackingConfig(jobData) {
     const jobTrackingConfig = {
         company_name: jobData.company_name || '',
@@ -348,6 +258,117 @@ async function saveJobTrackingConfig(jobData) {
     } catch (error) {
         console.log('Error saving job tracking config:', error);
     }
+}
+
+async function trackFromUrl() {
+    try {
+        const tableBody = document.getElementById('job-table-body');
+        const rows = tableBody.querySelectorAll('tr');
+        
+        for (const row of rows) {
+            const companyInput = row.querySelector('.company-name');
+            const jobTitleInput = row.querySelector('.job-title');
+            const jobUrlInput = row.querySelector('.job-url');
+            const contactNameInput = row.querySelector('.contact-name');
+            const contactLinkedInInput = row.querySelector('.contact-linkedin');
+            
+            // 1.1 Fill company name from LinkedIn URL
+            if (!companyInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
+                const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
+                if (result && result.company_name) {
+                    companyInput.value = result.company_name;
+                }
+            }
+            
+            // 1.2 Extract name from LinkedIn profile URL
+            if (!contactNameInput.value && contactLinkedInInput.value && contactLinkedInInput.value.includes('linkedin.com/in/')) {
+                const contactName = getContactNameFromLinkedin(contactLinkedInInput.value);
+                if (contactName) {
+                    contactNameInput.value = contactName;
+                }
+            }
+            
+            // 1.3 Fill job title from LinkedIn URL
+            if (!jobTitleInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
+                const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
+                if (result && result.job_title) {
+                    jobTitleInput.value = result.job_title;
+                }
+            }
+        }
+        
+        showAlert('Job details updated from URLs!', 'success');
+    } catch (error) {
+        console.error('Error updating from URLs:', error);
+        showAlert('Failed to update job details', 'error');
+    }
+}
+
+function populateStateSelect(selectElement) {
+    if (selectElement && states && Array.isArray(states)) {
+        selectElement.innerHTML = '';
+        states.forEach(state => {
+            const option = document.createElement('option');
+            option.value = state;
+            option.textContent = getStateLabel(state);
+            selectElement.appendChild(option);
+        });
+    }
+}
+
+function createStateSelect() {
+    const stateSelect = document.createElement('select');
+    stateSelect.className = 'form-select form-select-sm';
+    populateStateSelect(stateSelect);
+    return stateSelect;
+}
+
+
+function formatDateTime(dateTimeString) {
+    if (!dateTimeString) return '';
+    return new Date(dateTimeString).toLocaleString('en-GB', {
+        day: '2-digit',
+        month: '2-digit', 
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit',
+        hour12: false
+    });
+}
+
+function getStateLabel(enumName) {
+    const stateLabels = {
+        'CONNECTION_REQUESTED': 'Request Sent',
+        'MESSAGE_SENT': 'Message Sent',
+        'EMAIL_SENT': 'Email Sent',
+        'APPLIED': 'Applied',
+        'UNKNOWN': 'Unknown'
+    };
+    return stateLabels[enumName] || enumName;
+}
+
+function getFormData() {
+    return {
+        company_name: document.getElementById('company-name').value.trim(),
+        job_title: document.getElementById('job_title').value.trim(),
+        job_url: document.getElementById('job_url').value.trim(),
+        job_state: document.getElementById('job_state').value,
+        contact_name: document.getElementById('contact_name').value.trim(),
+        date_time: document.getElementById('job_date_time').value.trim(),
+        contact_linkedin: document.getElementById('contact_linkedin').value.trim(),
+        contact_email: document.getElementById('contact_email').value.trim()
+    };
+}
+
+function clearForm() {
+    document.getElementById('company-name').value = '';
+    document.getElementById('job_title').value = '';
+    document.getElementById('job_url').value = '';
+    document.getElementById('contact_name').value = '';
+    document.getElementById('contact_linkedin').value = '';
+    document.getElementById('contact_email').value = '';
+    document.getElementById('job_date_time').value = '';
+    document.getElementById('job_state').selectedIndex = 0;
 }
 
 async function trackJobApplicationFromText() {
@@ -407,7 +428,7 @@ function getRowData(row) {
         contact_name: row.querySelector('.contact-name').value,
         contact_linkedin: row.querySelector('.contact-linkedin').value,
         contact_email: row.querySelector('.contact-email').value,
-        date_time: row.querySelector('.job-date-time').value
+        date_time: row.querySelector('.date-time').value
     };
 }
 
