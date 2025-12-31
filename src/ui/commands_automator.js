@@ -7,7 +7,9 @@ async function tryInitApp() {
     initAttempts++;
     console.log(`Initialization attempt ${initAttempts}`);
 
-    if (typeof window.pywebview !== 'undefined' && typeof window.pywebview.api !== 'undefined') {
+    if (typeof window.pywebview !== 'undefined' && 
+        typeof window.pywebview.api !== 'undefined' && 
+        typeof window.pywebview.api.get_configuration === 'function') {
         try {
             await initApp();
         } catch (error) {
