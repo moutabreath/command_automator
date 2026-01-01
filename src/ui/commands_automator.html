@@ -97,7 +97,8 @@
                                         alt="Send" style="width: 24px; height: 24px;" />
                                 </button>
                                 <button id="select-image-btn" class="btn btn-secondary">+</button>
-                                <button id="cancel-btn" class="btn btn-danger spinner-exclude" style="display: none;">Cancel</button>
+                                <button id="cancel-btn" class="btn btn-danger spinner-exclude"
+                                    style="display: none;">Cancel</button>
                             </div>
                             <div id="image-preview" class="image-preview-area"></div>
                         </div>
@@ -130,7 +131,8 @@
                 </div>
 
                 <!-- Job Tracking Table Container -->
-                <div id="job-tracking-container" class="card bg-dark border-secondary spinner-exclude" style="display: none;">
+                <div id="job-tracking-container" class="card bg-dark border-secondary spinner-exclude"
+                    style="display: none;">
                     <div class="card-body">
                         <h5 class="card-title mb-3" style="color: #9EA3F5;">Job Tracking</h5>
                         <div class="table-responsive">
@@ -143,7 +145,7 @@
                                         <th>State</th>
                                         <th>Update Time</th>
                                         <th>Contact LinkedIn</th>
-                                        <th>Contact Name</th>                                        
+                                        <th>Contact Name</th>
                                         <th>Contact Email</th>
                                         <th>Actions</th>
                                     </tr>
@@ -153,19 +155,29 @@
                                     <tr class="table-active">
                                         <td>
                                             <span class="delete-spacer">×</span>
-                                            <input type="text" id="company-name" class="form-control form-control-sm company-input" placeholder="Company">
+                                            <input type="text" id="company-name"
+                                                class="form-control form-control-sm company-input"
+                                                placeholder="Company">
                                         </td>
-                                        <td><input type="text" id="job_title" class="form-control form-control-sm" placeholder="Title"></td>
-                                        <td><input type="text" id="job_url" class="form-control form-control-sm" placeholder="URL"></td>
+                                        <td><input type="text" id="job_title" class="form-control form-control-sm"
+                                                placeholder="Title"></td>
+                                        <td><input type="text" id="job_url" class="form-control form-control-sm"
+                                                placeholder="URL"></td>
                                         <td><select id="job_state" class="form-select form-select-sm"></select></td>
-                                        <td><input type="text" id="job_date_time" class="form-control form-control-sm" readonly></td>
-                                        <td><input type="text" id="contact_linkedin" class="form-control form-control-sm" placeholder="LinkedIn"></td>
-                                        <td><input type="text" id="contact_name" class="form-control form-control-sm" placeholder="Name"></td>                                        
-                                        <td><input type="text" id="contact_email" class="form-control form-control-sm" placeholder="Email"></td>
+                                        <td><input type="text" id="job_date_time" class="form-control form-control-sm"
+                                                readonly></td>
+                                        <td><input type="text" id="contact_linkedin"
+                                                class="form-control form-control-sm" placeholder="LinkedIn"></td>
+                                        <td><input type="text" id="contact_name" class="form-control form-control-sm"
+                                                placeholder="Name"></td>
+                                        <td><input type="text" id="contact_email" class="form-control form-control-sm"
+                                                placeholder="Email"></td>
                                         <td>
                                             <div class="d-flex gap-2">
-                                                <button id="track-job-btn" class="btn btn-primary btn-sm w-100">Track</button>
-                                                <button id="view-jobs-btn" class="btn btn-secondary btn-sm w-100">View</button>
+                                                <button id="track-job-btn"
+                                                    class="btn btn-primary btn-sm w-100">Track</button>
+                                                <button id="view-jobs-btn"
+                                                    class="btn btn-secondary btn-sm w-100">View</button>
                                             </div>
                                         </td>
                                     </tr>
@@ -180,8 +192,8 @@
             </div>
         </div>
 
-        <!-- Alert Container -->
-        <div id="alert-container" class="position-fixed bottom-0 end-0 p-3" style="z-index: 1050;"></div>
+        <div id="alert-container" class="position-fixed bottom-0 start-0 p-3" style="z-index: 9999;"></div>
+
     </div>
 
     <!-- Bootstrap JS -->
