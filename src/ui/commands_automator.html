@@ -135,6 +135,9 @@
                     style="display: none;">
                     <div class="card-body">
                         <h5 class="card-title mb-3" style="color: #9EA3F5;">Job Tracking</h5>
+                        <div id="bulk-delete-container" style="display: none; margin-bottom: 10px;">
+                            <button id="bulk-delete-btn" class="btn btn-danger btn-sm">🗑️</button>
+                        </div>
                         <div class="table-responsive">
                             <table id="job-table" class="table table-dark table-striped align-middle">
                                 <thead>
@@ -154,7 +157,6 @@
                                     <!-- Input Row -->
                                     <tr class="table-active">
                                         <td>
-                                            <span class="delete-spacer">×</span>
                                             <input type="text" id="company-name"
                                                 class="form-control form-control-sm company-input"
                                                 placeholder="Company">

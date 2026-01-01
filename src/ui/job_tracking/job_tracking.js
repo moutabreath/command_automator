@@ -37,6 +37,14 @@ async function initJobTracking() {
             viewCurrentRow();
         }
     });
+
+    // Add bulk delete functionality
+    const bulkDeleteBtn = document.getElementById('bulk-delete-btn');
+    if (bulkDeleteBtn) {
+        bulkDeleteBtn.addEventListener('click', async () => {
+            await bulkDeleteSelectedRows();
+        });
+    }
 }
 
 async function trackJobApplication(rowData, isFromBlankRow = false, rowElement = null) {
@@ -135,20 +143,28 @@ async function viewJobApplications(companyName) {
 }
 
 
+function updateBulkDeleteVisibility() {
+    const checkboxes = document.querySelectorAll('.row-checkbox');
+    const anyChecked = Array.from(checkboxes).some(cb => cb.checked);
+    const bulkDelete = document.getElementById('bulk-delete-container');
+    if (bulkDelete) bulkDelete.style.display = anyChecked ? 'block' : 'none';
+}
+
 function addJobToTable(job, companyName) {
     const tableBody = document.getElementById('job-table-body');
     const row = document.createElement('tr');
 
     // Create cells
     const companyCell = document.createElement('td');
-    const deleteSpan = document.createElement('span');
-    deleteSpan.className = 'delete-row';
-    deleteSpan.textContent = '×';
+    const selectCheckbox = document.createElement('input');
+    selectCheckbox.type = 'checkbox';
+    selectCheckbox.className = 'row-checkbox';
+    selectCheckbox.addEventListener('change', updateBulkDeleteVisibility);
     const companyInput = document.createElement('input');
     companyInput.type = 'text';
     companyInput.className = 'form-control form-control-sm company-name company-input';
     companyInput.value = companyName || '';
-    companyCell.appendChild(deleteSpan);
+    companyCell.appendChild(selectCheckbox);
     companyCell.appendChild(companyInput);
 
     const createInputCell = (value, className) => {
@@ -215,13 +231,6 @@ function addJobToTable(job, companyName) {
         viewBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await viewJobApplications(getRowData(row).company_name);
-        });
-    }
-
-    if (deleteBtn) {
-        deleteBtn.addEventListener('click', (e) => {
-            e.preventDefault();
-            row.remove();
         });
     }
 
@@ -552,6 +561,67 @@ async function viewJobApplicationsFromRow(companyName) {
         showAlert('Failed to retrieve jobs.', 'error');
     } finally {
         // Hide spinner
+        if (spinner) {
+            spinner.classList.remove('visible');
+            document.body.classList.remove('spinner-active');
+        }
+    }
+}
+
+async function bulkDeleteSelectedRows() {
+    const userId = window.userId || window.user_id;
+    if (!userId) {
+        showAlert('Please login first.', 'warning');
+        return;
+    }
+
+    const checkboxes = document.querySelectorAll('.row-checkbox:checked');
+    if (checkboxes.length === 0) {
+        showAlert('No rows selected for deletion.', 'warning');
+        return;
+    }
+
+    // Group jobs by company
+    const companiesJobs = {};
+    checkboxes.forEach(cb => {
+        const row = cb.closest('tr');
+        const rowData = getRowData(row);
+        const jobDto = {
+            job_url: rowData.job_url,
+            job_title: rowData.job_title,
+            job_state: rowData.job_state,
+            contact_name: rowData.contact_name || null,
+            contact_linkedin: rowData.contact_linkedin || null,
+            contact_email: rowData.contact_email || null
+        };
+
+        if (!companiesJobs[rowData.company_name]) {
+            companiesJobs[rowData.company_name] = { company_name: rowData.company_name, tracked_jobs: [] };
+        }
+        companiesJobs[rowData.company_name].tracked_jobs.push(jobDto);
+    });
+
+    const companiesJobsList = Object.values(companiesJobs);
+
+    const spinner = document.getElementById('spinner');
+    if (spinner) {
+        spinner.classList.add('visible');
+        document.body.classList.add('spinner-active');
+    }
+
+    try {
+        const response = await window.pywebview.api.delete_tracked_jobs(userId, companiesJobsList);
+        if (response && response['success']  === true) {
+            showAlert('Selected jobs deleted successfully!', 'success');
+            checkboxes.forEach(cb => cb.closest('tr').remove());
+            updateBulkDeleteVisibility();
+        } else {
+            showAlert('Failed to delete selected jobs.', 'error');
+        }
+    } catch (error) {
+        console.error('Bulk delete failed:', error);
+        showAlert('Failed to delete selected jobs. Please check the console for details.', 'error');
+    } finally {
         if (spinner) {
             spinner.classList.remove('visible');
             document.body.classList.remove('spinner-active');
