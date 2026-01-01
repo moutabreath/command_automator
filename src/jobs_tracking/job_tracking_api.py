@@ -1,8 +1,8 @@
 import logging
 from typing import Dict, List, Any
 
-from jobs_tracking.models import JobTrackingApiResponse, JobTrackingApiResponseCode, JobTrackingApiListResponse, TrackedJobDto
-from jobs_tracking.services.models import JobApplicationState, TrackedJob
+from jobs_tracking.models import CompanyDto, JobTrackingApiResponse, JobTrackingApiResponseCode, JobTrackingApiListResponse, TrackedJobDto
+from jobs_tracking.services.models import Company, JobApplicationState, TrackedJob
 from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
 from abstract_api import AbstractApi
 from dataclasses import asdict
@@ -31,7 +31,7 @@ class JobTrackingApi(AbstractApi):
         tracked_job = TrackedJob(
             job_url=job_dto.job_url,
             job_title=job_dto.job_title,
-            job_state=job_dto.job_state,
+            job_state=JobApplicationState.from_string(job_dto.job_state) if isinstance(job_dto.job_state, str) else job_dto.job_state,
             contact_name=job_dto.contact_name,
             contact_linkedin=job_dto.contact_linkedin,
             contact_email=job_dto.contact_email
@@ -62,6 +62,30 @@ class JobTrackingApi(AbstractApi):
 
     def extract_job_title_and_company(self, url:str):
         return self.job_tracking_service.extract_job_title_and_company(url)
+    
+    def delete_tracked_jobs(self, userid:str, companies_jobs:List[CompanyDto]):
+        domain_companies = self._convert_to_domain_companies(companies_jobs)
+        success = self.job_tracking_service.delete_tracked_jobs(userid, domain_companies)
+        return {"success" : success}
+
+    def _convert_to_domain_companies(self, companies_jobs: List[CompanyDto]) -> List[Company]:
+        domain_companies = []
+        for company in companies_jobs:
+            domain_company = Company(
+                name=company.company_name,
+                tracked_jobs=[TrackedJob(
+                    job_url=job.job_url,
+                    job_title=job.job_title,
+                    job_state=JobApplicationState.from_string(job.job_state) if isinstance(job.job_state, str) else job.job_state,
+                    contact_name=job.contact_name,
+                    contact_linkedin=job.contact_linkedin,
+                    contact_email=job.contact_email
+                ) for job in company.tracked_jobs]
+            )
+            domain_companies.append(domain_company)
+    
+        return domain_companies
+        
 
     def _create_job_response(self, response, company_name: str) -> Dict[str, Any]:
         if response and response.code == JobTrackingResponseCode.OK:

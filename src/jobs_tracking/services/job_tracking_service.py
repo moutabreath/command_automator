@@ -3,12 +3,12 @@ import logging
 from urllib.parse import urlparse
 from jobs_tracking.job_tracking_linkedin_parser import extract_linkedin_job
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
-from jobs_tracking.services.models import TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode, JobAndCompanyTrackingResponse
+from jobs_tracking.services.models import Company, TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode, JobAndCompanyTrackingResponse
 from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
 from services.abstract_persistence_service import AbstractPersistenceService
 from utils import file_utils
 from utils.utils import AsyncRunner
-from typing import List
+from typing import Dict, List
 
 class JobTrackingService(AbstractPersistenceService):
 
@@ -104,7 +104,20 @@ class JobTrackingService(AbstractPersistenceService):
             return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
 
     def extract_job_title_and_company(self, url:str):
-        return extract_linkedin_job(url)        
+        return extract_linkedin_job(url)       
+
+    def delete_tracked_jobs(self, userid:str, companies_jobs: List[Company]):
+        result = AsyncRunner.run_async(
+            self.delete_tracked_jobs_async(
+            userid=userid,
+            companies_jobs=companies_jobs
+            )
+        )
+        return result
+    
+    async def delete_tracked_jobs_async(self, userid:str, companies_jobs: List[Company]):
+        return await self.application_persist.delete_tracked_jobs(userid, companies_jobs)
+
     
     async def _get_job_title_keyword(self):
         job_title_keywords = await file_utils.read_json_file(file_utils.JOB_TITLES_CONFIG_FILE)        

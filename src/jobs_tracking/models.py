@@ -5,6 +5,8 @@ from typing import Dict, List, Optional
 from jobs_tracking.services.models import JobApplicationState
 from typing import Any
 
+from pydantic import BaseModel
+
 
 class JobTrackingApiResponseCode(Enum):
     OK = 1
@@ -47,11 +49,14 @@ class JobTrackingApiListResponse:
             "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
         }
     
-@dataclass
-class TrackedJobDto:
+class TrackedJobDto(BaseModel):
     job_url: str
     job_title: str
-    job_state: JobApplicationState
+    job_state: str
     contact_name: Optional[str] = None
     contact_linkedin: Optional[str] = None
     contact_email: Optional[str] = None
+
+class CompanyDto(BaseModel):
+    company_name: str
+    tracked_jobs: List[TrackedJobDto]

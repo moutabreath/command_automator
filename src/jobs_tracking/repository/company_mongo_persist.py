@@ -1,9 +1,11 @@
-from dataclasses import asdict
 import logging
-from typing import List, Dict
-import pymongo.errors as mongo_errors
 
-from jobs_tracking.services.models import TrackedJob, JobApplicationState
+from typing import List
+
+import pymongo.errors as mongo_errors
+from pymongo import UpdateOne
+
+from jobs_tracking.services.models import Company, TrackedJob, JobApplicationState
 
 from repository.abstract_mongo_persist import PersistenceErrorCode, PersistenceResponse
 from repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
@@ -133,7 +135,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             "job_state": tracked_job.job_state.value if hasattr(tracked_job.job_state, 'value') else tracked_job.job_state,
             "contact_name": tracked_job.contact_name,
             "contact_linkedin": tracked_job.contact_linkedin,
-            "contact_email" : tracked_job.contact_email
+            "contact_email": tracked_job.contact_email
         }
        
         try:
@@ -191,6 +193,36 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         except Exception as e:
             logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
+
+    async def delete_tracked_jobs(self, userid: str, companies: List[Company]) -> bool:
+        """
+        Removes jobs from the database using company_name and job_url 
+            as unique identifiers.
+            """
+        # Create a mapping of company_name -> list of urls to delete
+        # This allows us to target specific URLs for specific companies
+        for company in companies:
+            urls_to_remove = [job.job_url for job in company.tracked_jobs]
+            if not urls_to_remove:
+                continue
+            try:
+                # We use update_one inside a BulkWrite or keep update_many for broader sweeps.
+                requests = [
+                    UpdateOne(
+                        {"user_id": userid, "company_name": comp.name},
+                        {"$pull": {"jobs": {"job_url": {"$in": [tracked_job.job_url for tracked_job in comp.tracked_jobs]}}}}
+                    )
+                    for comp in companies if comp.tracked_jobs
+                ]
+
+                result = await self.job_applications.bulk_write(requests)
+                return result.modified_count > 0
+            except Exception as e:
+                logging.exception(f"Failed to delete jobs for user {userid}: {e}")
+                return False
+
+    
+    
     
     # ==================== QUERY HELPERS ====================
     
@@ -329,4 +361,3 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         
     def _convert_mongo_result_to_tracked_job_list(self, result):
         return [self._convert_mongo_result_to_tracked_job(job)for job in result["jobs"]]
-    

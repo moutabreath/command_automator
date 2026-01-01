@@ -6,7 +6,7 @@ import configparser
 
 
 from jobs_tracking.job_tracking_api import JobTrackingApi
-from jobs_tracking.models import TrackedJobDto
+from jobs_tracking.models import CompanyDto, TrackedJobDto
 from jobs_tracking.services.job_tracking_service import JobTrackingService
 from jobs_tracking.services.models import JobApplicationState
 from llm.llm_api import LLMApi
@@ -146,6 +146,9 @@ class CommandsAutomatorApi:
     def extract_job_title_and_company(self, url:str):
         return self.job_tracking_api.extract_job_title_and_company(url)
 
+    def delete_tracked_jobs(self, userid:str, companies_jobs:List[Dict[str,List[Dict]]]):
+        companies = [CompanyDto(**item) for item in companies_jobs]
+        return self.job_tracking_api.delete_tracked_jobs(userid, companies)
 
 def load_environment():
     """Load environment variables from .env.local file"""
