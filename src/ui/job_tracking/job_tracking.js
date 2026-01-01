@@ -2,26 +2,26 @@ states = []
 async function initJobTracking() {
     console.log('Initializing Job Tracking...');
     states = await window.pywebview.api.get_job_application_states();
-     
+
     populateStateSelect(document.getElementById('job_state'));
-    
+
     // Add event listeners for main form buttons
     const trackJobBtn = document.getElementById('track-job-btn');
     const viewJobsBtn = document.getElementById('view-jobs-btn');
-    
+
     if (trackJobBtn) {
         trackJobBtn.addEventListener('click', async () => {
             await trackJobApplication(getFormData(), true);
         });
     }
-    
+
     if (viewJobsBtn) {
         viewJobsBtn.addEventListener('click', async () => {
             const formData = getFormData();
             await viewJobApplications(formData.company_name);
         });
     }
-    
+
     // Add keyboard shortcuts
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.altKey && e.key === 'm') {
@@ -37,32 +37,9 @@ async function initJobTracking() {
             viewCurrentRow();
         }
     });
-    
-    await loadJobTrackingConfig();
 }
 
-async function loadJobTrackingConfig() {
-     if (!config || !config.job_tracking) {
-        console.log('No job tracking config found');
-        return;
-    }
-    const companyName = config.job_tracking.company_name || '';
-    const job = {
-        'job_title': config.job_tracking.job_title || '',
-        'job_url': config.job_tracking.job_url || '',
-        'contact_name': config.job_tracking.contact_name || '',
-        'contact_linkedin': config.job_tracking.contact_linkedin || '',
-        'contact_email': config.job_tracking.contact_email || '',
-        'job_state': config.job_tracking.job_state || '',
-        'date_time': config.job_tracking.date_time || ''
-    };
-
-    addJobToTable(job, companyName);
-
-    console.log('Job tracking config loaded successfully');
-}
-
-async function trackJobApplication(rowData, isFromForm = false) {
+async function trackJobApplication(rowData, isFromBlankRow = false, rowElement = null) {
     const userId = window.userId || window.user_id;
     if (!userId) {
         showAlert('Please login first.', 'warning');
@@ -98,14 +75,13 @@ async function trackJobApplication(rowData, isFromForm = false) {
 
         if (response && response.code === 'OK') {
             showAlert('Job application tracked successfully!', 'success');
-            
-            if (isFromForm) {
-                clearForm();
-                if (response.job) {
+            if (response.job) {
+                if (isFromBlankRow) {
                     addJobToTable(response.job, rowData.company_name);
+                    clearForm();
+                } else if (rowElement) {
+                    updateRow(rowElement, response.job);
                 }
-            } else {
-                await saveJobTrackingConfig(rowData);
             }
         } else {
             showAlert('Failed to track job application.', 'error');
@@ -162,7 +138,7 @@ async function viewJobApplications(companyName) {
 function addJobToTable(job, companyName) {
     const tableBody = document.getElementById('job-table-body');
     const row = document.createElement('tr');
-    
+
     // Create cells
     const companyCell = document.createElement('td');
     const deleteSpan = document.createElement('span');
@@ -174,7 +150,7 @@ function addJobToTable(job, companyName) {
     companyInput.value = companyName || '';
     companyCell.appendChild(deleteSpan);
     companyCell.appendChild(companyInput);
-    
+
     const createInputCell = (value, className) => {
         const cell = document.createElement('td');
         const input = document.createElement('input');
@@ -184,21 +160,21 @@ function addJobToTable(job, companyName) {
         cell.appendChild(input);
         return cell;
     };
-    
+
     row.appendChild(companyCell);
     row.appendChild(createInputCell(job.job_title, 'job-title'));
     row.appendChild(createInputCell(job.job_url, 'job-url'));
-    
+
     const newStateCell = document.createElement('td');
     newStateCell.className = 'state-cell';
     row.appendChild(newStateCell);
 
     row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time'));
-    
+
     row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
-    row.appendChild(createInputCell(job.contact_name, 'contact-name'));    
+    row.appendChild(createInputCell(job.contact_name, 'contact-name'));
     row.appendChild(createInputCell(job.contact_email, 'contact-email'));
-    
+
     const actionCell = document.createElement('td');
     const actionDiv = document.createElement('div');
     actionDiv.className = 'd-flex gap-2';
@@ -226,21 +202,22 @@ function addJobToTable(job, companyName) {
 
     // Add event listeners
     const deleteBtn = row.querySelector('.delete-row');
-    
+
     if (trackBtn) {
         trackBtn.addEventListener('click', async (e) => {
             e.preventDefault();
-            await trackJobApplication(getRowData(row));
+            await trackJobApplication(getRowData(row), false, row);
+   
         });
     }
-    
+
     if (viewBtn) {
         viewBtn.addEventListener('click', async (e) => {
             e.preventDefault();
             await viewJobApplications(getRowData(row).company_name);
         });
     }
-    
+
     if (deleteBtn) {
         deleteBtn.addEventListener('click', (e) => {
             e.preventDefault();
@@ -251,32 +228,37 @@ function addJobToTable(job, companyName) {
     tableBody.prepend(row);
 }
 
-async function saveJobTrackingConfig(jobData) {
-    const jobTrackingConfig = {
-        company_name: jobData.company_name || '',
-        job_title: jobData.job_title || '',
-        job_url: jobData.job_url || '',
-        contact_name: jobData.contact_name || '',
-        contact_linkedin: jobData.contact_linkedin || '',
-        contact_email: jobData.contact_email || '',
-        job_state: jobData.job_state || '',
-        date_time: jobData.date_time || ''
-    };
-    try {
+function updateRow(row, job) {
+    const jobTitleInput = row.querySelector('.job-title');
+    if (jobTitleInput) jobTitleInput.value = job.job_title || '';
 
-        await window.pywebview.api.save_configuration(jobTrackingConfig, 'job_tracking');
-        console.log('Job tracking config saved');
-    } catch (error) {
-        console.log('Error saving job tracking config:', error);
-    }
+    const jobUrlInput = row.querySelector('.job-url');
+    if (jobUrlInput) jobUrlInput.value = job.job_url || '';
+
+    const stateSelect = row.querySelector('.state-cell select');
+    if (stateSelect) stateSelect.value = job.job_state || '';
+
+    const dateTimeInput = row.querySelector('.date-time');
+    if (dateTimeInput) dateTimeInput.value = formatDateTime(job.update_time) || '';
+
+    const contactLinkedInInput = row.querySelector('.contact-linkedin');
+    if (contactLinkedInInput) contactLinkedInInput.value = job.contact_linkedin || '';
+
+    const contactNameInput = row.querySelector('.contact-name');
+    if (contactNameInput) contactNameInput.value = job.contact_name || '';
+
+    const contactEmailInput = row.querySelector('.contact-email');
+    if (contactEmailInput) contactEmailInput.value = job.contact_email || '';
 }
+
+
 
 async function viewCurrentRow() {
     try {
         // Find currently focused element or use blank form
         const activeElement = document.activeElement;
         let targetRow = null;
-        
+
         if (activeElement && activeElement.closest('tr')) {
             // Use the row containing the focused element
             targetRow = activeElement.closest('tr');
@@ -284,9 +266,9 @@ async function viewCurrentRow() {
             // Use the blank form row
             targetRow = document.querySelector('#job-input-body tr');
         }
-        
+
         if (!targetRow) return;
-        
+
         // Get row data and view applications
         const rowData = getRowData(targetRow) || getFormData();
         await viewJobApplications(rowData.company_name);
@@ -295,26 +277,25 @@ async function viewCurrentRow() {
         showAlert('Failed to view job applications', 'error');
     }
 }
-
 async function trackCurrentRow() {
     try {
         // Find currently focused element or use blank form
         const activeElement = document.activeElement;
         let targetRow = null;
-        
+
         if (activeElement && activeElement.closest('tr')) {
-            // Use the row containing the focused element
             targetRow = activeElement.closest('tr');
         } else {
-            // Use the blank form row
             targetRow = document.querySelector('#job-input-body tr');
         }
-        
+
         if (!targetRow) return;
-        
+
+        const isFromBlankRow = targetRow.parentElement.id === 'job-input-body';
+
         // Get row data and track it
-        const rowData = getRowData(targetRow) || getFormData();
-        await trackJobApplication(rowData);
+        const rowData = getRowData(targetRow);
+        await trackJobApplication(rowData, isFromBlankRow, isFromBlankRow ? null : targetRow);
     } catch (error) {
         console.error('Error tracking current row:', error);
         showAlert('Failed to track job application', 'error');
@@ -326,7 +307,7 @@ async function trackFromUrl() {
         // Find currently focused element or use blank form
         const activeElement = document.activeElement;
         let targetRow = null;
-        
+
         if (activeElement && activeElement.closest('tr')) {
             // Use the row containing the focused element
             targetRow = activeElement.closest('tr');
@@ -334,15 +315,15 @@ async function trackFromUrl() {
             // Use the blank form row
             targetRow = document.querySelector('#job-input-body tr');
         }
-        
+
         if (!targetRow) return;
-        
+
         const companyInput = targetRow.querySelector('.company-name, #company-name');
         const jobTitleInput = targetRow.querySelector('.job-title, #job_title');
         const jobUrlInput = targetRow.querySelector('.job-url, #job_url');
         const contactNameInput = targetRow.querySelector('.contact-name, #contact_name');
         const contactLinkedInInput = targetRow.querySelector('.contact-linkedin, #contact_linkedin');
-        
+
         // 1.1 Fill company name from LinkedIn URL
         if (!companyInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
             const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
@@ -350,7 +331,7 @@ async function trackFromUrl() {
                 companyInput.value = result.company_name;
             }
         }
-        
+
         // 1.2 Extract name from LinkedIn profile URL
         if (!contactNameInput.value && contactLinkedInInput.value && contactLinkedInInput.value.includes('linkedin.com/in/')) {
             const contactName = getContactNameFromLinkedin(contactLinkedInInput.value);
@@ -358,7 +339,7 @@ async function trackFromUrl() {
                 contactNameInput.value = contactName;
             }
         }
-        
+
         // 1.3 Fill job title from LinkedIn URL
         if (!jobTitleInput.value && jobUrlInput.value && jobUrlInput.value.includes('linkedin.com/jobs')) {
             const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
@@ -396,7 +377,7 @@ function formatDateTime(dateTimeString) {
     if (!dateTimeString) return '';
     return new Date(dateTimeString).toLocaleString('en-GB', {
         day: '2-digit',
-        month: '2-digit', 
+        month: '2-digit',
         year: 'numeric',
         hour: '2-digit',
         minute: '2-digit',
@@ -456,7 +437,7 @@ async function trackJobApplicationFromText() {
 
     try {
         const result = await trackPositionsFromText(userId, text);
-        
+
         if (result.job && result.company_name) {
             addJobToTable(result.job, result.company_name);
             showAlert('Job parsed and added to table!', 'success');
@@ -489,14 +470,14 @@ function displayJobsTable(jobs, companyName) {
 
 function getRowData(row) {
     return {
-        company_name: row.querySelector('.company-name').value,
-        job_title: row.querySelector('.job-title').value,
-        job_url: row.querySelector('.job-url').value,
-        job_state: row.querySelector('.state-cell select').value,
-        contact_name: row.querySelector('.contact-name').value,
-        contact_linkedin: row.querySelector('.contact-linkedin').value,
-        contact_email: row.querySelector('.contact-email').value,
-        date_time: row.querySelector('.date-time').value
+        company_name: (row.querySelector('.company-name') || row.querySelector('#company-name'))?.value || '',
+        job_title: (row.querySelector('.job-title') || row.querySelector('#job_title'))?.value || '',
+        job_url: (row.querySelector('.job-url') || row.querySelector('#job_url'))?.value || '',
+        job_state: (row.querySelector('.state-cell select') || row.querySelector('#job_state'))?.value || '',
+        contact_name: (row.querySelector('.contact-name') || row.querySelector('#contact_name'))?.value || '',
+        contact_linkedin: (row.querySelector('.contact-linkedin') || row.querySelector('#contact_linkedin'))?.value || '',
+        contact_email: (row.querySelector('.contact-email') || row.querySelector('#contact_email'))?.value || '',
+        date_time: (row.querySelector('.date-time') || row.querySelector('#job_date_time'))?.value || ''
     };
 }
 
