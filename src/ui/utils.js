@@ -57,6 +57,7 @@ function showAlert(message, type = 'info', duration = 5000) {
         console.error('Alert container not found');
         return;
     }
+    alertContainer.style.textAlign = 'left';  // Align alerts to the left
     const alertId = 'alert-' + Date.now() + '-' + Math.random().toString(36).slice(2, 11);
     const alertClass = {
         'success': 'alert-success',
@@ -96,33 +97,51 @@ function getContactNameFromLinkedin(url) {
 }
 
 function getCompanyFromUrl(url) {
-    if (url.includes('comeet.com')) {
-        const match = url.match(/comeet\.com\/jobs\/([^/]+)/);
+    // Normalize URL for consistent matching
+    const urlLower = url.toLowerCase();
+    
+    // Comeet URLs: comeet.com/jobs/{company}
+    if (urlLower.includes('comeet.com')) {
+        const match = url.match(/comeet\.com\/jobs\/([^/?]+)/i);
         if (match) {
-            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+            return capitalizeFirst(match[1]);
         }
     }
     
-    if (url.includes('smartrecruiters.com')) {
-        const match = url.match(/jobs\.smartrecruiters\.com\/([^/]+)/);
+    // SmartRecruiters URLs: jobs.smartrecruiters.com/{company}
+    if (urlLower.includes('smartrecruiters.com')) {
+        const match = url.match(/jobs\.smartrecruiters\.com\/([^/?]+)/i);
         if (match) {
-            return match[1].charAt(0).toUpperCase() + match[1].slice(1);
+            return capitalizeFirst(match[1]);
         }
     }
     
-    if (url.includes('gh_jid=')) {
-        if (url.includes('www.')) {
-            const match = url.match(/www\.([^.]+)/);
-            if (match) {
-                return match[1].charAt(0).toUpperCase() + match[1].slice(1);
-            }
-        } else {
-            const match = url.match(/https:\/\/([^.]+)/);
-            if (match) {
-                return match[1].charAt(0).toUpperCase() + match[1].slice(1);
-            }
+    // Greenhouse job-boards URLs: job-boards.greenhouse.io/{company}
+    if (urlLower.includes('job-boards.greenhouse.io')) {
+        const match = url.match(/job-boards\.greenhouse\.io\/([^/?]+)/i);
+        if (match) {
+            return capitalizeFirst(match[1]);
+        }
+    }
+    
+    // Generic Greenhouse URLs with gh_jid parameter
+    if (urlLower.includes('gh_jid=')) {
+        // Try www. subdomain first
+        let match = url.match(/www\.([^.]+)\./i);
+        if (match) {
+            return capitalizeFirst(match[1]);
+        }
+        // Fallback to domain after https://
+        match = url.match(/https?:\/\/([^.]+)\./i);
+        if (match) {
+            return capitalizeFirst(match[1]);
         }
     }
     
     return "";
+}
+
+// Helper function to capitalize first letter
+function capitalizeFirst(str) {
+    return str.charAt(0).toUpperCase() + str.slice(1);
 }
