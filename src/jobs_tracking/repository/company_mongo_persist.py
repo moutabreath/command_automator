@@ -339,9 +339,11 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             raise 
 
     def _convert_mongo_result_to_tracked_job(self, job):
-        # Handle job_state conversion - it might be stored as string or enum value
+        # Handle job_state conversion - it might be stored as integer or enum value
         job_state = job["job_state"]
-        if isinstance(job_state, str):
+        if isinstance(job_state, int):
+            job_state = JobApplicationState.from_value(job_state)
+        elif isinstance(job_state, str):
             try:
                 job_state = JobApplicationState[job_state]
             except KeyError:

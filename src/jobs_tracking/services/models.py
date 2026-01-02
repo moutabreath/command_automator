@@ -17,6 +17,14 @@ class JobApplicationState(Enum):
             return cls[state_str.upper()]
         except KeyError:
             return cls.UNKNOWN
+    
+    @classmethod
+    def from_value(cls, value: int) -> 'JobApplicationState':
+        """Create JobApplicationState from integer value"""
+        try:
+            return cls(value)
+        except ValueError:
+            return cls.UNKNOWN
 
 @dataclass
 class TrackedJob:
