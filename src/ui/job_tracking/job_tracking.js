@@ -376,7 +376,7 @@ function displayJobsTable(jobs, companyName) {
 }
 
 function getRowData(row) {
-    const find = (sel) => row.querySelector(sel)?.value || '';
+    const find = (sel) => row.querySelector(sel)?.value.trim() || '';
     return {
         company_name: find('.company-name') || find('#company-name'),
         job_title: find('.job-title') || find('#job_title'),
