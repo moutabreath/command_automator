@@ -371,6 +371,12 @@ function displayJobsTable(jobs, companyName) {
     const tableBody = document.getElementById('job-table-body');
     if (!tableContainer || !tableBody) return;
     tableBody.innerHTML = '';
+    
+    if (jobs.length === 0) {
+        showAlert(`No jobs found for ${companyName}`, 'info');
+        return;
+    }
+    
     jobs.forEach(job => addJobToTable(job, companyName));
     tableContainer.style.display = 'block';
 }
