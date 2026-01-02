@@ -1,5 +1,3 @@
-
-
 .delete-spacer {
     visibility: hidden;
     display: inline-block;
@@ -55,4 +53,30 @@
 
 #job-table tbody:not(#job-input-body) tr:hover .delete-row {
     opacity: 1;
+}
+
+/* Align the checkbox and company input in all rows */
+#job-table td:first-child {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+/* Adjust the checkbox to prevent shrinking and center it */
+.row-checkbox {
+    margin: 0;
+    flex-shrink: 0;
+}
+
+/* Optional: Subtle styling for readonly fields to differentiate them */
+#job-table-body input[readonly] {
+    background-color: transparent;
+    border-color: transparent;
+    color: #e0e0e0;
+    cursor: default;
+}
+
+#job-table-body input[readonly]:focus {
+    box-shadow: none;
+    outline: none;
 }
