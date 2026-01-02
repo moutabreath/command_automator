@@ -128,7 +128,7 @@ class CommandsAutomatorApi:
             job_url= job_dto_dict['job_url'],
             contact_linkedin=job_dto_dict['contact_linkedin'],
             contact_name=job_dto_dict['contact_name'],
-            job_state=JobApplicationState.from_string(job_dto_dict['job_state']),
+            job_state=job_dto_dict['job_state'],
             contact_email=job_dto_dict['contact_email']
         )
         return self.job_tracking_api.track_job_application(user_id=user_id, company_name=company_name, job_dto=job_dto)
