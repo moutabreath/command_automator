@@ -170,7 +170,7 @@ function addJobToTable(job, companyName) {
     companyInput.type = 'text';
     companyInput.className = 'form-control form-control-sm company-name company-input';
     companyInput.value = companyName || '';
-    companyInput.readOnly = true; // CHANGE 1: Readonly
+    companyInput.readOnly = true;
 
     companyWrapper.appendChild(selectCheckbox);
     companyWrapper.appendChild(companyInput);
@@ -184,14 +184,14 @@ function addJobToTable(job, companyName) {
         input.type = 'text';
         input.className = `form-control form-control-sm ${className}`;
         input.value = value || '';
-        if (isReadOnly) input.readOnly = true; // CHANGE 1: Readonly
+        if (isReadOnly) input.readOnly = true;
         cell.appendChild(input);
         return cell;
     };
 
     row.appendChild(companyCell);
-    row.appendChild(createInputCell(job.job_title, 'job-title', true)); // CHANGE 1: Readonly
-    row.appendChild(createInputCell(job.job_url, 'job-url', true));     // CHANGE 1: Readonly
+    row.appendChild(createInputCell(job.job_title, 'job-title', true)); 
+    row.appendChild(createInputCell(job.job_url, 'job-url', true));    
 
     const stateCell = document.createElement('td');
     stateCell.className = 'state-cell align-middle';

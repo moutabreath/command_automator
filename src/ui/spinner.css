@@ -42,9 +42,9 @@
 }
 
 /* Prevent body scroll when spinner is visible */
-body.spinner-active {
+/* body.spinner-active {
     overflow: hidden;
-}
+} */
 
 /* Exclude elements from spinner pointer-events blocking */
 .spinner-exclude {
