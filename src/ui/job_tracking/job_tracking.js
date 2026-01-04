@@ -27,7 +27,7 @@ async function initJobTracking() {
     document.addEventListener('keydown', (e) => {
         if (e.ctrlKey && e.altKey && e.key === 'm') {
             e.preventDefault();
-            trackFromUrl();
+            fillRowFromUrl();
         }
         if (e.ctrlKey && e.altKey && e.key === 't') {
             e.preventDefault();
@@ -281,7 +281,7 @@ async function trackCurrentRow() {
     await trackJobApplication(rowData, isFromBlankRow, isFromBlankRow ? null : targetRow);
 }
 
-async function trackFromUrl() {
+async function fillRowFromUrl() {
     const activeElement = document.activeElement;
     let targetRow = activeElement?.closest('tr') || document.querySelector('#job-input-body tr');
     if (!targetRow) return;
@@ -292,6 +292,10 @@ async function trackFromUrl() {
     const contactLinkedInInput = targetRow.querySelector('.contact-linkedin, #contact_linkedin');
     const contactNameInput = targetRow.querySelector('.contact-name, #contact_name');
 
+    if ((companyInput?.value) &&(jobTitleInput?.value && (contactNameInput?.value))){
+        return;
+    }
+
     try {
         if (jobUrlInput.value.includes('linkedin.com/jobs')) {
             const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
@@ -300,12 +304,16 @@ async function trackFromUrl() {
                 if (!jobTitleInput.value) jobTitleInput.value = result.job_title || '';
             }
         }
-        if (!contactNameInput.value && contactLinkedInInput.value.includes('linkedin.com/in/')) {
-            const contactName = getContactNameFromLinkedin(contactLinkedInInput.value);
-            if (contactName) contactNameInput.value = contactName;
-        }
     } catch (error) {
         console.error('Error updating from URLs:', error);
+    }
+
+    if (!contactNameInput.value && contactLinkedInInput.value.includes('linkedin.com/in/')) {
+        const contactName = getContactNameFromLinkedin(contactLinkedInInput.value);
+        if (contactName) contactNameInput.value = contactName;
+    }
+    if (!companyInput?.value && !jobUrlInput.value.includes('linkedin.com/jobs')) {
+        companyInput.value = getCompanyFromUrl(jobTitleInput.value);
     }
 }
 
