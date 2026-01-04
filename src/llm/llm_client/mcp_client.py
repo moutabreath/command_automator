@@ -7,7 +7,7 @@ from mcp import ClientSession
 
 from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
 from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
-from llm.llm_client.services.job_search_service import JobSearchService
+from llm.llm_client.services.job_unifier_service import JobUnifierService
 from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
 
 
@@ -21,7 +21,7 @@ class SmartMCPClient:
         self.gemini_client_wrapper: GeminiClientWrapper = GeminiClientWrapper()
         self.resume_chat = self.gemini_client_wrapper.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_client_wrapper)
-        self.job_search_service = JobSearchService(self.gemini_client_wrapper)
+        self.job_search_service = JobUnifierService(self.gemini_client_wrapper)
         
         self.session_tools = None
         self.available_tools = []
