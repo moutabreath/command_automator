@@ -7,7 +7,7 @@ from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponseCod
 from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
 from utils import file_utils
 
-class JobSearchService:
+class JobUnifierService:
 
     def __init__(self, gemini_utils: GeminiClientWrapper):
         self.gemini_agent: GeminiClientWrapper = gemini_utils
