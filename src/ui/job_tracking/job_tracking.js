@@ -69,10 +69,9 @@ async function trackJobApplication(rowData, isFromBlankRow = false, rowElement =
         contact_email: rowData.contact_email || null
     };
 
-    const spinner = document.getElementById('spinner');
+    const spinner = document.getElementById('job-spinner');
     if (spinner) {
         spinner.classList.add('visible');
-        document.body.classList.add('spinner-active');
     }
 
     try {
@@ -101,7 +100,6 @@ async function trackJobApplication(rowData, isFromBlankRow = false, rowElement =
     } finally {
         if (spinner) {
             spinner.classList.remove('visible');
-            document.body.classList.remove('spinner-active');
         }
     }
 }
@@ -118,10 +116,9 @@ async function viewJobApplications(companyName) {
         return;
     }
 
-    const spinner = document.getElementById('spinner');
+    const spinner = document.getElementById('job-spinner');
     if (spinner) {
         spinner.classList.add('visible');
-        document.body.classList.add('spinner-active');
     }
 
     try {
@@ -137,7 +134,6 @@ async function viewJobApplications(companyName) {
     } finally {
         if (spinner) {
             spinner.classList.remove('visible');
-            document.body.classList.remove('spinner-active');
         }
     }
 }
