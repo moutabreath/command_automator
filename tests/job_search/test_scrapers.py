@@ -1,14 +1,14 @@
 import pytest
-import os
 from dependency_injector import containers, providers
 
-from llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
-from llm.mcp_servers.job_search.services.linkedin_jobs_scraper import LinkedInJobsScraper
+from jobs_tracking.job_tracking_linkedin_parser import extract_linkedin_job
+from llm.mcp_servers.job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
+from llm.mcp_servers.job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
 from llm.mcp_servers.job_search.models import ScrapedJob
 
 class Container(containers.DeclarativeContainer):
-    linkedin_scraper = providers.Factory(LinkedInJobsScraper)
-    glassdoor_scraper = providers.Factory(GlassdoorJobsScraper)
+    linkedin_scraper = providers.Factory(LinkedInJobsScraperService)
+    glassdoor_scraper = providers.Factory(GlassdoorJobsScraperService)
 
 @pytest.fixture
 def container():
@@ -26,7 +26,7 @@ def glassdoor_jobs_scraper(container):
 async def test_linkedin_scraper(linkedin_jobs_scraper):
     """Test LinkedIn scraper can search for jobs"""
     job_title = "python developer"
-    jobs: list[ScrapedJob] =  linkedin_jobs_scraper.run_scraper(job_title=job_title, location="Israel", max_pages=1)
+    jobs: list[ScrapedJob] = await linkedin_jobs_scraper.run_scraper(job_title=job_title, location="Israel", max_pages=1)
     
     assert isinstance(jobs, list)
     if jobs:
@@ -43,15 +43,26 @@ async def test_glassdoor_scraper(glassdoor_jobs_scraper):
     
     
     assert isinstance(jobs, list)
-    assert len(jobs) <=5
+    assert len(jobs) <= 5
 
 
 @pytest.mark.asyncio
 async def test_scraper_empty_query(linkedin_jobs_scraper, glassdoor_jobs_scraper):
     """Test scrapers handle empty queries gracefully"""
-    linkedin_jobs = linkedin_jobs_scraper.run_scraper("", "")
+    linkedin_jobs = await linkedin_jobs_scraper.run_scraper("", "")
     glassdoor_jobs = await glassdoor_jobs_scraper.run_scraper("", "")
     
     assert isinstance(linkedin_jobs, list)
     assert isinstance(glassdoor_jobs, list)
 
+def test_linkedin_job_and_company_scaper():
+    url = "https://www.linkedin.com/jobs/view/4343611949/"
+    result = extract_linkedin_job(url)
+    assert isinstance(result, dict)
+    assert "job_title" in result
+    assert "company_name" in result
+    
+    # Verify neither job title nor company name is "N/A"
+    assert result["job_title"] != "N/A"
+    assert result["company_name"] != "N/A"
+    
