@@ -214,36 +214,13 @@ function addJobToTable(job, companyName) {
 
     row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time', true));
     
-    // Contact LinkedIn as clickable link
-    const linkedinCell = document.createElement('td');
-    linkedinCell.className = "align-middle";
-    if (job.contact_linkedin) {
-        const linkedinLink = document.createElement('a');
-        linkedinLink.href = job.contact_linkedin;
-        linkedinLink.target = '_blank';
-        linkedinLink.textContent = job.contact_linkedin;
-        linkedinLink.className = 'text-primary contact-linkedin-link';
-        linkedinCell.appendChild(linkedinLink);
-    } else {
-        linkedinCell.appendChild(document.createTextNode(''));
-    }
-    row.appendChild(linkedinCell);
+    // Contact LinkedIn as editable input
+    row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
     
     row.appendChild(createInputCell(job.contact_name, 'contact-name'));
     
-    // Contact Email as clickable mailto link
-    const emailCell = document.createElement('td');
-    emailCell.className = "align-middle";
-    if (job.contact_email) {
-        const emailLink = document.createElement('a');
-        emailLink.href = `mailto:${job.contact_email}`;
-        emailLink.textContent = job.contact_email;
-        emailLink.className = 'text-primary contact-email-link';
-        emailCell.appendChild(emailLink);
-    } else {
-        emailCell.appendChild(document.createTextNode(''));
-    }
-    row.appendChild(emailCell);
+    // Contact Email as editable input
+    row.appendChild(createInputCell(job.contact_email, 'contact-email'));
 
     const actionCell = document.createElement('td');
     actionCell.className = "align-middle";
@@ -293,20 +270,14 @@ function updateRow(row, job) {
     const dateTimeInput = row.querySelector('.date-time');
     if (dateTimeInput) dateTimeInput.value = formatDateTime(job.update_time) || '';
 
-    const linkedinLink = row.querySelector('.contact-linkedin-link');
-    if (linkedinLink) {
-        linkedinLink.href = job.contact_linkedin || '';
-        linkedinLink.textContent = job.contact_linkedin || '';
-    }
+    const linkedinInput = row.querySelector('.contact-linkedin');
+    if (linkedinInput) linkedinInput.value = job.contact_linkedin || '';
 
     const contactNameInput = row.querySelector('.contact-name');
     if (contactNameInput) contactNameInput.value = job.contact_name || '';
 
-    const emailLink = row.querySelector('.contact-email-link');
-    if (emailLink) {
-        emailLink.href = job.contact_email ? `mailto:${job.contact_email}` : '';
-        emailLink.textContent = job.contact_email || '';
-    }
+    const emailInput = row.querySelector('.contact-email');
+    if (emailInput) emailInput.value = job.contact_email || '';
 }
 
 async function viewCurrentRow() {
@@ -442,8 +413,8 @@ function getRowData(row) {
         job_url: row.querySelector('.job-url-link')?.textContent.trim() || find('.job-url') || find('#job_url'),
         job_state: find('.state-cell select') || find('#job_state'),
         contact_name: find('.contact-name') || find('#contact_name'),
-        contact_linkedin: row.querySelector('.contact-linkedin-link')?.textContent.trim() || find('.contact-linkedin') || find('#contact_linkedin'),
-        contact_email: row.querySelector('.contact-email-link')?.textContent.trim() || find('.contact-email') || find('#contact_email'),
+        contact_linkedin: find('.contact-linkedin') || find('#contact_linkedin'),
+        contact_email: find('.contact-email') || find('#contact_email'),
         date_time: find('.date-time') || find('#job_date_time')
     };
 }
