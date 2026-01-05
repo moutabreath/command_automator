@@ -6,7 +6,7 @@ from google.genai.types import FileData, Part, File
 
 from PIL import Image
 
-from llm.llm_client.models import LLMResponse, LLMResponseCode
+from llm.gemini.models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
 from utils import file_utils
 
 class GeminiClientWrapper:
@@ -101,8 +101,7 @@ class GeminiClientWrapper:
         except Exception as e:
             return self._handle_gemini_exception(e)
         
-    def get_mcp_tool_json(self, prompt: str,
-                                 chat: Chat, available_tools):
+    def get_mcp_tool_response(self, prompt: str, chat: Chat, available_tools) -> LLMToolResponse:
         config = self.base_config.copy()
         config[self.CONFIG_RESPONSE_MIME_TYPE] = mimetypes.types_map['.json']
         try:
@@ -123,10 +122,11 @@ class GeminiClientWrapper:
             args = tools_json.get("args", {})
             if selected_tool and selected_tool in available_tools:
                 logging.debug(f"Gemini decided to use tool: {selected_tool}")
-                return selected_tool, args
+                return LLMToolResponse(selected_tool=selected_tool, args=args, code=LLMToolResponseCode.USING_TOOL)
         except Exception as ex:
-            self._handle_gemini_exception(ex)
-            return None, None
+            llm_execption = self._handle_gemini_exception(ex)
+            logging.warning(f"Error using Gemini: {llm_execption.text}")
+            return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, error_message=llm_execption.text)
         
     async def _get_json_files_content_for_prompt(self, file_paths: list[str]) -> str:
         result = ""

@@ -47,20 +47,27 @@ except Exception as e:
 if getattr(sys, 'frozen', False):
     # Frozen mode - use APPDATA structure
     RESUME_RESOURCES_DIR = BASE_DIR / 'mcp_servers' / 'resume' / 'resources'
-    USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
     JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+    JOB_FILE_DIR = BASE_DIR / 'mcp_servers' / 'job_search' / 'saved_jobs'
 else:
     # Development mode - use source structure
-    RESUME_RESOURCES_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'resume' / 'resources'
-    USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
-    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'    
+    RESUME_RESOURCES_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'resume' / 'resources'    
+    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+    JOB_FILE_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'saved_jobs'
+
+
 
 # Common paths
 CONFIG_FILE = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator' / 'commands_automator.config'
+
+USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
 USER_SCRIPTS_CONFIG_FILE = USER_SCRIPTS_DIR / 'config' / 'scripts_config.json'
+
 RESUME_ADDITIONAL_FILES_DIR = RESUME_RESOURCES_DIR / 'additional_files'
+
 GLASSDOOR_SELECTORS_FILE = JOB_SEARCH_CONFIG_FILE.parent / 'glassdoor_selectors.json'
 JOB_TITLES_CONFIG_FILE = BASE_DIR / 'jobs_tracking' / 'config' / 'job_titles_keywords.json'
+
 
 
 T = TypeVar('T', bound=BaseModel)

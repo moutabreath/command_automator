@@ -1,10 +1,13 @@
 import json, aiohttp, logging, asyncio
 
+
 from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
+from llm.gemini.models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
 from llm.gemini.gemini_client_wrapper import GeminiClientWrapper
-from llm.llm_client.models import MCPResponse, MCPResponseCode, LLMResponse, LLMResponseCode
+
+from llm.llm_client.models import MCPResponse, MCPResponseCode
 from llm.llm_client.services.job_unifier_service import JobUnifierService
 from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
 
@@ -52,14 +55,17 @@ class SmartMCPClient:
                 logging.debug("Successfully initialized MCP session")
 
                 # Use Gemini to decide if a tool should be used
-                selected_tool, tool_args = await self._decide_tool_usage(query, user_id, session)
+                tool_response = await self._decide_tool_usage(query, user_id, session)
 
-                # If Gemini decided to use a tool, call it
-                if selected_tool:
+                if tool_response.code == LLMToolResponseCode.USING_TOOL:
+                    if tool_response.selected_tool is None:
+                        logging.error("Error with tool seletion")
+                        return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,text="Error with tool seletion")
+                    selected_tool,tool_args = tool_response.selected_tool, tool_response.args
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
                 else:
                     agent_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
-                    return self._convert_llm_response_to_mcp_response(agent_response)
+                    return self._convert_llm_response_to_mcp_response(agent_response)                
         except asyncio.CancelledError:
             logging.debug("MCP query was cancelled")
             return MCPResponse("Operation was cancelled", MCPResponseCode.OPERATION_CANCELLED)
@@ -106,7 +112,7 @@ class SmartMCPClient:
             
         return False
 
-    async def _decide_tool_usage(self, query:str, user_id:str, session:ClientSession):
+    async def _decide_tool_usage(self, query:str, user_id:str, session:ClientSession) -> LLMToolResponse:
         """
         Use LLM to decide which tool to use based on the query
         
@@ -114,30 +120,21 @@ class SmartMCPClient:
             query: The user's question
             
         Returns:
-            tuple: (tool_name, tool_args) or (None, None) if no tool should be used
+            LLMToolResponse
         """
         # Quick filter for common greetings and chitchat - never use tools for these
         if self._is_greeting_query(query):
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
-            return None, None
+            return LLMToolResponse(code=LLMResponseCode.OK, selected_tool=None, args=None , error_message="Query is greetings query")
         
         await self._init_available_tools_descriptions(session)
             
-        try:
-            message = self._init_system_prompt(query, user_id)
-            
-            selected_tool, args = self.gemini_client_wrapper.get_mcp_tool_json(prompt=message,
-                                                                chat=self.resume_chat,
-                                                                available_tools=self.available_tools_names)
-            if selected_tool != {}:
-                logging.debug(f"Gemini decided to use tool: {selected_tool}")
-                return selected_tool, args
-            else:
-                logging.debug("LLM decided not to use any tools")
-                return None, None
-        except Exception as e:
-            logging.exception(f"Error using LLM for tool decision {e}")
-            return None, None
+        message = self._init_system_prompt(query, user_id)
+        
+        return self.gemini_client_wrapper.get_mcp_tool_response(prompt=message,
+                                                            chat=self.resume_chat,
+                                                            available_tools=self.available_tools_names)
+   
         
          
     async def _init_available_tools_descriptions(self, session: ClientSession):
