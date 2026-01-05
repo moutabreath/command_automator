@@ -187,7 +187,19 @@ function addJobToTable(job, companyName) {
 
     row.appendChild(companyCell);
     row.appendChild(createInputCell(job.job_title, 'job-title', true)); 
-    row.appendChild(createInputCell(job.job_url, 'job-url', true));    
+    
+    // Job URL as clickable link
+    const urlCell = document.createElement('td');
+    urlCell.className = "align-middle";
+    if (job.job_url) {
+        const urlLink = document.createElement('a');
+        urlLink.href = job.job_url;
+        urlLink.target = '_blank';
+        urlLink.textContent = job.job_url;
+        urlLink.className = 'text-primary job-url-link';
+        urlCell.appendChild(urlLink);
+    }
+    row.appendChild(urlCell);
 
     const stateCell = document.createElement('td');
     stateCell.className = 'state-cell align-middle';
@@ -201,9 +213,37 @@ function addJobToTable(job, companyName) {
     }
 
     row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time', true));
-    row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
+    
+    // Contact LinkedIn as clickable link
+    const linkedinCell = document.createElement('td');
+    linkedinCell.className = "align-middle";
+    if (job.contact_linkedin) {
+        const linkedinLink = document.createElement('a');
+        linkedinLink.href = job.contact_linkedin;
+        linkedinLink.target = '_blank';
+        linkedinLink.textContent = job.contact_linkedin;
+        linkedinLink.className = 'text-primary contact-linkedin-link';
+        linkedinCell.appendChild(linkedinLink);
+    } else {
+        linkedinCell.appendChild(document.createTextNode(''));
+    }
+    row.appendChild(linkedinCell);
+    
     row.appendChild(createInputCell(job.contact_name, 'contact-name'));
-    row.appendChild(createInputCell(job.contact_email, 'contact-email'));
+    
+    // Contact Email as clickable mailto link
+    const emailCell = document.createElement('td');
+    emailCell.className = "align-middle";
+    if (job.contact_email) {
+        const emailLink = document.createElement('a');
+        emailLink.href = `mailto:${job.contact_email}`;
+        emailLink.textContent = job.contact_email;
+        emailLink.className = 'text-primary contact-email-link';
+        emailCell.appendChild(emailLink);
+    } else {
+        emailCell.appendChild(document.createTextNode(''));
+    }
+    row.appendChild(emailCell);
 
     const actionCell = document.createElement('td');
     actionCell.className = "align-middle";
@@ -241,8 +281,11 @@ function updateRow(row, job) {
     const jobTitleInput = row.querySelector('.job-title');
     if (jobTitleInput) jobTitleInput.value = job.job_title || '';
 
-    const jobUrlInput = row.querySelector('.job-url');
-    if (jobUrlInput) jobUrlInput.value = job.job_url || '';
+    const urlLink = row.querySelector('.job-url-link');
+    if (urlLink) {
+        urlLink.href = job.job_url || '';
+        urlLink.textContent = job.job_url || '';
+    }
 
     const stateSelect = row.querySelector('.state-cell select');
     if (stateSelect) stateSelect.value = job.job_state || '';
@@ -250,14 +293,20 @@ function updateRow(row, job) {
     const dateTimeInput = row.querySelector('.date-time');
     if (dateTimeInput) dateTimeInput.value = formatDateTime(job.update_time) || '';
 
-    const contactLinkedInInput = row.querySelector('.contact-linkedin');
-    if (contactLinkedInInput) contactLinkedInInput.value = job.contact_linkedin || '';
+    const linkedinLink = row.querySelector('.contact-linkedin-link');
+    if (linkedinLink) {
+        linkedinLink.href = job.contact_linkedin || '';
+        linkedinLink.textContent = job.contact_linkedin || '';
+    }
 
     const contactNameInput = row.querySelector('.contact-name');
     if (contactNameInput) contactNameInput.value = job.contact_name || '';
 
-    const contactEmailInput = row.querySelector('.contact-email');
-    if (contactEmailInput) contactEmailInput.value = job.contact_email || '';
+    const emailLink = row.querySelector('.contact-email-link');
+    if (emailLink) {
+        emailLink.href = job.contact_email ? `mailto:${job.contact_email}` : '';
+        emailLink.textContent = job.contact_email || '';
+    }
 }
 
 async function viewCurrentRow() {
@@ -390,11 +439,11 @@ function getRowData(row) {
     return {
         company_name: find('.company-name') || find('#company-name'),
         job_title: find('.job-title') || find('#job_title'),
-        job_url: find('.job-url') || find('#job_url'),
+        job_url: row.querySelector('.job-url-link')?.textContent.trim() || find('.job-url') || find('#job_url'),
         job_state: find('.state-cell select') || find('#job_state'),
         contact_name: find('.contact-name') || find('#contact_name'),
-        contact_linkedin: find('.contact-linkedin') || find('#contact_linkedin'),
-        contact_email: find('.contact-email') || find('#contact_email'),
+        contact_linkedin: row.querySelector('.contact-linkedin-link')?.textContent.trim() || find('.contact-linkedin') || find('#contact_linkedin'),
+        contact_email: row.querySelector('.contact-email-link')?.textContent.trim() || find('.contact-email') || find('#contact_email'),
         date_time: find('.date-time') || find('#job_date_time')
     };
 }
