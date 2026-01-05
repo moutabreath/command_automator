@@ -25,6 +25,6 @@ class LLMToolResponseCode(Enum):
 @dataclass
 class LLMToolResponse:
     code : LLMToolResponseCode
-    selected_tool: str
-    args: List[Any]
+    selected_tool: Optional[str] = None
+    args: Optional[List[Any]] = None
     error_message: Optional[str] = None
