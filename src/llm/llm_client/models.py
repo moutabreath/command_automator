@@ -1,4 +1,3 @@
-
 from enum import Enum
 from dataclasses import dataclass
 
@@ -17,3 +16,17 @@ class MCPResponseCode(Enum):
 class MCPResponse:
     text: str
     code: MCPResponseCode
+
+
+class LLMResponseCode(Enum):
+    """Enumeration of possible Gemini API operation results"""
+    OK = 1
+    ERROR_USING_GEMINI_API = 2
+    GEMINI_UNAVAILABLE = 3
+    MODEL_OVERLOADED = 4
+    RESOURCE_EXHAUSTED = 5
+    
+class LLMResponse:
+    def __init__(self, text: str, code: LLMResponseCode):
+        self.text = text
+        self.code = code

@@ -40,7 +40,7 @@ class JobTrackingApi(AbstractApi):
         response = self.job_tracking_service.add_or_update_position(
             user_id=user_id,
             company_name=company_name,
-            trackedJob=tracked_job
+            tracked_job=tracked_job
         )
         return self._create_job_response(response, company_name)
 

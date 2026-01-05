@@ -1,32 +1,13 @@
-from enum import Enum
-import io
-import json
-import logging
-import mimetypes
-import os
+import io, json, logging, mimetypes, os
+
 from google import genai
 from google.genai.chats import Chat
-from google.genai.types import FileData
-from google.genai.types import File
-from google.genai.types import Part
+from google.genai.types import FileData, Part, File
+
 from PIL import Image
 
+from llm.llm_client.models import LLMResponse, LLMResponseCode
 from utils import file_utils
-
-
-class LLMResponseCode(Enum):
-    """Enumeration of possible Gemini API operation results"""
-    OK = 1
-    ERROR_USING_GEMINI_API = 2
-    GEMINI_UNAVAILABLE = 3
-    MODEL_OVERLOADED = 4
-    RESOURCE_EXHAUSTED = 5
-    
-class LLMResponse:
-    def __init__(self, text: str, code: LLMResponseCode):
-        self.text = text
-        self.code = code
-        
 
 class GeminiClientWrapper:
     GEMINI_MODEL = "gemini-2.5-flash"
@@ -49,6 +30,12 @@ class GeminiClientWrapper:
             self._delete_all_files()
             
     def init_chat(self) -> Chat:
+        """
+        Initialize a chat session with Gemini.
+        
+        Args:
+            system_instruction: Optional system instruction to set for the chat.
+        """
         self.base_config = {
             "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
             "top_p": 0.95,       # Focus on high-probability words

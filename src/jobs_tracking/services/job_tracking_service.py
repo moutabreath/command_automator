@@ -23,13 +23,13 @@ class JobTrackingService(AbstractPersistenceService):
         company_persist = await CompanyMongoPersist.create(mongo_connection_string, db_name)
         return cls(company_persist)
 
-    def add_or_update_position(self, user_id: str, company_name: str, trackedJob: TrackedJob) -> JobTrackingResponse:
+    def add_or_update_position(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         
         result = AsyncRunner.run_async(
             self.add_or_update_position_async(
             user_id=user_id,
             company_name=company_name,
-            tracked_job=trackedJob
+            tracked_job=tracked_job
             )
         )
         return result

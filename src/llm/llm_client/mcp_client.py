@@ -1,12 +1,10 @@
-import json
-import aiohttp
-import logging
-import asyncio
+import json, aiohttp, logging, asyncio
+
 from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
-from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
-from llm.llm_client.mcp_response import MCPResponse, MCPResponseCode
+from llm.gemini.gemini_client_wrapper import GeminiClientWrapper
+from llm.llm_client.models import MCPResponse, MCPResponseCode, LLMResponse, LLMResponseCode
 from llm.llm_client.services.job_unifier_service import JobUnifierService
 from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
 
@@ -21,10 +19,13 @@ class SmartMCPClient:
         self.gemini_client_wrapper: GeminiClientWrapper = GeminiClientWrapper()
         self.resume_chat = self.gemini_client_wrapper.init_chat()
         self.resume_refiner_service = ResumeRefinerService(self.resume_chat, self.gemini_client_wrapper)
-        self.job_search_service = JobUnifierService(self.gemini_client_wrapper)
+        self.job_unifier_service = JobUnifierService(self.gemini_client_wrapper)
         
-        self.session_tools = None
-        self.available_tools = []
+        # List of MCP tools with only their name
+        self.available_tools_names = []
+
+        # List of MCP tools with their name and parameters
+        self.available_tools_descriptions = {}
 
     async def process_query( self,  query: str, base64_decoded: str = None, output_file_path: str = None, user_id: str = None) -> MCPResponse:
         """
@@ -43,22 +44,15 @@ class SmartMCPClient:
                 llm_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                 return self._convert_llm_response_to_mcp_response(llm_response)
 
-            async with streamable_http_client(self.mcp_server_url) as (
-                read_stream,
-                write_stream,
-                _,
-            ), ClientSession(read_stream, write_stream) as session:
+            async with streamable_http_client(self.mcp_server_url) as ( read_stream, write_stream, _,), ClientSession(read_stream, write_stream) as session:
+                
                 logging.debug("Established streamable_http and Created MCP client session")
 
                 await session.initialize()
                 logging.debug("Successfully initialized MCP session")
 
-                if not 'session_tools' in vars(self) or self.session_tools is None:
-                   await self._init_session_tools(session)
-                   self._init_available_tools()
-
                 # Use Gemini to decide if a tool should be used
-                selected_tool, tool_args = await self._decide_tool_usage(query, user_id)
+                selected_tool, tool_args = await self._decide_tool_usage(query, user_id, session)
 
                 # If Gemini decided to use a tool, call it
                 if selected_tool:
@@ -94,19 +88,6 @@ class SmartMCPClient:
             logging.exception(f"MCP server not ready {e}")
             return False
         
-    async def _init_session_tools(self, session: ClientSession):
-        try:
-            self.session_tools = await session.list_tools()        
-        except Exception as e:
-            logging.debug(f"Could not list tools: {e}")
-            return None
-        
-    def _init_available_tools(self):
-        if (self.session_tools == None):
-            return []
-        self.available_tools = [tool.name for tool in self.session_tools.tools]
-        logging.debug(f"Available tools: {self.available_tools}")
-        
     def _is_greeting_query(self, query: str) -> bool:
         """Check if query is a simple greeting that shouldn't use tools"""
         single_word_greetings = ["hello", "hi", "hey", "greetings", "howdy"]
@@ -125,7 +106,7 @@ class SmartMCPClient:
             
         return False
 
-    async def _decide_tool_usage(self, query:str, user_id:str):
+    async def _decide_tool_usage(self, query:str, user_id:str, session:ClientSession):
         """
         Use LLM to decide which tool to use based on the query
         
@@ -139,13 +120,15 @@ class SmartMCPClient:
         if self._is_greeting_query(query):
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
             return None, None
+        
+        await self._init_available_tools_descriptions(session)
             
         try:
-            messages = self._init_messages(query, user_id)
+            message = self._init_system_prompt(query, user_id)
             
-            selected_tool, args = self.gemini_client_wrapper.get_mcp_tool_json(prompt=messages,
+            selected_tool, args = self.gemini_client_wrapper.get_mcp_tool_json(prompt=message,
                                                                 chat=self.resume_chat,
-                                                                available_tools=self.available_tools)
+                                                                available_tools=self.available_tools_names)
             if selected_tool != {}:
                 logging.debug(f"Gemini decided to use tool: {selected_tool}")
                 return selected_tool, args
@@ -155,25 +138,40 @@ class SmartMCPClient:
         except Exception as e:
             logging.exception(f"Error using LLM for tool decision {e}")
             return None, None
-            
-    def _init_messages(self, query: str, user_id:str):
-        tool_descriptions = {}
         
-        for tool in self.session_tools.tools:
-            if tool.name in self.available_tools:
+         
+    async def _init_available_tools_descriptions(self, session: ClientSession):
+        if (self.available_tools_names != []):
+            return 
+        
+        session_tools = await self._init_session_tools(session)
+        if session_tools == None:
+            return
+        
+        self.available_tools_names = [tool.name for tool in session_tools.tools]
+        logging.debug(f"Available tools: {self.available_tools_names}")
+        
+        for tool in session_tools.tools:
+            if tool.name in self.available_tools_names:
                 # Include parameter info in description
                 params = tool.inputSchema.get('properties', {}) if tool.inputSchema else {}
                 param_info = f" (Parameters: {list(params.keys())})" if params else " (No parameters)"
-                tool_descriptions[tool.name] = f"{tool.description}{param_info}"
-        
-        available_descriptions = tool_descriptions
-        system_prompt = self._init_system_prompt(available_descriptions, query, user_id)
-        return system_prompt
+                self.available_tools_descriptions[tool.name] = f"{tool.description}{param_info}"        
+
     
-    def _init_system_prompt(self, available_descriptions:dict, query:str, user_id:str):
+    async def _init_session_tools(self, session: ClientSession):
+        try:
+            session_tools = await session.list_tools()        
+        except Exception as e:
+            logging.debug(f"Could not list tools: {e}")
+            return None
+        return session_tools
+            
+    
+    def _init_system_prompt(self, query:str, user_id:str) -> str:
         return f"""You are a tool selection assistant. 
 Based on the user's query, determine if any of the available tools should be used.
-{json.dumps(available_descriptions, indent=2)}
+{json.dumps(self.available_tools_descriptions, indent=2)}
 IMPORTANT: Use a tool if the query is asking about one of the following:
  1. Adjust resume to job description.
  2. Searching for jobs on the internet.
@@ -221,5 +219,5 @@ If no tool should be selected, respond to the query directly. Query: {query}
         if selected_tool == 'get_resume_files':
             return await self.resume_refiner_service.refine_resume(tool_result, output_file_path)
         if selected_tool == 'search_jobs_from_the_internet':
-            return await self.job_search_service.get_unified_jobs()
+            return await self.job_unifier_service.get_unified_jobs()
         return MCPResponse(tool_result, MCPResponseCode.OK)
