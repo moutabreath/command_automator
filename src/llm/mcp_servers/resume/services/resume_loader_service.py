@@ -2,9 +2,47 @@ import logging
 from pathlib import Path
 from typing import Tuple, List, Optional
 
+from llm.mcp_servers.resume.models import ResumeData
 from utils import file_utils
 
 class ResumeLoaderService:
+
+    async def get_resume_files(self) -> ResumeData:
+        """Fetch resume file, applicant name, job description and guidelines"""    
+        try:
+            resume_content, applicant_name = await self.get_resume_and_applicant_name()
+            
+            if resume_content is None:
+                logging.error("Couldn't parse resume content")
+                return self._create_empty_resume_data()
+
+            if applicant_name is None:
+                applicant_name = "John Doe"
+
+            guide_lines = await self.get_main_part_guide_lines()
+            if guide_lines:
+                guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
+            
+            highlighted_sections = await self.get_highlighted_sections()
+            job_description_content = await self.get_job_description()
+            cover_letter_guide_lines = await self.get_cover_letter_guide_lines()
+
+            data_dict = {
+                "applicant_name": applicant_name or "",
+                "general_guidelines": guide_lines or "",
+                "resume": resume_content or "",
+                "resume_highlighted_sections": highlighted_sections or [],
+                "job_description": job_description_content or "",
+                "cover_letter_guidelines": cover_letter_guide_lines or ""
+            }
+            
+            resume_data = ResumeData(**data_dict)
+            logging.debug("Created ResumeData successfully")
+            return resume_data
+            
+        except Exception as e:
+            logging.error(f"Unhandled error in get_resume_files: {e}", exc_info=True)
+            return self._create_empty_resume_data()
 
     async def get_main_part_guide_lines(self) -> str:
         file_path: Path = file_utils.RESUME_ADDITIONAL_FILES_DIR / 'guidelines.txt'     
@@ -64,3 +102,14 @@ class ResumeLoaderService:
             logging.error(f"No cover letter file found at {file_path}")
             return ""
         return file_text
+    
+    def _create_empty_resume_data(self) -> ResumeData:
+        """Create empty ResumeData object"""
+        return ResumeData(
+            applicant_name="",
+            general_guidelines="",
+            resume="",
+            resume_highlighted_sections=[],
+            job_description="",
+            cover_letter_guidelines=""
+        )

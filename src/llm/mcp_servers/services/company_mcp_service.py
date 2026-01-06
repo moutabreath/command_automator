@@ -1,6 +1,7 @@
 import logging
 from typing import Dict, Any
 from llm.mcp_servers.persistence.mcp_company_mongo_persist import MCPCompanyMongoPersist
+from llm.mcp_servers.services.models import UserApplicationResponse, UserApplication, UserApplicationResponseCode
 from repository.abstract_mongo_persist import PersistenceErrorCode
 
 class CompanyMCPService:
@@ -19,24 +20,30 @@ class CompanyMCPService:
             logging.exception(f"Error in CompanyMCPService.initialize: {e}")
             raise
 
-    async def get_all_user_applications(self, user_id: str) -> Dict[str, Any]:
+    async def get_all_user_applications(self, user_id: str) -> UserApplicationResponse:
         """
         Get all job applications for a specific user.
         """
         response = await self.mcp_company_persist.get_all_applications(user_id)
         if response.code == PersistenceErrorCode.SUCCESS:
-            return {
-                "success": True,
-                "user_id": user_id,
-                "applications": response.data
-            }
+            user_applications = [
+                UserApplication(
+                    company_name=app["company_name"], 
+                    tracked_job=app["jobs"]
+                ) for app in response.data
+            ]
+            return UserApplicationResponse(
+                code=UserApplicationResponseCode.SUCESS, 
+                user_applications=user_applications
+            )
         else:
-            return {
-                "success": False,
-                "error": response.error_message or "Unknown error occurred"
-            }
+            return UserApplicationResponse(
+                code=UserApplicationResponseCode.ERROR, 
+                user_applications=[], 
+                error_message=response.error_message or "Unknown error occurred"
+            )
         
-    async def get_user_applications_for_company(self, user_id: str, company_name: str) -> Dict[str, Any]:
+    async def get_user_applications_for_company(self, user_id: str, company_name: str) -> UserApplicationResponse:
         """
         Get all job applications for a specific user and company.
         """

@@ -26,3 +26,4 @@ src/user/config/user-config.json
 src/jobs_tracking/config/job-tracking.json
 publish/build/*
 src/config/commands_automator.config
+src/llm/mcp_servers/job_search/saved_jobs/*

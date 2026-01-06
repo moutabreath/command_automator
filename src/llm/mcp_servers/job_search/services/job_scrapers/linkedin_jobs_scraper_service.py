@@ -1,23 +1,31 @@
-import logging
-import requests
+import asyncio, logging, requests, time, random
+
 from datetime import date, datetime
-from bs4 import BeautifulSoup
-import time
-import random
-import urllib.parse
 from typing import List, Optional
 
-from llm.mcp_servers.job_search.models import ScrapedJob
-from llm.mcp_servers.job_search.services.abstract_jobs_scraper import AbstractJobsScraper
+from bs4 import BeautifulSoup
+import urllib.parse
 
-class LinkedInJobsScraper(AbstractJobsScraper):
+from llm.mcp_servers.job_search.models import ScrapedJob
+from llm.mcp_servers.job_search.services.job_scrapers.abstract_jobs_scraper_service import AbstractJobsScraperService
+
+class LinkedInJobsScraperService(AbstractJobsScraperService):
     def __init__(self):
         super().__init__()
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
+    async def run_scraper(self, job_title: str, location: str = "", remote: bool = False, 
+                    forbidden_titles: List[str] = None, max_pages: int = 3,
+                    job_type: str = "", experience_level: str = "") -> List[ScrapedJob]:
+            loop = asyncio.get_event_loop()
+            return await loop.run_in_executor(
+                None,
+                lambda: self.run_scraper_sync(job_title, location, remote, forbidden_titles, max_pages, job_type, experience_level)
+    )
+
        
-    def run_scraper(self, job_title: str, location: str = "", remote: bool = False, 
+    def run_scraper_sync(self, job_title: str, location: str = "", remote: bool = False, 
                     forbidden_titles: List[str] = None, max_pages: int = 3,
                     job_type: str = "", experience_level: str = "") -> List[ScrapedJob]:
         """Run the LinkedIn job scraper with specified parameters
@@ -94,39 +102,52 @@ class LinkedInJobsScraper(AbstractJobsScraper):
         """Scrape job listings from LinkedIn search results"""
         jobs = []
         
-        try:
-            for page in range(max_pages):
-                logging.info(f"Scraping page {page + 1}...")
-                
-                # Add page parameter to URL
-                page_url = search_url + f"&start={page * 25}"
-                
+        for page in range(max_pages):            
+            
+            # Add page parameter to URL
+            page_url = search_url + f"&start={page * 25}"
+
+            logging.info(f"Scraping page {page_url}..")
+            soup = None
+            try:                
                 response = self.session.get(page_url, timeout=30)
                 response.raise_for_status()                
-                soup = BeautifulSoup(response.content, 'lxml')
-                
-                # Find job cards
-                job_cards = soup.find_all('div', class_='base-card')
-                
-                if not job_cards:
-                    logging.warning("No job cards found on this page")
-                    break
-                
-                for card in job_cards:
-                    job = self._parse_job_card(card, forbidden_titles)
-                    if job:
-                        jobs.append(job)
-                
-                # Be respectful with requests - use randomized delay
-                time.sleep(random.uniform(2, 5))
-                
-        except requests.RequestException as e:
-            logging.error(f"Error fetching job listings: {e}", exc_info=True)
+                soup = BeautifulSoup(response.content, 'lxml')                      
+            except requests.RequestException as e:
+                logging.exception(f"Error fetching job listings: {e}")
+                return jobs
+            
+            # Find job cards
+            job_cards = soup.find_all('div', class_='base-card')
+            
+            if not job_cards:
+                logging.warning("No job cards found on this page")
+                break
+            
+            for card in job_cards:
+                job = self._parse_job_card(card, forbidden_titles)
+                if job:
+                    jobs.append(job)
+            
+            # Be respectful with requests - use randomized delay
+            time.sleep(random.uniform(2, 5))          
          
         return jobs
 
+    def _validate_job(self, job_data: dict) -> bool:
+        """Validate job data to filter out invalid entries"""
+        title = job_data.get('title', '')
+        company = job_data.get('company', '')
+        link = job_data.get('link', '')
+        
+        # Filter out jobs where title, company, or link only contains '*' characters
+        if (title.strip('*').strip() == '' or company.strip('*').strip() == '' or link.strip('*').strip() == ''):
+            return False
+        return True
+
     def _parse_job_card(self, card, forbidden_titles) -> Optional[ScrapedJob]:
         """Parse individual job card to extract job information"""
+              
         # Create a dictionary to collect all fields first
         job_data = {}
         try:
@@ -155,7 +176,7 @@ class LinkedInJobsScraper(AbstractJobsScraper):
                         
             # Add optional fields after creation
             link_element = card.find('a', class_='base-card__full-link')
-            job_data['link'] = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
+            job_data['job_url'] = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"
  
 
             # Extract posted date
@@ -171,17 +192,21 @@ class LinkedInJobsScraper(AbstractJobsScraper):
                 logging.warning(f"Could not parse date '{posted_date_str}'. Using today's date.")
                 job_data['posted_date'] = date.today()
 
-            logging.debug(f"Attempting to create Job with data: {job_data}")    
+            logging.debug(f"Attempting to create Job with data: {job_data}")
+            
+            # Validate job data before creating Job object
+            if not self._validate_job(job_data):
+                logging.info(f"Skipping invalid job: {job_data['title']}")
+                return None
+                
             job = ScrapedJob(**job_data)
             return job
             
         except Exception as e:
-            logging.error(f"Error parsing job card: {e}", exc_info=True)
-            logging.error(f"Job data collected so far: {job_data}")
+            logging.exception(f"Error parsing job card: {e}. Job data collected so far: {job_data}")
             return None
     
     def _get_job_description(self, job_url: str) -> str:
-        """Get detailed job description from individual job page"""
         try:
             response = self.session.get(job_url, timeout=30)
             response.raise_for_status()
@@ -197,4 +222,3 @@ class LinkedInJobsScraper(AbstractJobsScraper):
         except Exception as e:
             logging.error(f"Error fetching job description: {e}", exc_info=True)
             return "Description not available"        
- 
