@@ -10,11 +10,10 @@ class LLMResponseCode(Enum):
     MODEL_OVERLOADED = 4
     RESOURCE_EXHAUSTED = 5
     
+@dataclass
 class LLMResponse:
-    def __init__(self, text: str, code: LLMResponseCode):
-        self.text = text
-        self.code = code
-
+    text: str
+    code: LLMResponseCode
 
 class LLMToolResponseCode(Enum):
     """Enumeration of possible Gemini API operation results"""
@@ -26,6 +25,6 @@ class LLMToolResponseCode(Enum):
 @dataclass
 class LLMToolResponse:
     code : LLMToolResponseCode
-    selected_tool: Optional[str] = None
+    code: LLMToolResponseCode 
     args: Optional[List[Any]] = None
     error_message: Optional[str] = None

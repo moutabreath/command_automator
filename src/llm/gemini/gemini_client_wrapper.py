@@ -32,9 +32,6 @@ class GeminiClientWrapper:
     def init_chat(self) -> Chat:
         """
         Initialize a chat session with Gemini.
-        
-        Args:
-            system_instruction: Optional system instruction to set for the chat.
         """
         self.base_config = {
             "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
@@ -126,7 +123,7 @@ class GeminiClientWrapper:
         except Exception as ex:
             llm_exception = self._handle_gemini_exception(ex)
             logging.warning(f"Error using Gemini: {llm_exception.text}")
-            if llm_exception.code == LLMResponseCode.MODEL_OVERLOADED or LLMResponseCode.RESOURCE_EXHAUSTED:
+            if llm_exception.code in (LLMResponseCode.MODEL_OVERLOADED, LLMResponseCode.RESOURCE_EXHAUSTED):
                 return LLMToolResponse(code=LLMToolResponseCode.MODEL_OVERLOADED, error_message=llm_exception.text)
             return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, error_message=llm_exception.text)
         
