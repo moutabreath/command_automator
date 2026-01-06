@@ -12,32 +12,47 @@ def extract_linkedin_job(url):
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
 
-        # 1. Extract Job Title 
-        # Strategy: Find the <p> that contains the phrase "Developer" or "Engineer"
-        # and grab only the 'Direct' text (NavigableString) to avoid nested SVG/Link text.
-        # We look for all <p> tags and check their direct strings
-        for p in soup.find_all('p'):
-            # .find(text=True, recursive=False) gets text that isn't inside nested tags
-            direct_text = p.find(text=True, recursive=False)
-            if direct_text and len(direct_text.strip()) > 3:
-                # Often the title is the longest direct string in a header area
-                job_title = direct_text.strip()
-                break 
+        # 1. Extract Job Title from <title> tag
+        # Strategy: Find the <title> tag and parse it
+        # LinkedIn format: "Company hiring Job Title in Location | LinkedIn"
+        # or "Job Title - Company | Job Posting"
+        title_tag = soup.find('title')
+        if title_tag:
+            title_text = title_tag.get_text().strip()
+            # Remove " | LinkedIn" suffix if present
+            if " | LinkedIn" in title_text:
+                title_text = title_text.split(" | LinkedIn")[0]
+            
+            # Try to extract job title from "Company hiring Job Title in Location" format
+            if " hiring " in title_text:
+                parts = title_text.split(" hiring ")
+                if len(parts) > 1:
+                    # Get the part after "hiring" and before "in Location"
+                    job_and_location = parts[1]
+                    if " in " in job_and_location:
+                        job_title = job_and_location.split(" in ")[0].strip()
+                    else:
+                        job_title = job_and_location.strip()
+            # Alternative format: "Job Title at Company"
+            elif " at " in title_text:
+                job_title = title_text.split(" at ")[0].strip()
+            # Fallback: use the whole cleaned title
+            else:
+                job_title = title_text
 
         # 2. Extract Company Name
         # Strategy: Look for the <a> tag that leads to a company page
         company_tag = soup.find('a', href=lambda x: x and '/company/' in x)
-        # We use the same 'direct text' trick to avoid spans/icons inside the link
         if company_tag:
             company_name = company_tag.find(text=True, recursive=False) or company_tag.get_text()
+        
         return {
             "job_title": job_title,
             "company_name": company_name.strip()
         }
-
     except Exception as e:
-           logging.exception(f"error scraping linkedin page {e}")
-           return {
+        logging.exception(f"error scraping linkedin page {e}")
+        return {
             "job_title": job_title,
             "company_name": company_name.strip()
         }
