@@ -48,16 +48,16 @@ class Company:
         # Convert the list of Job DTOs to Job Domain objects
         domain_jobs = [
             TrackedJob(
-                title=job_dto.title
-                , url=job_dto.url
-                , state=JobApplicationState.from_string(job_dto.state)
-                , contact_name=job_dto.contact
+                title=job_dto.title,
+                job_url=job_dto.url,
+                job_state=JobApplicationState.from_string(job_dto.state),
+                contact_name=job_dto.contact
             )
             for job_dto in dto.tracked_jobs
         ]
         
         return cls(
-            company_name=dto.company_name,
+            name=dto.company_name,
             tracked_jobs=domain_jobs
             # company_id is generated automatically by default_factory
         )

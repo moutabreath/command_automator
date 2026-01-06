@@ -94,14 +94,14 @@ class JobTrackingService(AbstractPersistenceService):
             if response.code == PersistenceErrorCode.SUCCESS:
                 if not response.data:
                     logging.warning(f"No positions found for company {company_name}")
-                    return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.OK)
+                    return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.OK)
                 return JobTrackingListResponse(jobs=response.data, code=JobTrackingResponseCode.OK)
             else:
                 logging.warning(f"No positions found for company {company_name}")
-                return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
+                return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
         except Exception as e:
             logging.error(f"Failed to get positions for company {company_name}: {e}")
-            return JobTrackingListResponse(jobs={}, code=JobTrackingResponseCode.ERROR)
+            return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
 
     def extract_job_title_and_company(self, url:str):
         return extract_linkedin_job(url)       

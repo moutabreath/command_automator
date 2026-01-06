@@ -10,17 +10,16 @@ from dataclasses import asdict
 
 class JobTrackingApi(AbstractApi):
     
-    def __init__(self, jobTrackingService: JobTrackingService):
-        self.job_tracking_service = jobTrackingService
+    def __init__(self, job_tracking_service: JobTrackingService):
+        self.job_tracking_service = job_tracking_service
 
     def get_job_application_states(self) -> List[str]:
         """Get list of available job application states"""
         try:
-            return [state.name for state in JobApplicationState if not state==JobApplicationState.UNKNOWN ]
+            return [state.name for state in JobApplicationState if not state == JobApplicationState.UNKNOWN]
         except Exception as e:
             logging.exception(f"Error getting job application states: {e}")
-            return []       
-    
+            return []    
         
     def track_job_application(self, user_id: str, company_name: str, job_dto: TrackedJobDto) -> Dict[str, Any]:
         
@@ -28,22 +27,14 @@ class JobTrackingApi(AbstractApi):
             logging.error("Missing required parameter: user_id, company_name, or job_dto")
             return JobTrackingApiResponse(None, JobTrackingApiResponseCode.ERROR).to_dict()
                
-        tracked_job = TrackedJob(
-            job_url=job_dto.job_url,
-            job_title=job_dto.job_title,
-            job_state=JobApplicationState.from_string(job_dto.job_state) if isinstance(job_dto.job_state, str) else job_dto.job_state,
-            contact_name=job_dto.contact_name,
-            contact_linkedin=job_dto.contact_linkedin,
-            contact_email=job_dto.contact_email
-        )
+        tracked_job = self._convert_dto_to_tracked_job(job_dto)
         
         response = self.job_tracking_service.add_or_update_position(
             user_id=user_id,
-            company_name=company_name,
-            tracked_job=tracked_job
+            job_state=JobApplicationState.from_string(job_dto.job_state) if isinstance(job_dto.job_state, str) else (job_dto.job_state if isinstance(job_dto.job_state, JobApplicationState) else JobApplicationState.UNKNOWN),            tracked_job=tracked_job
         )
-        return self._create_job_response(response, company_name)
-
+        return self._create_job_response(response, company_name)    
+ 
     def get_positions(self, user_id: str, company_name: str) -> Dict[str, Any]:
         if not user_id or not company_name:
             logging.error("Missing required parameter: user_id or company_name")
@@ -55,32 +46,42 @@ class JobTrackingApi(AbstractApi):
             return JobTrackingApiListResponse(serialized_jobs, company_name, JobTrackingApiResponseCode.OK).to_dict()
         return JobTrackingApiListResponse(None, company_name, JobTrackingApiResponseCode.ERROR).to_dict()
     
-    def track_job_application_from_text(self, user_id: str, text:str):
-        response = self.job_tracking_service.track_position_from_text(user_id, text)
-        company_name = getattr(response, 'company_name', None)
-        return self._create_job_response(response, company_name)
-
     def extract_job_title_and_company(self, url:str):
-        return self.job_tracking_service.extract_job_title_and_company(url)
+        if not url:
+            logging.error("Missing required parameter: url")
+            return {"error": "URL is required"}
+
+        try:
+            return self.job_tracking_service.extract_job_title_and_company(url)
+        except Exception as e:
+            logging.exception(f"Error extracting job info from URL: {e}")
+            return {"error": "Failed to extract job information"}
     
-    def delete_tracked_jobs(self, userid:str, companies_jobs:List[CompanyDto]):
+    def delete_tracked_jobs(self, user_id:str, companies_jobs:List[CompanyDto]):
+        if not user_id or not companies_jobs:
+            logging.error("Missing required parameter: user_id or companies_jobs")
+            return {"success": False}
         domain_companies = self._convert_to_domain_companies(companies_jobs)
-        success = self.job_tracking_service.delete_tracked_jobs(userid, domain_companies)
+        success = self.job_tracking_service.delete_tracked_jobs(user_id, domain_companies)
         return {"success" : success}
+    
+    def _convert_dto_to_tracked_job(self, job_dto: TrackedJobDto) -> TrackedJob:
+        """Convert TrackedJobDto to domain TrackedJob"""
+        return TrackedJob(
+            job_url=job_dto.job_url,
+            job_title=job_dto.job_title,
+            job_state=JobApplicationState.from_string(job_dto.job_state) if isinstance(job_dto.job_state, str) else job_dto.job_state,
+            contact_name=job_dto.contact_name,
+            contact_linkedin=job_dto.contact_linkedin,
+            contact_email=job_dto.contact_email
+    )
 
     def _convert_to_domain_companies(self, companies_jobs: List[CompanyDto]) -> List[Company]:
         domain_companies = []
         for company in companies_jobs:
             domain_company = Company(
                 name=company.company_name,
-                tracked_jobs=[TrackedJob(
-                    job_url=job.job_url,
-                    job_title=job.job_title,
-                    job_state=JobApplicationState.from_string(job.job_state) if isinstance(job.job_state, str) else job.job_state,
-                    contact_name=job.contact_name,
-                    contact_linkedin=job.contact_linkedin,
-                    contact_email=job.contact_email
-                ) for job in company.tracked_jobs]
+                tracked_jobs=[self._convert_dto_to_tracked_job(job) for job in company.tracked_jobs]
             )
             domain_companies.append(domain_company)
     

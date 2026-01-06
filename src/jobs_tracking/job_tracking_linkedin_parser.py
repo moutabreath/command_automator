@@ -9,9 +9,9 @@ def extract_linkedin_job(url):
     company_name = "N/A"
     job_title = "N/A"
     try:
-        response = requests.get(url, headers=headers)
+        response = requests.get(url, headers=headers, timeout=10)
+        response.raise_for_status()
         soup = BeautifulSoup(response.text, 'html.parser')
-
         # 1. Extract Job Title from <title> tag
         # Strategy: Find the <title> tag and parse it
         # LinkedIn format: "Company hiring Job Title in Location | LinkedIn"
@@ -51,7 +51,7 @@ def extract_linkedin_job(url):
             "company_name": company_name.strip()
         }
     except Exception as e:
-        logging.exception(f"error scraping linkedin page {e}")
+        logging.exception("Error scraping LinkedIn page")
         return {
             "job_title": job_title,
             "company_name": company_name.strip()
