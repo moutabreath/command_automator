@@ -60,7 +60,7 @@ class SmartMCPClient:
                 if tool_response.code == LLMToolResponseCode.USING_TOOL:
                     if tool_response.selected_tool is None:
                         logging.error("Error with tool seletion")
-                        return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,text="Error with tool seletion")
+                        return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,text="Error with tool selection")
                     selected_tool,tool_args = tool_response.selected_tool, tool_response.args
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
                 elif tool_response.code == LLMToolResponseCode.MODEL_OVERLOADED:
@@ -98,6 +98,9 @@ class SmartMCPClient:
         
     def _is_greeting_query(self, query: str) -> bool:
         """Check if query is a simple greeting that shouldn't use tools"""
+        if not query:
+            return False
+        
         single_word_greetings = ["hello", "hi", "hey", "greetings", "howdy"]
         multi_word_greetings = ["good morning", "good afternoon", "how are you", "what's up"]
         
@@ -113,7 +116,7 @@ class SmartMCPClient:
             return True
             
         return False
-
+    
     async def _decide_tool_usage(self, query:str, user_id:str, session:ClientSession) -> LLMToolResponse:
         """
         Use LLM to decide which tool to use based on the query
@@ -127,7 +130,7 @@ class SmartMCPClient:
         # Quick filter for common greetings and chitchat - never use tools for these
         if self._is_greeting_query(query):
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
-            return LLMToolResponse(code=LLMResponseCode.OK, selected_tool=None, args=None , error_message="Query is greetings query")
+            return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, selected_tool=None, args=None , error_message="Query is greetings query")
         
         response =  self._get_tool_and_params_using_keywords(query)
         
@@ -209,7 +212,7 @@ If no tool should be selected, respond to the query directly. Query: {query}
             response = await session.call_tool(selected_tool, tool_args)
             
             if response is None:
-                return MCPResponse(f"Tool execution failed returned no answer", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
+                return MCPResponse(f"Tool execution failed to return an answer", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if not response.content or len(response.content) == 0:
                 return MCPResponse("Tool execution returned empty response", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if response.isError:
