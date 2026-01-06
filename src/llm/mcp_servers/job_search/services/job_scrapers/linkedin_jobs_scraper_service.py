@@ -170,10 +170,7 @@ class LinkedInJobsScraperService(AbstractJobsScraperService):
             
             # Add description before creating the Job object
             job_data['description'] = "Click link to view full description"
-            
-            # Log the collected data before creating Job object
-            logging.debug(f"Attempting to create Job with data: {job_data}")
-                        
+                                    
             # Add optional fields after creation
             link_element = card.find('a', class_='base-card__full-link')
             job_data['job_url'] = link_element['href'] if link_element and 'href' in link_element.attrs else "N/A"

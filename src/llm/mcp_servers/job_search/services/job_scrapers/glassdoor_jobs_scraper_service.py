@@ -209,8 +209,8 @@ class GlassdoorJobsScraperService(AbstractJobsScraperService):
             title=job_data['title'],
             company=job_data['company'],
             location=job_data['location'],
-            description=None if not('descritpion' in job_data) else self._normalize_description(job_data['descritpion']),
-            link=None if not('url' in job_data) else job_data['url'] ,
+            description=None if not('description' in job_data) else self._normalize_description(job_data['description']),
+            link=None if not('job_url' in job_data) else job_data['job_url'] ,
             posted_date=parsed_date
         )
     
@@ -267,9 +267,8 @@ class GlassdoorJobsScraperService(AbstractJobsScraperService):
             
         except Exception as e:
             logging.error(f"Error scraping page {url}: {e}", exc_info=True)
-        finally:
-            return jobs
-    
+
+        return jobs    
  
     def _validate_job(self, job_data, forbidden_titles) -> bool:
         """Validate job data against forbidden titles"""

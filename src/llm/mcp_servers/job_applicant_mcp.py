@@ -16,7 +16,7 @@ mcp = FastMCP("job_applicant_helper")
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
     """Fetch resume file, applicant name, job description and guidelines"""
-    global resume_load_service
+    global resume_loader_service
     return await resume_loader_service.get_resume_files()
 
 @mcp.tool()
@@ -48,9 +48,9 @@ async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | 
     return await job_search_service.get_jobs_from_glassdoor(job_title, location, remote, user_id)
 
 @mcp.tool()
-async def get_user_applications_for_company(user_id: str, company_name: str) -> dict:
-    global job_search_service
+async def get_user_applications_for_company(user_id: str, company_name: str) -> dict:    
     """Get all job applications for a specific user and company"""
+    global job_search_service
     return await job_search_service.get_user_applications_for_company(user_id, company_name)
 
 class MCPRunner:
