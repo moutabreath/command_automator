@@ -41,12 +41,12 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             )
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
+            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
         except mongo_errors.ConnectionFailure as e:
             logging.exception(f"MongoDB connection failed: {e}")
             return PersistenceResponse(
                 data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
+                code=PersistenceErrorCode.CONNECTION_ERROR,
                 error_message=f"MongoDB connection failed: {e}"
             )
         except Exception as e:
@@ -77,7 +77,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             logging.exception(f"MongoDB connection failed: {e}")
             return PersistenceResponse(
                 data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
+                code=PersistenceErrorCode.CONNECTION_ERROR,
                 error_message=f"MongoDB connection failed: {e}"
             )
         except Exception as e:
@@ -104,7 +104,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             )
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
+            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
         except mongo_errors.ConnectionFailure as e:
             logging.exception(f"MongoDB connection failed: {e}")
             return PersistenceResponse(
@@ -139,10 +139,10 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         }
        
         try:
-            existing = await self._find_existing_application(user_id, company_name, tracked_job.job_url)
+            existing_job = await self._find_existing_application(user_id, company_name, tracked_job.job_url)
         
-            if existing:
-                success = await self._update_existing_application(user_id, company_name, new_job, existing)
+            if existing_job:
+                success = await self._update_existing_application(user_id, company_name, new_job, existing_job)
                 if (success):
                     return PersistenceResponse(data=self._convert_mongo_result_to_tracked_job(new_job), code=PersistenceErrorCode.SUCCESS)
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to update job")
@@ -206,7 +206,6 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             if not urls_to_remove:
                 continue
             try:
-                # We use update_one inside a BulkWrite or keep update_many for broader sweeps.
                 requests = [
                     UpdateOne(
                         {"user_id": userid, "company_name": comp.name},
@@ -214,7 +213,10 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
                     )
                     for comp in companies if comp.tracked_jobs
                 ]
-
+                
+                if not requests:
+                    return False
+                
                 result = await self.job_applications.bulk_write(requests)
                 return result.modified_count > 0
             except Exception as e:
@@ -307,7 +309,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         return False
 
     async def _update_existing_application(self, user_id, company_name, new_job, existing_job)-> bool:
-        if not (self._has_job_changes(new_job, existing_job)):
+        if not (self._has_job_changes(existing_job=existing_job, new_job=new_job)):
             logging.warning(f"tried to update a job with the same values {existing_job['job_url']}")
             return True
 
