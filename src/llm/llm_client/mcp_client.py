@@ -129,6 +129,11 @@ class SmartMCPClient:
             logging.debug("Query appears to be a simple greeting or too short - not using tools")
             return LLMToolResponse(code=LLMResponseCode.OK, selected_tool=None, args=None , error_message="Query is greetings query")
         
+        response =  self._get_tool_and_params_using_keywords(query)
+        
+        if response.code == LLMToolResponseCode.USING_TOOL:
+            return response
+        
         await self._init_available_tools_descriptions(session)
             
         message = self._init_system_prompt(query, user_id)
@@ -137,6 +142,13 @@ class SmartMCPClient:
                                                             chat=self.resume_chat,
                                                             available_tools=self.available_tools_names)
    
+    def _get_tool_and_params_using_keywords(self, query:str) -> LLMToolResponse:
+        query = query.lower().strip()
+        if "resume" in query and "job" in query:
+            return LLMToolResponse(code=LLMToolResponseCode.USING_TOOL, selected_tool="get_resume_files", args=None)
+        if ("search" in query or "find" in query) and ("jobs" in query or "job" in query) and "internet" in query:
+            return LLMToolResponse(code=LLMToolResponseCode.USING_TOOL, selected_tool="search_jobs_from_the_internet", args=None)
+        return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, selected_tool=None, args=None)
         
          
     async def _init_available_tools_descriptions(self, session: ClientSession):
