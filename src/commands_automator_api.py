@@ -1,26 +1,21 @@
-import logging
-import os
+import configparser, webview, sys, logging, os
 from typing import Any, Dict, List
 from dotenv import load_dotenv
-import configparser
-
 
 from jobs_tracking.job_tracking_api import JobTrackingApi
 from jobs_tracking.models import CompanyDto, TrackedJobDto
 from jobs_tracking.services.job_tracking_service import JobTrackingService
-from jobs_tracking.services.models import JobApplicationState
+
 from llm.llm_api import LLMApi
 from llm.services.llm_service import LLMService
+
 from scripts_manager.scripts_manager_api import ScriptsManagerApi
+
 from user.services.user_registry_service import UserRegistryService
 from user.user_api import UserApi
-from utils import file_utils
+
 from utils.utils import AsyncRunner
-import webview
-import sys
-
 from utils.logger_config import setup_logging
-
 from utils.file_utils import CONFIG_FILE
 
 class CommandsAutomatorApi:
@@ -118,6 +113,8 @@ class CommandsAutomatorApi:
     
     def get_job_application_states(self):
         """Get list of job application states"""
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.get_job_application_states()
     
     def track_job_application(self, user_id: str, company_name: str, job_dto_dict: Dict) -> Dict[str, Any]:
@@ -133,22 +130,21 @@ class CommandsAutomatorApi:
         )
         return self.job_tracking_api.track_job_application(user_id=user_id, company_name=company_name, job_dto=job_dto)
     
-    def get_positions(self, user_id: str, company_name: str) -> List[Dict]:
+    def get_positions(self, user_id: str, company_name: str) -> List[Dict] | dict:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.get_positions(user_id, company_name)
-    
-    def track_job_application_from_text(self, user_id: str, text:str):
+            
+    def extract_job_title_and_company(self, url:str):
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.track_job_application_from_text(user_id, text)
-    
-    def extract_job_title_and_company(self, url:str):
         return self.job_tracking_api.extract_job_title_and_company(url)
-
-    def delete_tracked_jobs(self, userid:str, companies_jobs:List[Dict[str,List[Dict]]]):
+        
+    def delete_tracked_jobs(self, user_id: str, companies_jobs: List[Dict[str, List[Dict]]]):
+        if self.job_tracking_api is None:
+            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         companies = [CompanyDto(**item) for item in companies_jobs]
-        return self.job_tracking_api.delete_tracked_jobs(userid, companies)
+        return self.job_tracking_api.delete_tracked_jobs(user_id, companies)
 
 def load_environment():
     """Load environment variables from .env.local file"""
