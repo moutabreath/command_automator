@@ -329,7 +329,7 @@ async function fillRowFromUrl() {
         if (contactName) contactNameInput.value = contactName;
     }
     if (!companyInput?.value && !jobUrlInput.value.includes('linkedin.com/jobs')) {
-        companyInput.value = getCompanyFromUrl(jobTitleInput.value);
+        companyInput.value = getCompanyFromUrl(jobUrlInput.value);
     }
 }
 
