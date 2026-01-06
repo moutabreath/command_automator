@@ -31,7 +31,9 @@ class ResumeRefinerService:
             return await self.save_resume_and_cover_letter(output_file_path, resume_data_dict, refined_resume_response)
         return refined_resume_response 
     
-    async def save_resume_and_cover_letter(self, output_file_path, resume_data_dict, refined_resume_response):
+    async def save_resume_and_cover_letter(self, output_file_path: str, resume_data_dict: dict,
+                                            refined_resume_response: MCPResponse) -> MCPResponse:
+
         applicant_name = resume_data_dict.get('applicant_name', '')
         resume_highlighted_sections = resume_data_dict.get('resume_highlighted_sections', '')
             
@@ -42,7 +44,7 @@ class ResumeRefinerService:
             
         self.resume_saver_service.save_file(
                 text=refined_resume_response.text,
-                output_file_path=output_file_path,
+                output_dir_path=output_file_path,
                 applicant_name=applicant_name,
                 file_name=resume_file_name,                                                 
                 resume_highlighted_sections=resume_highlighted_sections
