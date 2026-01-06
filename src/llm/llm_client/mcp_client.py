@@ -63,6 +63,8 @@ class SmartMCPClient:
                         return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,text="Error with tool seletion")
                     selected_tool,tool_args = tool_response.selected_tool, tool_response.args
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
+                elif tool_response.code == LLMToolResponseCode.MODEL_OVERLOADED:
+                    return MCPResponse(tool_response.error_message, MCPResponseCode.ERROR_MODEL_OVERLOADED)
                 else:
                     agent_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                     return self._convert_llm_response_to_mcp_response(agent_response)                

@@ -20,6 +20,7 @@ class LLMToolResponseCode(Enum):
     """Enumeration of possible Gemini API operation results"""
     USING_TOOL = 1
     NOT_USING_TOOL = 2
+    MODEL_OVERLOADED = 3
 
 
 @dataclass

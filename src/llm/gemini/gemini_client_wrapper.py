@@ -124,9 +124,13 @@ class GeminiClientWrapper:
                 logging.debug(f"Gemini decided to use tool: {selected_tool}")
                 return LLMToolResponse(selected_tool=selected_tool, args=args, code=LLMToolResponseCode.USING_TOOL)
         except Exception as ex:
-            llm_execption = self._handle_gemini_exception(ex)
-            logging.warning(f"Error using Gemini: {llm_execption.text}")
-            return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, error_message=llm_execption.text)
+            llm_exception = self._handle_gemini_exception(ex)
+            logging.warning(f"Error using Gemini: {llm_exception.text}")
+            if llm_exception.code == LLMResponseCode.MODEL_OVERLOADED or LLMResponseCode.RESOURCE_EXHAUSTED:
+                return LLMToolResponse(code=LLMToolResponseCode.MODEL_OVERLOADED, error_message=llm_exception.text)
+            return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, error_message=llm_exception.text)
+        
+        return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL)
         
     async def _get_json_files_content_for_prompt(self, file_paths: list[str]) -> str:
         result = ""
