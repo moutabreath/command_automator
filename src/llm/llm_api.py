@@ -20,7 +20,7 @@ class LLMApiResponseCode(Enum):
 
 class LLMApiResponse(ApiResponse):
     def __init__(self, code: LLMApiResponseCode, error_message: str = "", result_text: str = ""):
-        super().__init__(result_text=result_text, code=code, error_message=error_message)
+        super().__init__(text=result_text, code=code, error_message=error_message)
 
 class LLMApi(AbstractApi):
 
@@ -33,6 +33,13 @@ class LLMApi(AbstractApi):
   
 
     def call_llm(self, prompt: str, image_data: str, output_file_path: str, user_id:str = None) -> Dict[str, Any]:
+        if not prompt or not prompt.strip():
+            resp = LLMApiResponse(
+                error_message="Prompt cannot be empty",
+                code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM
+            )
+            return resp.to_dict()
+        
         decoded_data = None
         if image_data and image_data != '':
             try:
@@ -49,14 +56,21 @@ class LLMApi(AbstractApi):
                 resp = LLMApiResponse(error_message="Error loading image", code = LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)
                 return resp.to_dict()
 
-        result: MCPResponse = run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path, user_id)
-        return self._convert_mcp_response_to_api_response(result)
-    
+        try:
+            result: MCPResponse = run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path, user_id)
+            return self._convert_mcp_response_to_api_response(result)
+        except Exception as e:
+            logging.error("Unexpected error during LLM operation")
+            resp = LLMApiResponse(
+                error_message="Error communicating with LLM",
+                code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM
+            )
+            return resp.to_dict()    
         
     def _convert_mcp_response_to_api_response(self, result: MCPResponse) -> Dict[str, Any]:
         """Convert MCPResponse to LLMApiResponse dictionary"""
         if not result:
-            return LLMApiResponse(code=LLMApiResponseCode.OPERATION_CANCELLED, error_message="Operation was cancelled").to_dict()
+            return LLMApiResponse(code=LLMApiResponseCode.OPERATION_CANCELLED, error_message="Operation was cancelled").model_dump()
         
         match result.code:
             case MCPResponseCode.OK:
@@ -67,4 +81,4 @@ class LLMApi(AbstractApi):
                 resp = LLMApiResponse(error_message="Model Exhausted", code=LLMApiResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
             case _:
                 resp = LLMApiResponse(error_message="Error communicating with LLM", code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-        return resp.to_dict()
+        return resp.model_dump()
