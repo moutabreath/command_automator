@@ -38,7 +38,7 @@ class LLMApi(AbstractApi):
                 error_message="Prompt cannot be empty",
                 code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM
             )
-            return resp.to_dict()
+            return resp.model_dump()
         
         decoded_data = None
         if image_data and image_data != '':
@@ -54,7 +54,7 @@ class LLMApi(AbstractApi):
             except Exception as e:
                 logging.exception(f"Error processing image data: {e}")
                 resp = LLMApiResponse(error_message="Error loading image", code = LLMApiResponseCode.ERROR_LOADING_IMAGE_TO_MODEL)
-                return resp.to_dict()
+                return resp.model_dump()
 
         try:
             result: MCPResponse = run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path, user_id)
@@ -65,7 +65,7 @@ class LLMApi(AbstractApi):
                 error_message="Error communicating with LLM",
                 code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM
             )
-            return resp.to_dict()    
+            return resp.model_dump()    
         
     def _convert_mcp_response_to_api_response(self, result: MCPResponse) -> Dict[str, Any]:
         """Convert MCPResponse to LLMApiResponse dictionary"""
