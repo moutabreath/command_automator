@@ -153,11 +153,12 @@ class ScriptsManagerService:
             raise TypeError("run_version_command must be a list, not string")
         try:
             subprocess.run(run_version_command, startupinfo=startupinfo, shell=False, check=True)
-        except subprocess.CalledProcessError as e:
-            logging.exception(f"Command failed: {e}")
+        except subprocess.CalledProcessError as ex:
+            logging.exception(f"Command failed: {ex}")
+        except Exception as ex:
+            logging.exception(f"Unexpected error: {ex}")
 
-    def get_string_from_thread_result(self, result: Union[bytes, bytearray], err: Optional[Union[str, bytes]]) -> str:
- 
+    def get_string_from_thread_result(self, result: Union[bytes, bytearray], err: Optional[Union[str, bytes]]) -> str: 
         str_result = ""
         logging.log(logging.DEBUG, "entered.")
         if isinstance(result, (bytes, bytearray)):

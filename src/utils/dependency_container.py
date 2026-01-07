@@ -5,6 +5,8 @@ from dependency_injector import containers, providers
 
 class Container(containers.DeclarativeContainer):
     """Dependency injection container"""
+    
+    _lock = None
 
     @classmethod
     def _get_lock(cls):
@@ -36,15 +38,14 @@ class Container(containers.DeclarativeContainer):
         async with cls._get_lock():
             if cls._container is not None:
                 return cls._container
-         
+
             logging.info("Initializing DI container in MCP subprocess")
-        
-        # Create and configure container
-        container = Container()
-        # Initialize resources
-        container.init_resources()
-        
-        
-        cls._container = container
-        logging.info("DI container initialized successfully")
-        return container
+
+            # Create and configure container
+            container = Container()
+            # Initialize resources
+            container.init_resources()
+
+            cls._container = container
+            logging.info("DI container initialized successfully")
+            return container
