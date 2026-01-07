@@ -5,10 +5,11 @@
 
 
 @REM add certifi for https imports such as bootstrap
-..\.venv\Scripts\python.exe  -m PyInstaller ^   ../src/commands_automator_api.py ^
-    -i "../src/ui/resources/Commands_Automator.ico" ^
+..\.venv\Scripts\python.exe -m PyInstaller ^
+    ..\src\commands_automator_api.py ^
+    -i "..\src\ui\resources\Commands_Automator.ico" ^
     -F ^
-    --add-data "../src/ui;ui" ^
+    --add-data "..\src\ui;ui" ^
     --hidden-import=mcp.server.fastmcp ^
     --hidden-import=multiprocessing ^
     --hidden-import=multiprocessing.pool ^
