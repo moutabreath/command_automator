@@ -34,7 +34,7 @@ async function tryInitApp() {
     }
 }
 
-config = null
+let config = null;
 
 async function initApp() {
     console.log('Initializing application modules...');

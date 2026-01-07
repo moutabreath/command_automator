@@ -139,7 +139,7 @@ function getCompanyFromUrl(url) {
     }
     const leverMatch = url.match(/https:\/\/jobs\.lever\.co\/([^\/]+)/);
     if (leverMatch) {
-        return leverMatch[1];
+        return capitalizeFirst(leverMatch[1]);
     }
 
     

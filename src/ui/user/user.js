@@ -12,10 +12,11 @@ async function initUser() {
 
 async function loadUserConfig() {
     const userEmail = document.getElementById('user-email');
-    if (userEmail && typeof config !== 'undefined' && config) {
+    if (userEmail && typeof config !== 'undefined' && config && config.user) {
         userEmail.value = config.user.email || '';
     }
 }
+
 async function saveUserConfig() {
     try {
         const userEmail = document.getElementById('user-email');
@@ -133,14 +134,13 @@ async function registerOrLogin() {
             showAlert('Login successful!', 'success');
             console.log('User logged in successfully:', window.userId);
         } else {
-            isLoggingIn = false;
             throw new Error(response?.text || 'Login failed');
         }
     } catch (error) {
         console.error('Login failed:', error);
         showAlert('Login failed. Please try again.', 'error');
-        isLoggingIn = false;
     } finally {
+        isLoggingIn = false;
         // Re-enable button
         if (loginBtn) {
             loginBtn.disabled = false;
@@ -153,9 +153,7 @@ async function registerOrLogin() {
             document.body.classList.remove('spinner-active');
         }
     }
-}
-
-function isValidEmail(email) {
+}function isValidEmail(email) {
     // Basic email validation regex
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     return emailRegex.test(email);
