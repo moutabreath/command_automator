@@ -8,7 +8,7 @@ async function initLLM() {
 async function loadLLMConfig() {
     const outputPath = document.getElementById('output-file-path');
     if (outputPath) {
-        outputPath.value = (window.config?.llm?.output_file_path) || '';
+        outputPath.value = (config?.llm?.output_file_path) || '';
     }
 }
 
@@ -274,7 +274,6 @@ async function callLLM() {
     document.body.classList.remove('spinner-active');
 
     // Hide cancel button
-    cancelBtn = document.getElementById('cancel-btn');
     if (cancelBtn) cancelBtn.style.display = 'none';
 
     // Create response element
