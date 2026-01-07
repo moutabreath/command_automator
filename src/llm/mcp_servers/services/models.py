@@ -1,11 +1,11 @@
 from dataclasses import dataclass
+from enum import Enum
 
 from jobs_tracking.services.models import TrackedJob
 
-class UserApplicationResponseCode:
-    SUCESS = 1,
+class UserApplicationResponseCode(Enum):
+    SUCCESS = 1
     ERROR = 2
-
 
 
 @dataclass

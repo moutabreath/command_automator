@@ -16,7 +16,6 @@ class JobSearchService:
     
     def __init__(self, linkedin_jobs_scraper_service: LinkedInJobsScraperService, glassdoor_jobs_scraper_service: GlassdoorJobsScraperService,
                  company_mcp_service: CompanyMCPService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
-        self.config = read_json_file(JOB_SEARCH_CONFIG_FILE)
         self.company_mcp_service = company_mcp_service
         self.linkedin_jobs_scraper_service = linkedin_jobs_scraper_service
         self.glasdoor_jobs_scraper_service = glassdoor_jobs_scraper_service
@@ -113,23 +112,23 @@ class JobSearchService:
                                                       remote: Optional[bool] = None) -> Tuple[str, str, bool, List[str]]:
         """Get search parameters from config or use defaults"""
         try:
-            llm_conf = await read_json_file(JOB_SEARCH_CONFIG_FILE)
-            logging.debug(f"LLM config loaded for job search defaults: {llm_conf}")
+            job_search_config = await read_json_file(JOB_SEARCH_CONFIG_FILE)
+            logging.debug(f"job config loaded for job search defaults: {job_search_config}")
         except Exception as e:
-            logging.debug(f"Could not load LLM config for defaults: {e}")
-            llm_conf = {}
+            logging.debug(f"Could not load job config for defaults: {e}")
+            job_search_config = {}
 
         # Use values from config when provided, otherwise use hardcoded defaults
         if job_title is None:
-            job_title = llm_conf.get('job_search', {}).get('job_title', 'Software Engineer')
+            job_title = job_search_config.get('job_search', {}).get('job_title', 'Software Engineer')
         if location is None:
-            location = llm_conf.get('job_search', {}).get('location', 'Israel')
+            location = job_search_config.get('job_search', {}).get('location', 'Israel')
         
         if remote is None:
-            remote_val = llm_conf.get('job_search', {}).get('remote')
+            remote_val = job_search_config.get('job_search', {}).get('remote')
             remote = bool(remote_val) if remote_val is not None else True
 
-        # Get forbidden titles (placeholder for now)
-        forbidden_titles = []
+        # Get forbidden titles from config
+        forbidden_titles = job_search_config.get('job_search', {}).get('forbidden_titles', [])
         
         return job_title, location, remote, forbidden_titles

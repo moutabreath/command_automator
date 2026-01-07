@@ -20,7 +20,7 @@ class JobsFilterService:
             return [], []
 
         response = await self.company_mcp_service.get_all_user_applications(user_id)
-        if response.code != UserApplicationResponseCode.SUCESS:
+        if response.code != UserApplicationResponseCode.SUCCESS:
             logging.error(f"Failed to get user applications for user_id {user_id}: {response.error_message}")
             return scraped_jobs, []
         
@@ -28,6 +28,11 @@ class JobsFilterService:
         if len(tracked_companies_with_positions) == 0:
             return scraped_jobs, []
         
+        company_lookup = {
+            app.company_name.strip().lower(): app 
+            for app in tracked_companies_with_positions
+        }
+
         applied_company_names = [app.company_name.strip().lower() for app in tracked_companies_with_positions]
         
         filtered_jobs = []
@@ -40,14 +45,11 @@ class JobsFilterService:
                 filtered_jobs.append(scraped_job)
                 continue
 
-            company_data = next((tracked_company_with_position \
-                                 for tracked_company_with_position \
-                                 in tracked_companies_with_positions \
-                                 if tracked_company_with_position.company_name.strip().lower() == scraped_company_name), None)
+            company_data = company_lookup.get(scraped_company_name)
             if not company_data:
                 filtered_jobs.append(scraped_job)
                 continue
-            
+        
             applied_jobs = company_data.tracked_job
             scraped_company_applied_job_urls = [job.job_url for job in applied_jobs]
             scraped_company_applied_job_titles = [job.job_title.strip().lower() for job in applied_jobs]

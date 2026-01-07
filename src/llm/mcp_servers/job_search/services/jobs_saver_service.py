@@ -11,7 +11,7 @@ class JobsSaverService:
         """Save jobs to JSON file
 
         Args:
-            jobs: List of Job objects to save
+            jobs: List of ScrapedJob objects to save
             filename: Name of the file (without path)
 
         Returns:
@@ -26,7 +26,7 @@ class JobsSaverService:
         if len(jobs) == 0:
             logging.info(f"No jobs to save for {filename}.")
             return False
-        
+                
         file_path = os.path.join(file_utils.JOB_FILE_DIR, filename)
         jobs_json_string = file_utils.serialize_objects(jobs)
         return await file_utils.save_file(file_path, jobs_json_string)

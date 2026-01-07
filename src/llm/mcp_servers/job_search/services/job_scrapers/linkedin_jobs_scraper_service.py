@@ -52,9 +52,10 @@ class LinkedInJobsScraperService(AbstractJobsScraperService):
         search_url = self._build_search_url(
             job_title=job_title,
             location=location,
-            remote=remote
-        )
-    
+            remote=remote,
+            job_type=job_type,
+            experience_level=experience_level
+        )    
         logging.debug(f"Search URL: {search_url}")
         
         return self._scrape_job_listings(search_url=search_url, forbidden_titles=forbidden_titles, max_pages=max_pages)

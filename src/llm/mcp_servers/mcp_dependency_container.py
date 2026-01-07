@@ -44,10 +44,9 @@ class MCPContainer(Container):
         linkedin_jobs_scraper_service=linkedin_jobs_scraper_service,
         glassdoor_jobs_scraper_service=glassdoor_jobs_scraper_service,
         jobs_saver_service=job_saver_service,
-        jobs_filter_service = jobs_filter_service,
+        jobs_filter_service=jobs_filter_service,
         company_mcp_service=company_mcp_service
     )
-
 
     @classmethod
     async def init_container(cls) -> 'MCPContainer':
