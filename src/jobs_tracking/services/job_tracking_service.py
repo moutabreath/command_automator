@@ -1,14 +1,18 @@
 from datetime import datetime, timezone
 import logging
 from urllib.parse import urlparse
+from typing import List
+
 from jobs_tracking.job_tracking_linkedin_parser import extract_linkedin_job
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
-from jobs_tracking.services.models import Company, TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode, JobAndCompanyTrackingResponse
-from repository.abstract_mongo_persist import PersistenceResponse, PersistenceErrorCode
+from jobs_tracking.services.models import Company, TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode
+from repository.models import PersistenceResponse, PersistenceErrorCode
+
 from services.abstract_persistence_service import AbstractPersistenceService
+
 from utils import file_utils
 from utils.utils import AsyncRunner
-from typing import Dict, List
+
 
 class JobTrackingService(AbstractPersistenceService):
 

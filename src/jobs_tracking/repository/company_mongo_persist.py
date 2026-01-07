@@ -7,7 +7,7 @@ from pymongo import UpdateOne
 
 from jobs_tracking.services.models import Company, TrackedJob, JobApplicationState
 
-from repository.abstract_mongo_persist import PersistenceErrorCode, PersistenceResponse
+from repository.models import PersistenceErrorCode, PersistenceResponse
 from repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
 
 class CompanyMongoPersist(AbstractOwnerMongoPersist):

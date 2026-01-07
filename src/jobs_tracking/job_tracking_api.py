@@ -31,7 +31,8 @@ class JobTrackingApi(AbstractApi):
         
         response = self.job_tracking_service.add_or_update_position(
             user_id=user_id,
-            job_state=JobApplicationState.from_string(job_dto.job_state) if isinstance(job_dto.job_state, str) else (job_dto.job_state if isinstance(job_dto.job_state, JobApplicationState) else JobApplicationState.UNKNOWN),            tracked_job=tracked_job
+            company_name=company_name,
+            tracked_job=tracked_job
         )
         return self._create_job_response(response, company_name)    
  

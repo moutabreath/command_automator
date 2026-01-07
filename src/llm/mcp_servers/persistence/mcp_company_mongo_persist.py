@@ -4,8 +4,8 @@ import pymongo.errors as mongo_errors
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from repository.abstract_mongo_persist import AbstractMongoPersist, PersistenceErrorCode, PersistenceResponse
-
+from repository.abstract_mongo_persist import AbstractMongoPersist
+from repository.models import PersistenceErrorCode, PersistenceResponse
 class MCPCompanyMongoPersist(AbstractMongoPersist):
     
     async def initialize_connection(self):
@@ -94,25 +94,12 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
    
     async def get_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
         """Get all jobs for a company"""
-        try:
-            app_response = await self.get_application(user_id, company_name)
-            if app_response.code == PersistenceErrorCode.SUCCESS and app_response.data:
-                return PersistenceResponse(data=app_response.data.get("jobs", []), code=PersistenceErrorCode.SUCCESS)
-            elif app_response.code == PersistenceErrorCode.NOT_FOUND:
-                return PersistenceResponse(data=[], code=PersistenceErrorCode.NOT_FOUND) # Return empty list if company not found
-            return app_response # Propagate other errors
-        except mongo_errors.OperationFailure as e:
-            logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
-        except mongo_errors.ConnectionFailure as e:
-            logging.exception(f"MongoDB connection failed: {e}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
-                error_message=f"MongoDB connection failed: {e}"
-            )
-        except Exception as e:
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
+        app_response = await self.get_application(user_id, company_name)
+        if app_response.code == PersistenceErrorCode.SUCCESS and app_response.data:
+            return PersistenceResponse(data=app_response.data.get("jobs", []), code=PersistenceErrorCode.SUCCESS)
+        elif app_response.code == PersistenceErrorCode.NOT_FOUND:
+            return PersistenceResponse(data=[], code=PersistenceErrorCode.NOT_FOUND) # Return empty list if company not found
+        return app_response # Propagate other errors
    
     # ==================== QUERY HELPERS ====================
     
@@ -137,7 +124,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
             logging.exception(f"MongoDB connection failed: {e}")
             return PersistenceResponse(
                 data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
+                code=PersistenceErrorCode.CONNECTION_ERROR,
                 error_message=f"MongoDB connection failed: {e}"
             )
         except Exception as e:
