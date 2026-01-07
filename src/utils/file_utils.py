@@ -129,7 +129,7 @@ async def read_json_file(file_path: str) -> dict:
         logging.exception(f"Error reading JSON file {file_path}: {e}")
         return {}
     
-async def read_text_file(file_path: str | Path) -> str | None:
+async def read_text_file(file_path: str | Path) -> str:
     content: str = ""
     logging.debug(f"Reading file: {file_path}")
     try:

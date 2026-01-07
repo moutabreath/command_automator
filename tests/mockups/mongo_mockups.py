@@ -24,7 +24,7 @@ class MockUserMongoPersist:
         
         user_id = str(uuid.uuid4())
         new_user = {"_id": user_id, "email": email}
-        self.users.insert_one(new_user)
+        await self.users.insert_one(new_user)
         return new_user
 
 class AsyncMockCursor:

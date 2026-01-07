@@ -44,7 +44,7 @@ def extract_linkedin_job(url):
         # Strategy: Look for the <a> tag that leads to a company page
         company_tag = soup.find('a', href=lambda x: x and '/company/' in x)
         if company_tag:
-            company_name = company_tag.find(text=True, recursive=False) or company_tag.get_text()
+            company_name = company_tag.find(string=True, recursive=False) or company_tag.get_text()
         
         return {
             "job_title": job_title,
