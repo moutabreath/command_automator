@@ -13,7 +13,7 @@ class UserRegistryResponseCode(Enum):
 class UserRegistryResponse:
     def __init__(self, code: UserRegistryResponseCode, user_id: str = "", error_message: str = "",):
         self.user_id = user_id
-        self.error_messsage = error_message
+        self.error_message = error_message
         self.code = code
         
 class UserRegistryService(AbstractPersistenceService):
@@ -40,15 +40,14 @@ class UserRegistryService(AbstractPersistenceService):
             return response
         except Exception:
             logging.exception("Error during login or register")
-            return UserRegistryResponse(error_message=f"Error during login or register:", code=UserRegistryResponseCode.ERROR)
-
+            return UserRegistryResponse(error_message="Error during login or register", code=UserRegistryResponseCode.ERROR)
 
     async def login_or_register_user_async(self, user_email: str) -> UserRegistryResponse:
         if not user_email or not user_email.strip():
-            return UserRegistryResponse("", UserRegistryResponseCode.ERROR)
+            return UserRegistryResponse(code=UserRegistryResponseCode.ERROR, error_message="Email is required")
         user_email = user_email.strip().lower()
         response = await self.user_persist.create_or_update_user(user_email)
         if response and '_id' in response:
              return UserRegistryResponse(user_id=str(response['_id']), code=UserRegistryResponseCode.OK)
         logging.error("Failed to create or update user")
-        return UserRegistryResponse(error_message="", code=UserRegistryResponseCode.ERROR)
+        return UserRegistryResponse(error_message="Failed to create or update user", code=UserRegistryResponseCode.ERROR)

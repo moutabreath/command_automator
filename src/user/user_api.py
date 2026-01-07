@@ -27,7 +27,7 @@ class UserApi(AbstractApi):
         try:
             response = self.user_registry_service.login_or_register(user_email)
         except Exception as e:
-            logging.error(f"Exception calling user registry service: {e}")
+            logging.exception(f"Exception calling user registry service: {e}")
             return UserApiResponse(error_message="Service unavailable", code=UserApiResponseCode.ERROR).model_dump()
          
         if not response: 
