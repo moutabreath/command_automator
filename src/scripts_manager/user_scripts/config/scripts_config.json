@@ -37,13 +37,13 @@
       "free_text_required": true
     },
     {
-      "script_name": "replace_parenthesis.py",
+      "script_name": "replace_brackets_with_braces.py",
       "short_description": "Replace brackets with braces",
       "detailed_description": "Replace '[' with '{' and ']' with '}'",
       "free_text_required": false
     },
     {
-      "script_name": "remove_parenthesis.py",
+      "script_name": "remove_braces.py",
       "short_description": "Remove braces",
       "detailed_description": "Remove '{' and '}' from input",
       "free_text_required": false
