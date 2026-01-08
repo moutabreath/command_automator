@@ -115,7 +115,7 @@ async function registerOrLogin() {
             window.userId = response.text;
 
             // Hide login container and show job tracking
-            const loginContainer = document.getElementById('llm-login-container');
+            const loginContainer = document.getElementById('login-container');
             const jobTrackingContainer = document.getElementById('job-tracking-container');
 
             if (loginContainer) {

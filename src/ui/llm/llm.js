@@ -209,11 +209,14 @@ function autoResize() {
     queryBox.style.height = 'auto';
     queryBox.style.height = Math.max(MIN_HEIGHT, queryBox.scrollHeight) + 'px';
 }
+
 async function cancelLLMJob() {
     try {
         await window.pywebview.api.cancel_llm_operation();
+        showToast('LLM operation cancelled', 'info');
     } catch (error) {
         console.error('LLM cancel failed:', error);
+        showToast('Failed to cancel operation', 'error');
     }
 }
 
@@ -253,13 +256,21 @@ async function callLLM() {
     const img = imagePreview ? imagePreview.querySelector('img') : null;
     const imageData = img ? img.src : '';
 
-    // Show spinner
+    // Show spinner and cancel button
+    
     spinner.classList.add('visible');
     document.body.classList.add('spinner-active');
-
-    // Show cancel button
-    let cancelBtn = document.getElementById('cancel-btn');
-    if (cancelBtn) cancelBtn.style.display = 'block';
+    
+    const cancelBtn = document.getElementById('cancel-btn');
+    
+    if (cancelBtn) {
+        cancelBtn.style.display = 'block';
+        console.log('Cancel button display set to block');
+    } else {
+        console.error('Cancel button not found!');
+    }
+    
+    console.log('Spinner activated, cancel button should show');
 
     let response = '';
     try {
@@ -269,13 +280,14 @@ async function callLLM() {
         response = 'Error: Failed to get response from LLM';
     }
 
-    // Hide spinner
+    // Hide spinner and cancel button
     spinner.classList.remove('visible');
     document.body.classList.remove('spinner-active');
-
-    // Hide cancel button
-    if (cancelBtn) cancelBtn.style.display = 'none';
-
+    
+    if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+    }
+    
     // Create response element
     const responseElem = document.createElement('div');
     responseElem.className = 'llm-response';

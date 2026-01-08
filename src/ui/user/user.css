@@ -1,13 +1,13 @@
 /* User Login Styles - Bootstrap Compatible */
 
-#llm-login-container {
+#login-container {
     background-color: #2a2a2a;
     border: 1px solid #444;
     border-radius: 8px;
     margin-bottom: 20px;
 }
 
-#llm-login-container .card-body {
+#login-container .card-body {
     padding: 20px;
 }
 
