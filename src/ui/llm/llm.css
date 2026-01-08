@@ -1,5 +1,3 @@
-/* LLM Interface Styles - Bootstrap Compatible */
-
 .llm-response-container {
     width: 100%;
     font-family: Arial, sans-serif;
@@ -183,6 +181,36 @@
     display: block;
 }
 
+/* Cancel Button Styling */
+#cancel-btn {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    color: white !important;
+    opacity: 1 !important;
+    display: none;
+}
+
+#cancel-btn:hover {
+    background-color: #c82333 !important;
+    border-color: #bd2130 !important;
+}
+
+#cancel-btn:disabled {
+    background-color: #dc3545 !important;
+    border-color: #dc3545 !important;
+    opacity: 1 !important;
+}
+
+/* Show cancel button with high z-index when spinner is active */
+body.spinner-active #cancel-btn {
+    display: inline-flex !important;
+    position: relative !important;
+    z-index: 99999 !important;
+    pointer-events: auto !important;
+}
+
+
+
 /* Output File Path Section */
 .query-input-section {
     display: flex;
@@ -230,27 +258,28 @@
         font-size: 0.9rem;
         padding: 10px;
     }
-    
+
     .query-box-wrapper {
         padding: 10px;
     }
-    
+
     #query-box {
         font-size: 0.95rem;
         min-height: 50px;
     }
-    
+
     .llm-query,
     .llm-response {
         max-width: 95%;
     }
-    
+
     #send-btn,
-    #select-image-btn {
+    #select-image-btn,
+    #cancel-btn {
         width: 36px;
         height: 36px;
     }
-    
+
     #image-preview {
         max-width: 150px;
         max-height: 150px;
@@ -262,7 +291,7 @@
         width: 100%;
         justify-content: space-between;
     }
-    
+
     #response-box {
         min-height: 120px;
         max-height: 250px;
