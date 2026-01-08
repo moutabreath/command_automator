@@ -230,10 +230,10 @@ async function callLLM() {
 
     const sendBtn = document.getElementById('send-btn');
     const responseBox = document.getElementById('response-box');
-    const spinner = document.getElementById('spinner');
+    
     const imagePreview = document.getElementById('image-preview');
 
-    if (!sendBtn || !queryBox || !responseBox || !spinner) {
+    if (!sendBtn || !queryBox || !responseBox) {
         console.error('Required DOM elements not found');
         return;
     }
@@ -256,22 +256,10 @@ async function callLLM() {
     const img = imagePreview ? imagePreview.querySelector('img') : null;
     const imageData = img ? img.src : '';
 
-    // Show spinner and cancel button
-    
-    spinner.classList.add('visible');
-    document.body.classList.add('spinner-active');
-    
+    const spinner = document.getElementById('spinner');
     const cancelBtn = document.getElementById('cancel-btn');
+    showSpinnedAndCancelButton(spinner, cancelBtn);
     
-    if (cancelBtn) {
-        cancelBtn.style.display = 'block';
-        console.log('Cancel button display set to block');
-    } else {
-        console.error('Cancel button not found!');
-    }
-    
-    console.log('Spinner activated, cancel button should show');
-
     let response = '';
     try {
         response = await getMessageFromLLMResponse(query, imageData, outputPath);
@@ -280,22 +268,10 @@ async function callLLM() {
         response = 'Error: Failed to get response from LLM';
     }
 
-    // Hide spinner and cancel button
-    spinner.classList.remove('visible');
-    document.body.classList.remove('spinner-active');
-    
-    if (cancelBtn) {
-        cancelBtn.style.display = 'none';
-    }
+    hideSpinneAndCancelButon(spinner, cancelBtn);
     
     // Create response element
-    const responseElem = document.createElement('div');
-    responseElem.className = 'llm-response';
-    responseElem.textContent = response;
-    responseBox.appendChild(responseElem);
-
-    // Scroll to bottom
-    responseBox.scrollTop = responseBox.scrollHeight;
+    addReponseToResponseBox(response, responseBox);
 
     // Clear image after sending
     if (imageData) {
@@ -306,6 +282,39 @@ async function callLLM() {
     sendBtn.disabled = false;
     queryBox.disabled = false;
     queryBox.focus();
+}
+
+function addReponseToResponseBox(response, responseBox) {
+    const responseElem = document.createElement('div');
+    responseElem.className = 'llm-response';
+    responseElem.textContent = response;
+    responseBox.appendChild(responseElem);
+
+    // Scroll to bottom
+    responseBox.scrollTop = responseBox.scrollHeight;
+}
+
+function hideSpinneAndCancelButon(spinner, cancelBtn) {
+    spinner.classList.remove('visible');
+    document.body.classList.remove('spinner-active');
+
+    if (cancelBtn) {
+        cancelBtn.style.display = 'none';
+    }
+}
+
+function showSpinnedAndCancelButton(spinner, cancelBtn) {
+    
+    spinner.classList.add('visible');
+    document.body.classList.add('spinner-active');
+
+    if (cancelBtn) {
+        cancelBtn.style.display = 'block';
+        console.log('Cancel button display set to block');
+    } else {
+        console.error('Cancel button not found!');
+    }
+    return { spinner, cancelBtn };
 }
 
 async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
