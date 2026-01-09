@@ -1,7 +1,7 @@
 from enum import Enum
 from typing import Dict, Any
 
-from abstract_api import AbstractApi, ApiResponse
+from abstract_api import ApiResponse
 from user.services.user_registry_service import UserRegistryResponseCode, UserRegistryService
 import logging
 
@@ -13,7 +13,7 @@ class UserApiResponse(ApiResponse):
     def __init__(self, code: UserApiResponseCode, user_id: str = None, error_message: str = None):
         super().__init__(text=user_id, error_message=error_message, code=code)
 
-class UserApi(AbstractApi):
+class UserApi:
 
     def __init__(self, user_registry_service: UserRegistryService):
         self.user_registry_service = user_registry_service   

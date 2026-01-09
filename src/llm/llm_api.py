@@ -1,9 +1,9 @@
 import base64, logging
-
+import asyncio
 from enum import Enum
 from typing import Dict, Any
 
-from abstract_api import AbstractApi, ApiResponse
+from abstract_api import ApiResponse
 from utils.utils import run_async_method, cancel_current_async_operation
 from llm.llm_client.models import MCPResponse, MCPResponseCode
 from llm.services.llm_service import LLMService
@@ -22,7 +22,7 @@ class LLMApiResponse(ApiResponse):
     def __init__(self, code: LLMApiResponseCode, error_message: str = "", result_text: str = ""):
         super().__init__(text=result_text, code=code, error_message=error_message)
 
-class LLMApi(AbstractApi):
+class LLMApi:
 
     def __init__(self,llm_service: LLMService):
         self.llm_service = llm_service
@@ -57,14 +57,19 @@ class LLMApi(AbstractApi):
                 return resp.model_dump()
 
         try:
-            result: MCPResponse = run_async_method(self.llm_service.chat_with_bot, prompt, decoded_data, output_file_path, user_id)
+            # Create and track the LLM task
+            async def llm_task():
+                return await self.llm_service.chat_with_bot(prompt, decoded_data, output_file_path, user_id)
+            
+            result: MCPResponse = run_async_method(llm_task)
             return self._convert_mcp_response_to_api_response(result)
+        except asyncio.CancelledError:
+            logging.debug("LLM operation was cancelled")
+            resp = LLMApiResponse(error_message="Operation was cancelled", code=LLMApiResponseCode.OPERATION_CANCELLED)
+            return resp.model_dump()
         except Exception as e:
             logging.error("Unexpected error during LLM operation")
-            resp = LLMApiResponse(
-                error_message="Error communicating with LLM",
-                code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM
-            )
+            resp = LLMApiResponse(error_message="Error communicating with LLM", code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
             return resp.model_dump()    
         
     def _convert_mcp_response_to_api_response(self, result: MCPResponse) -> Dict[str, Any]:

@@ -1,9 +1,9 @@
 import logging
-from abstract_api import AbstractApi
+
 from scripts_manager.services.scripts_manager_service import ScriptsManagerService
 
 
-class ScriptsManagerApi(AbstractApi):
+class ScriptsManagerApi:
     def __init__(self):
         self.scripts_manager_service = ScriptsManagerService()       
 
