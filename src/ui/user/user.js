@@ -112,7 +112,7 @@ async function registerOrLogin() {
         const response = await window.pywebview.api.login_or_register(userEmail);
 
         if (response && response.code === 'OK') {
-            window.userId = response.text;
+            window.userId = response.user_id;
 
             // Hide login container and show job tracking
             const loginContainer = document.getElementById('login-container');
