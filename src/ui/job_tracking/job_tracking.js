@@ -75,7 +75,7 @@ async function trackJobApplication(rowData, isFromBlankRow = false, rowElement =
     }
 
     try {
-        const response = await window.pywebview.api.track_job_application(
+        const response = await window.pywebview.api.track_job(
             userId,
             rowData.company_name,
             jobDto
@@ -122,7 +122,7 @@ async function viewJobApplications(companyName) {
     }
 
     try {
-        const response = await window.pywebview.api.get_positions(userId, companyName);
+        const response = await window.pywebview.api.get_tracked_jobs(userId, companyName);
         if (response && response.jobs) {
             displayJobsTable(response.jobs, companyName);
         } else {

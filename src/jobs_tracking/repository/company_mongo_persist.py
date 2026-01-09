@@ -18,7 +18,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
       
     async def create_index(self):
         if self.job_applications is not None:
-            await self.job_applications.create_index([("user_id", 1), ("company_name", 1)])
+            await self.job_applications.create_index([("user_id", 1), ("company_id", 1)])
         
     # ==================== APPLICATION CRUD ====================
        
@@ -122,13 +122,14 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
     
     # ==================== JOB CRUD ====================
     
-    async def add_or_update_position(self, user_id: str, company_name: str, tracked_job: TrackedJob, update_time) -> PersistenceResponse[TrackedJob]:
+    async def track_job(self, user_id: str, company_name: str, tracked_job: TrackedJob, update_time) -> PersistenceResponse[TrackedJob]:
         """Add or update a job in a company application
         
         Returns:
             A PersistenceResponse with a dictionary indicating if the job was created or updated: `{"created": bool, "updated": bool}`.
         """
         new_job = {
+            "job_id": tracked_job.job_id,
             "job_url": tracked_job.job_url,
             "job_title": tracked_job.job_title,
             "update_time": update_time,
@@ -143,7 +144,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         
             if existing_job:
                 success = await self._update_existing_application(user_id, company_name, new_job, existing_job)
-                if (success):
+                if success:
                     return PersistenceResponse(data=self._convert_mongo_result_to_tracked_job(new_job), code=PersistenceErrorCode.SUCCESS)
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to update job")
             else:
@@ -354,6 +355,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             job_state = JobApplicationState(job_state)
             
         return TrackedJob(
+                        job_id =job['job_id'],
                         job_url=job["job_url"],
                         job_title=job["job_title"],
                         job_state=job_state,

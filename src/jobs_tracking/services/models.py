@@ -28,6 +28,7 @@ class JobApplicationState(Enum):
 
 @dataclass
 class TrackedJob:
+    job_id: str
     job_url: str
     job_title: str
     job_state: JobApplicationState
@@ -39,6 +40,7 @@ class TrackedJob:
 
 @dataclass
 class Company:
+    company_id: str
     name: str
     tracked_jobs: List[TrackedJob]
 
@@ -48,18 +50,19 @@ class Company:
         # Convert the list of Job DTOs to Job Domain objects
         domain_jobs = [
             TrackedJob(
-                title=job_dto.title,
-                job_url=job_dto.url,
-                job_state=JobApplicationState.from_string(job_dto.state),
-                contact_name=job_dto.contact
+                job_id=job_dto.job_id,
+                job_url=job_dto.job_url,
+                job_title=job_dto.job_title,
+                job_state=JobApplicationState.from_string(job_dto.job_state),
+                contact_name=job_dto.contact_name
             )
             for job_dto in dto.tracked_jobs
         ]
         
         return cls(
+            company_id=dto.company_id,
             name=dto.company_name,
             tracked_jobs=domain_jobs
-            # company_id is generated automatically by default_factory
         )
 
 class JobTrackingResponseCode(Enum):

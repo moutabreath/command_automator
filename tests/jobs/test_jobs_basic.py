@@ -53,7 +53,7 @@ async def test_track_and_retrieve_job(user_service, job_service):
         contact_linkedin=contact_linkedin,
         contact_email=contact_email
     )
-    job_res: JobTrackingResponse = await job_service.add_or_update_position_async(
+    job_res: JobTrackingResponse = await job_service.track_job_async(
         user_id=user_id,
         company_name=company,
         tracked_job=tracked_job
@@ -88,14 +88,14 @@ async def test_get_applications(user_service, job_service):
         contact_linkedin="linkedin.com/jane",
         contact_email="jane@test.com"
     )
-    await job_service.add_or_update_position_async(
+    await job_service.track_job_async(
         user_id=user_id,
         company_name=company,
         tracked_job=tracked_job
     )
     
     # 2. Test job retrieval
-    positions = await job_service.get_positions_async(user_id, company)
+    positions = await job_service.get_tracked_jobs_async(user_id, company)
     assert positions is not None
     assert positions.code == JobTrackingResponseCode.OK
     assert len(positions.jobs) == 1

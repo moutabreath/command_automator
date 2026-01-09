@@ -27,10 +27,10 @@ class JobTrackingService(AbstractPersistenceService):
         company_persist = await CompanyMongoPersist.create(mongo_connection_string, db_name)
         return cls(company_persist)
 
-    def add_or_update_position(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    def track_job(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         
         result = AsyncRunner.run_async(
-            self.add_or_update_position_async(
+            self.track_job_async(
             user_id=user_id,
             company_name=company_name,
             tracked_job=tracked_job
@@ -39,7 +39,7 @@ class JobTrackingService(AbstractPersistenceService):
         return result
     
        
-    async def add_or_update_position_async(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    async def track_job_async(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -51,41 +51,41 @@ class JobTrackingService(AbstractPersistenceService):
               
         if not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
             logging.error("Missing required parameters for add_or_update_position")
-            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
+            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
         
         if tracked_job.contact_name and not all(c.isalpha() or c in (' ', '-', "'") for c in tracked_job.contact_name):
             logging.error("Contact name must contain only letters")
-            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
+            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
         company_name = company_name.lower()
         try:
             job_url = urlparse(tracked_job.job_url).geturl()
         except (ValueError, AttributeError) as e:
             logging.error(f"Invalid job_url format: {e}")
-            return JobTrackingResponse(job={}, code=JobTrackingResponseCode.ERROR)
+            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
         
         tracked_job.job_url = job_url
         
-        mongoResult: PersistenceResponse[TrackedJob] = await self.application_persist.add_or_update_position(
+        mongo_result: PersistenceResponse[TrackedJob] = await self.application_persist.track_job(
             user_id=user_id,
             company_name=company_name,
             tracked_job=tracked_job,
             update_time=datetime.now(timezone.utc),
         )
-        if mongoResult.code == PersistenceErrorCode.SUCCESS:
-            return JobTrackingResponse(job = mongoResult.data, code = JobTrackingResponseCode.OK)
-        logging.error(f"Failed to add job for company {company_name}: {mongoResult.code}")
-        return JobTrackingResponse(job = mongoResult.data , code = JobTrackingResponseCode.ERROR)
+        if mongo_result.code == PersistenceErrorCode.SUCCESS:
+            return JobTrackingResponse(job = mongo_result.data, code = JobTrackingResponseCode.OK)
+        logging.error(f"Failed to add job for company {company_name}: {mongo_result.code}")
+        return JobTrackingResponse(job = mongo_result.data , code = JobTrackingResponseCode.ERROR)
     
-    def get_positions(self, user_id: str, company_name: str) -> JobTrackingListResponse:
+    def get_tracked_jobs(self, user_id: str, company_name: str) -> JobTrackingListResponse:
         result = AsyncRunner.run_async(
-            self.get_positions_async(
+            self.get_tracked_jobs_async(
             user_id=user_id,
             company_name=company_name
             )
         )
         return result
     
-    async def get_positions_async(self, user_id: str, company_name: str) -> JobTrackingListResponse:
+    async def get_tracked_jobs_async(self, user_id: str, company_name: str) -> JobTrackingListResponse:
         """Get all positions for a user at a specific company"""
         if not user_id or not company_name:
             logging.error("Missing required parameters for get_positions")
@@ -97,14 +97,14 @@ class JobTrackingService(AbstractPersistenceService):
             response: PersistenceResponse[List[TrackedJob]] = await self.application_persist.get_tracked_jobs(user_id, company_name)
             if response.code == PersistenceErrorCode.SUCCESS:
                 if not response.data:
-                    logging.warning(f"No positions found for company {company_name}")
+                    logging.warning(f"No tracked jobs found for company {company_name}")
                     return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.OK)
                 return JobTrackingListResponse(jobs=response.data, code=JobTrackingResponseCode.OK)
             else:
-                logging.warning(f"No positions found for company {company_name}")
+                logging.warning(f"No tracked jobs found for company {company_name}")
                 return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
         except Exception as e:
-            logging.error(f"Failed to get positions for company {company_name}: {e}")
+            logging.error(f"Failed to get tracked jobs for company {company_name}: {e}")
             return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
 
     def extract_job_title_and_company(self, url:str):

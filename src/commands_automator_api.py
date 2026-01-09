@@ -1,5 +1,7 @@
 import configparser, webview, sys, logging, os
 from typing import Any, Dict, List
+
+import uuid
 from dotenv import load_dotenv
 
 from jobs_tracking.job_tracking_api import JobTrackingApi
@@ -102,25 +104,21 @@ class CommandsAutomatorApi:
         return self.user_api.login_or_register(email)
     
 
-    def load_job_tracking_configuration(self):
-        """Load job tracking configuration from unified config"""
-        if self.job_tracking_api is None:
-            return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        config = self.get_configuration()
-        return config.get('job_tracking', {})
-    
-    
-    
     def get_job_application_states(self):
         """Get list of job application states"""
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
         return self.job_tracking_api.get_job_application_states()
     
-    def track_job_application(self, user_id: str, company_name: str, job_dto_dict: Dict) -> Dict[str, Any]:
+    def track_job(self, user_id: str, company_name: str, job_dto_dict: Dict) -> Dict[str, Any]:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
+        if 'job_id' in job_dto_dict:
+            job_id = job_dto_dict['job_id']
+        else:
+            job_id = str(uuid.uuid4())
         job_dto = TrackedJobDto(
+            job_id=job_id,
             job_title=job_dto_dict['job_title'],
             job_url= job_dto_dict['job_url'],
             contact_linkedin=job_dto_dict['contact_linkedin'],
@@ -128,12 +126,14 @@ class CommandsAutomatorApi:
             job_state=job_dto_dict['job_state'],
             contact_email=job_dto_dict['contact_email']
         )
-        return self.job_tracking_api.track_job_application(user_id=user_id, company_name=company_name, job_dto=job_dto)
+        return self.job_tracking_api.track_job(user_id=user_id, company_name=company_name, job_dto=job_dto)
+
+
     
-    def get_positions(self, user_id: str, company_name: str) -> List[Dict] | dict:
+    def get_tracked_jobs(self, user_id: str, company_name: str) -> List[Dict] | dict:
         if self.job_tracking_api is None:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}
-        return self.job_tracking_api.get_positions(user_id, company_name)
+        return self.job_tracking_api.get_tracked_jobs(user_id, company_name)
             
     def extract_job_title_and_company(self, url:str):
         if self.job_tracking_api is None:
@@ -216,7 +216,7 @@ def main():
         )
         
         logging.info("Starting webview...")
-        webview.start(icon='ui/resources/Commands_Automator.ico')
+        webview.start(icon='ui/resources/Commands_Automator.ico', debug=True)
     except Exception as ex:
         logging.exception(f"Fatal error in main: {ex}")
         raise

@@ -1,62 +1,38 @@
-from dataclasses import dataclass
 from enum import Enum
 from typing import Dict, List, Optional
 
-from jobs_tracking.services.models import JobApplicationState
 from typing import Any
 
 from pydantic import BaseModel
 
 
-class JobTrackingApiResponseCode(Enum):
-    OK = 1
-    ERROR = 2
+class JobTrackingApiResponseCode(str, Enum):
+    OK = "OK"
+    ERROR = "ERROR"
 
-class JobTrackingApiResponse:
 
-    def __init__(self, job: Dict[str, Any], code: JobTrackingApiResponseCode):
-        self.job = job
-        self.code = code
+class JobTrackingApiResponse(BaseModel):
+    job: Dict[str, Any]
+    code: JobTrackingApiResponseCode
 
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a JSON-serializable representation."""
-        return {
-            "job": self.job,
-            "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
-        }
 
-    def __getstate__(self) -> Dict[str, Any]:
-        """Support pickling/serialization by returning a dict."""
-        return self.to_dict()
+class JobTrackingApiListResponse(BaseModel):
+    jobs: List[Dict]
+    company_name: str
+    code: JobTrackingApiResponseCode
 
-    def __setstate__(self, state: Dict[str, Any]) -> None:
-        """Restore instance from pickled state."""
-        self.job = state["job"]
-        # Restore the Enum from its name
-        self.code = JobTrackingApiResponseCode[state["code"]]
 
-class JobTrackingApiListResponse:
-    def __init__(self, jobs: List[Dict], company_name:str, code: JobTrackingApiResponseCode):
-        self.jobs = jobs
-        self.company_name = company_name
-        self.code = code
-
-    def to_dict(self) -> Dict[str, Any]:
-        """Return a JSON-serializable representation."""
-        return {
-            "jobs": self.jobs,
-            "company_name": self.company_name,
-            "code": self.code.name if isinstance(self.code, Enum) else str(self.code)
-        }
-    
 class TrackedJobDto(BaseModel):
+    job_id: str
     job_url: str
     job_title: str
     job_state: str
+    company_id: Optional[str] = None
     contact_name: Optional[str] = None
     contact_linkedin: Optional[str] = None
     contact_email: Optional[str] = None
 
 class CompanyDto(BaseModel):
+    company_id: str
     company_name: str
     tracked_jobs: List[TrackedJobDto]
