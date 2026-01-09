@@ -57,9 +57,12 @@
 
 /* Align the checkbox and company input in all rows */
 #job-table td:first-child {
-    display: flex;
+    vertical-align: middle;
+}
+
+#job-table td:first-child .d-flex {
     align-items: center;
-    gap: 0.5rem;
+    height: 100%;
 }
 
 /* Adjust the checkbox to prevent shrinking and center it */

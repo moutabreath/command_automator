@@ -155,7 +155,7 @@ function addJobToTable(job, companyName) {
 
     // Container to keep checkbox and input aligned
     const companyWrapper = document.createElement('div');
-    companyWrapper.className = "d-flex align-items-center gap-2";
+    companyWrapper.className = "d-flex align-items-center gap-2 h-100";
 
     const selectCheckbox = document.createElement('input');
     selectCheckbox.type = 'checkbox';

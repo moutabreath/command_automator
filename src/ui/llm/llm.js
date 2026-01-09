@@ -56,6 +56,10 @@ async function initLLMEventListeners() {
             e.preventDefault();
             await callLLM();
         }
+        if (e.ctrlKey && e.altKey && e.key === 'j') {
+            e.preventDefault();
+            cancelLLMJob();
+        }
     });
 
     // Folder selection
