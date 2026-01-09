@@ -1,26 +1,11 @@
 import base64, logging
 import asyncio
-from enum import Enum
 from typing import Dict, Any
 
-from abstract_api import ApiResponse
 from utils.utils import run_async_method, cancel_current_async_operation
 from llm.llm_client.models import MCPResponse, MCPResponseCode
 from llm.services.llm_service import LLMService
-
-
-class LLMApiResponseCode(Enum):
-    """Enumeration of possible LLM operation results"""
-    OK = 1
-    ERROR_COMMUNICATING_WITH_LLM = 2
-    ERROR_MODEL_OVERLOADED = 3
-    ERROR_LOADING_IMAGE_TO_MODEL = 4
-    ERROR_MODEL_QUOTA_EXCEEDED = 5
-    OPERATION_CANCELLED = 6
-
-class LLMApiResponse(ApiResponse):
-    def __init__(self, code: LLMApiResponseCode, error_message: str = "", result_text: str = ""):
-        super().__init__(text=result_text, code=code, error_message=error_message)
+from llm.models import LLMApiResponse, LLMApiResponseCode
 
 class LLMApi:
 
@@ -66,16 +51,16 @@ class LLMApi:
         except asyncio.CancelledError:
             logging.debug("LLM operation was cancelled")
             resp = LLMApiResponse(error_message="Operation was cancelled", code=LLMApiResponseCode.OPERATION_CANCELLED)
-            return resp.model_dump()
+            return resp.dict()
         except Exception as e:
             logging.error("Unexpected error during LLM operation")
             resp = LLMApiResponse(error_message="Error communicating with LLM", code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM)
-            return resp.model_dump()    
+            return resp.model_dump()
         
     def _convert_mcp_response_to_api_response(self, result: MCPResponse) -> Dict[str, Any]:
         """Convert MCPResponse to LLMApiResponse dictionary"""
         if not result:
-            return LLMApiResponse(code=LLMApiResponseCode.OPERATION_CANCELLED, error_message="Operation was cancelled").model_dump()
+            return LLMApiResponse(error_message="Operation was cancelled", code=LLMApiResponseCode.OPERATION_CANCELLED).model_dump()
         
         match result.code:
             case MCPResponseCode.OK:

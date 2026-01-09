@@ -9,22 +9,35 @@ T = TypeVar('T')
 
 _active_tasks: Set[asyncio.Task] = set()
 _task_lock = threading.Lock()
+_current_llm_task: Optional[asyncio.Task] = None
+_llm_task_lock = threading.Lock()
 
 def cancel_current_async_operation():
     """Cancel all currently running async operations"""
-    global _active_tasks
-    with _task_lock:
-        for task in _active_tasks.copy():
-            if not task.done():
-                task.cancel()
-        logging.debug(f"Cancelled {len(_active_tasks)} async operations")
-        _active_tasks.clear()
+    global _active_tasks, _current_llm_task    
+    with _llm_task_lock:
+        if _current_llm_task and not _current_llm_task.done():
+            _current_llm_task.cancel()
+            logging.debug("Cancelled current LLM task")
+            _current_llm_task = None
+
+def set_current_llm_task(task: asyncio.Task):
+    """Set the current LLM task for tracking"""
+    global _current_llm_task
+    with _llm_task_lock:
+        _current_llm_task = task
+
+def clear_current_llm_task():
+    """Clear the current LLM task"""
+    global _current_llm_task
+    with _llm_task_lock:
+        _current_llm_task = None
 
 def run_async_method(async_method: Callable[..., Coroutine[Any, Any, T]], *args, **kwargs) ->  Optional[T]:
     """
      Runs an async method synchronously. Returns None on error after logging.
     """
-    global _active_tasks
+    global _active_tasks, _current_llm_task
     try:
         async def _wrapped_method():
             return await async_method(*args, **kwargs)
@@ -36,18 +49,27 @@ def run_async_method(async_method: Callable[..., Coroutine[Any, Any, T]], *args,
             with _task_lock:
                 _active_tasks.add(task)
             
+            # If this looks like an LLM task, track it separately
+            if hasattr(async_method, '__name__') and 'llm' in async_method.__name__.lower():
+                set_current_llm_task(task)
+            
             try:
-                return loop.run_until_complete(task)
+                result = loop.run_until_complete(task)
+                clear_current_llm_task()
+                return result
             finally:
                 with _task_lock:
                     _active_tasks.discard(task)
+                clear_current_llm_task()
         finally:
             loop.close()
     except asyncio.CancelledError:
         logging.debug("Async operation was cancelled")
+        clear_current_llm_task()
         raise
     except Exception as e:
         logging.error(f"Error running async method {e}", exc_info=True)
+        clear_current_llm_task()
         return None # Caller must handle None return
 
 

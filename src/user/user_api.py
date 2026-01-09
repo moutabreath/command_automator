@@ -1,17 +1,9 @@
-from enum import Enum
-from typing import Dict, Any
-
-from abstract_api import ApiResponse
-from user.services.user_registry_service import UserRegistryResponseCode, UserRegistryService
 import logging
 
-class UserApiResponseCode(Enum):
-    OK = 1
-    ERROR = 2
+from typing import Dict, Any
 
-class UserApiResponse(ApiResponse):
-    def __init__(self, code: UserApiResponseCode, user_id: str = None, error_message: str = None):
-        super().__init__(text=user_id, error_message=error_message, code=code)
+from user.models import UserApiResponse, UserApiResponseCode
+from user.services.user_registry_service import UserRegistryResponseCode, UserRegistryService
 
 class UserApi:
 
@@ -33,7 +25,7 @@ class UserApi:
         if not response: 
             return UserApiResponse(error_message="Unknown error occurred", code=UserApiResponseCode.ERROR).model_dump()
         if response.code == UserRegistryResponseCode.OK:
-            return UserApiResponse( user_id=response.user_id, code=UserApiResponseCode.OK).model_dump()
+            return UserApiResponse(user_id=response.user_id, code=UserApiResponseCode.OK).model_dump()
         error_detail = getattr(response, 'error_message', 'Unknown error')
         logging.error(f"Failed to login or register user: {error_detail}")
         return UserApiResponse(error_message=f"Error registering or logging in user: {error_detail}", code=UserApiResponseCode.ERROR).model_dump()
