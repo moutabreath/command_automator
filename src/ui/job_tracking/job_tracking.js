@@ -12,7 +12,7 @@ async function initJobTracking() {
 
     if (trackJobBtn) {
         trackJobBtn.addEventListener('click', async () => {
-            await trackJobApplication(getFormData(), true);
+            await trackJob(getFormData(), true);
         });
     }
 
@@ -48,8 +48,8 @@ async function initJobTracking() {
     }
 }
 
-async function trackJobApplication(rowData, isFromBlankRow = false, rowElement = null) {
-    const userId = window.userId || window.user_id;
+async function trackJob(rowData, isFromBlankRow = false, rowElement = null) {
+    const userId = window.userId;
     if (!userId) {
         showAlert('Please login first.', 'warning');
         return;
@@ -75,20 +75,24 @@ async function trackJobApplication(rowData, isFromBlankRow = false, rowElement =
     }
 
     try {
-        const response = await window.pywebview.api.track_job(
+        const jobTrackingResponse = await window.pywebview.api.track_job(
             userId,
             rowData.company_name,
             jobDto
         );
+    //     class JobTrackingResponse:
+    // job: TrackedJob
+    // code: JobTrackingResponseCode
+    // company_id: Optional[str] = None
 
-        if (response && response.code === 'OK') {
+        if (jobTrackingResponse && jobTrackingResponse.code === 'OK') {
             showAlert('Job application tracked successfully!', 'success');
-            if (response.job) {
+            if (jobTrackingResponse.job) {
                 if (isFromBlankRow) {
-                    addJobToTable(response.job, rowData.company_name);
+                    addJobToTable(jobTrackingResponse.job, rowData.company_name, jobTrackingResponse.company_id);
                     clearForm();
                 } else if (rowElement) {
-                    updateRow(rowElement, response.job);
+                    updateRow(rowElement, jobTrackingResponse.job);
                 }
             }
         } else {
@@ -105,7 +109,7 @@ async function trackJobApplication(rowData, isFromBlankRow = false, rowElement =
 }
 
 async function viewJobApplications(companyName) {
-    const userId = window.userId || window.user_id;
+    const userId = window.userId;
     if (!userId) {
         showAlert('Please login first.', 'warning');
         return;
@@ -123,8 +127,8 @@ async function viewJobApplications(companyName) {
 
     try {
         const response = await window.pywebview.api.get_tracked_jobs(userId, companyName);
-        if (response && response.jobs) {
-            displayJobsTable(response.jobs, companyName);
+        if (response && response.company) {
+            displayJobsTable(response.company);
         } else {
             showAlert(`No jobs found for ${companyName}.`, 'info');
         }
@@ -145,9 +149,12 @@ function updateBulkDeleteVisibility() {
     if (bulkDelete) bulkDelete.style.display = anyChecked ? 'block' : 'none';
 }
 
-function addJobToTable(job, companyName) {
+function addJobToTable(job, companyName, companyId) {
     const tableBody = document.getElementById('job-table-body');
     const row = document.createElement('tr');
+
+    if (job.job_id) row.setAttribute('data-job-id', job.job_id);
+    if (companyId) row.setAttribute('data-company-id', companyId);
 
     // Create cells
     const companyCell = document.createElement('td');
@@ -186,8 +193,8 @@ function addJobToTable(job, companyName) {
     };
 
     row.appendChild(companyCell);
-    row.appendChild(createInputCell(job.job_title, 'job-title', true)); 
-    
+    row.appendChild(createInputCell(job.job_title, 'job-title', true));
+
     // Job URL as clickable link
     const urlCell = document.createElement('td');
     urlCell.className = "align-middle";
@@ -213,12 +220,12 @@ function addJobToTable(job, companyName) {
     }
 
     row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time', true));
-    
+
     // Contact LinkedIn as editable input
     row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
-    
+
     row.appendChild(createInputCell(job.contact_name, 'contact-name'));
-    
+
     // Contact Email as editable input
     row.appendChild(createInputCell(job.contact_email, 'contact-email'));
 
@@ -243,7 +250,7 @@ function addJobToTable(job, companyName) {
     // Add event listeners
     trackBtn.addEventListener('click', async (e) => {
         e.preventDefault();
-        await trackJobApplication(getRowData(row), false, row);
+        await trackJob(getRowData(row), false, row);
     });
 
     viewBtn.addEventListener('click', async (e) => {
@@ -294,7 +301,7 @@ async function trackCurrentRow() {
     if (!targetRow) return;
     const isFromBlankRow = targetRow.parentElement.id === 'job-input-body';
     const rowData = getRowData(targetRow);
-    await trackJobApplication(rowData, isFromBlankRow, isFromBlankRow ? null : targetRow);
+    await trackJob(rowData, isFromBlankRow, isFromBlankRow ? null : targetRow);
 }
 
 async function fillRowFromUrl() {
@@ -308,7 +315,7 @@ async function fillRowFromUrl() {
     const contactLinkedInInput = targetRow.querySelector('.contact-linkedin, #contact_linkedin');
     const contactNameInput = targetRow.querySelector('.contact-name, #contact_name');
 
-    if ((companyInput?.value) &&(jobTitleInput?.value && (contactNameInput?.value))){
+    if ((companyInput?.value) && (jobTitleInput?.value && (contactNameInput?.value))) {
         return;
     }
 
@@ -390,24 +397,28 @@ function clearForm() {
     document.getElementById('job_state').selectedIndex = 0;
 }
 
-function displayJobsTable(jobs, companyName) {
+function displayJobsTable(company) {
     const tableContainer = document.getElementById('job-tracking-container');
     const tableBody = document.getElementById('job-table-body');
     if (!tableContainer || !tableBody) return;
     tableBody.innerHTML = '';
-    
-    if (jobs.length === 0) {
-        showAlert(`No jobs found for ${companyName}`, 'info');
+
+    if (company.tracked_jobs.length === 0) {
+        showAlert(`No jobs found for ${company.company_name}`, 'info');
         return;
     }
-    
-    jobs.forEach(job => addJobToTable(job, companyName));
+    jobs = company.tracked_jobs
+    let companyName = company.company_name;
+    let companyId = company.company_id;
+    jobs.forEach(job => addJobToTable(job, companyName, companyId));
     tableContainer.style.display = 'block';
 }
 
 function getRowData(row) {
     const find = (sel) => row.querySelector(sel)?.value.trim() || '';
     return {
+        job_id: row.getAttribute('data-job-id'), // Get the ID
+        company_id: row.getAttribute('data-company-id'),
         company_name: find('.company-name') || find('#company-name'),
         job_title: find('.job-title') || find('#job_title'),
         job_url: row.querySelector('.job-url-link')?.textContent.trim() || find('.job-url') || find('#job_url'),
@@ -420,8 +431,10 @@ function getRowData(row) {
 }
 
 async function bulkDeleteSelectedRows() {
-    const userId = window.userId || window.user_id;
+    const userId = window.userId;
     if (!userId) return;
+
+    console.log("userId")
 
     const checkboxes = document.querySelectorAll('.row-checkbox:checked');
     if (checkboxes.length === 0) return;
@@ -429,11 +442,18 @@ async function bulkDeleteSelectedRows() {
     const companiesJobs = {};
     checkboxes.forEach(cb => {
         const row = cb.closest('tr');
-        const d = getRowData(row);
-        if (!companiesJobs[d.company_name]) companiesJobs[d.company_name] = { company_name: d.company_name, tracked_jobs: [] };
-        companiesJobs[d.company_name].tracked_jobs.push({
-            job_url: d.job_url, job_title: d.job_title, job_state: d.job_state,
-            contact_name: d.contact_name, contact_linkedin: d.contact_linkedin, contact_email: d.contact_email
+        const rowData = getRowData(row);
+        if (!companiesJobs[rowData.company_name]) companiesJobs[rowData.company_name] =
+            { company_id: rowData.company_id, company_name: rowData.company_name, tracked_jobs: [] };
+
+        companiesJobs[rowData.company_name].tracked_jobs.push({
+            job_id: rowData.job_id,
+            job_url: rowData.job_url,
+            job_title: rowData.job_title,
+            job_state: rowData.job_state,
+            contact_name: rowData.contact_name,
+            contact_linkedin: rowData.contact_linkedin,
+            contact_email: rowData.contact_email
         });
     });
 
