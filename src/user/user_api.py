@@ -3,7 +3,8 @@ import logging
 from typing import Dict, Any
 
 from user.models import UserApiResponse, UserApiResponseCode
-from user.services.user_registry_service import UserRegistryResponseCode, UserRegistryService
+from user.services.models import UserRegistryResponseCode
+from user.services.user_registry_service import UserRegistryService
 
 class UserApi:
 

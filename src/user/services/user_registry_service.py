@@ -1,20 +1,10 @@
-from enum import Enum
 from services.abstract_persistence_service import AbstractPersistenceService
-from services.configuration_service import ConfigurationService
 from user.repository.user_mongo_persist import UserMongoPersist
-from utils import file_utils
+from user.services.models import UserRegistryResponse, UserRegistryResponseCode
 from utils.utils import AsyncRunner
 import logging
 
-class UserRegistryResponseCode(Enum):
-    OK = 1
-    ERROR = 2
-    
-class UserRegistryResponse:
-    def __init__(self, code: UserRegistryResponseCode, user_id: str = "", error_message: str = "",):
-        self.user_id = user_id
-        self.error_message = error_message
-        self.code = code
+
         
 class UserRegistryService(AbstractPersistenceService):
     
