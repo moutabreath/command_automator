@@ -1,13 +1,14 @@
+from dataclasses import asdict
 from datetime import datetime, timezone
 import logging
 from urllib.parse import urlparse
-from typing import List
 
 from jobs_tracking.job_tracking_linkedin_parser import extract_linkedin_job
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
-from jobs_tracking.services.models import Company, TrackedJob, JobTrackingListResponse, JobTrackingResponse, JobTrackingResponseCode
-from repository.models import PersistenceResponse, PersistenceErrorCode
+from jobs_tracking.services.models import Company, TrackedJob, CompanyResponse, JobTrackingResponse, JobTrackingResponseCode
+from jobs_tracking.services.models import JobApplicationState
 
+from repository.models import PersistenceErrorCode, PersistenceResponse
 from services.abstract_persistence_service import AbstractPersistenceService
 
 from utils import file_utils
@@ -45,8 +46,6 @@ class JobTrackingService(AbstractPersistenceService):
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
         If the company doesn't exist, it's created automatically.
         
-        Returns:
-            {"created": bool, "updated": bool}
         """
               
         if not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
@@ -65,18 +64,23 @@ class JobTrackingService(AbstractPersistenceService):
         
         tracked_job.job_url = job_url
         
-        mongo_result: PersistenceResponse[TrackedJob] = await self.application_persist.track_job(
+        # Convert domain object to dict for persistence layer
+        tracked_job_dict = asdict(tracked_job)
+        
+        mongo_result: PersistenceResponse[dict] = await self.application_persist.track_job(
             user_id=user_id,
             company_name=company_name,
-            tracked_job=tracked_job,
+            tracked_job_dict=tracked_job_dict,
             update_time=datetime.now(timezone.utc),
         )
         if mongo_result.code == PersistenceErrorCode.SUCCESS:
-            return JobTrackingResponse(job = mongo_result.data, code = JobTrackingResponseCode.OK)
+            # Convert dict back to domain object
+            result_job = self._dict_to_tracked_job(mongo_result.data)
+            return JobTrackingResponse(job=result_job, company_id=mongo_result.id, code=JobTrackingResponseCode.OK)
         logging.error(f"Failed to add job for company {company_name}: {mongo_result.code}")
-        return JobTrackingResponse(job = mongo_result.data , code = JobTrackingResponseCode.ERROR)
+        return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
     
-    def get_tracked_jobs(self, user_id: str, company_name: str) -> JobTrackingListResponse:
+    def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyResponse:
         result = AsyncRunner.run_async(
             self.get_tracked_jobs_async(
             user_id=user_id,
@@ -85,32 +89,35 @@ class JobTrackingService(AbstractPersistenceService):
         )
         return result
     
-    async def get_tracked_jobs_async(self, user_id: str, company_name: str) -> JobTrackingListResponse:
+    async def get_tracked_jobs_async(self, user_id: str, company_name: str) -> CompanyResponse:
         """Get all positions for a user at a specific company"""
         if not user_id or not company_name:
             logging.error("Missing required parameters for get_positions")
-            return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
+            return CompanyResponse(code=JobTrackingResponseCode.ERROR)
             
         company_name = company_name.lower()
         
         try:
-            response: PersistenceResponse[List[TrackedJob]] = await self.application_persist.get_tracked_jobs(user_id, company_name)
+            response: PersistenceResponse[list[dict]] = await self.application_persist.get_tracked_jobs(user_id, company_name)
             if response.code == PersistenceErrorCode.SUCCESS:
                 if not response.data:
                     logging.warning(f"No tracked jobs found for company {company_name}")
-                    return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.OK)
-                return JobTrackingListResponse(jobs=response.data, code=JobTrackingResponseCode.OK)
+                    return CompanyResponse(company_id=response.id, code=JobTrackingResponseCode.OK)
+                # Convert dicts back to domain objects
+                tracked_jobs = [self._dict_to_tracked_job(job_dict) for job_dict in response.data]
+                company = Company(company_id=response.id, company_name=company_name, tracked_jobs=tracked_jobs)
+                return CompanyResponse(company=company, code=JobTrackingResponseCode.OK)
             else:
                 logging.warning(f"No tracked jobs found for company {company_name}")
-                return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
+                return CompanyResponse(company=None, code=JobTrackingResponseCode.NO_TRACKED_JOBS, error_message="No tracked jobs for this company")
         except Exception as e:
             logging.error(f"Failed to get tracked jobs for company {company_name}: {e}")
-            return JobTrackingListResponse(jobs=[], code=JobTrackingResponseCode.ERROR)
+            return CompanyResponse(company=None, code=JobTrackingResponseCode.ERROR)
 
     def extract_job_title_and_company(self, url:str):
         return extract_linkedin_job(url)       
 
-    def delete_tracked_jobs(self, userid:str, companies_jobs: List[Company]):
+    def delete_tracked_jobs(self, userid:str, companies_jobs: list[Company]):
         result = AsyncRunner.run_async(
             self.delete_tracked_jobs_async(
             userid=userid,
@@ -119,8 +126,33 @@ class JobTrackingService(AbstractPersistenceService):
         )
         return result
     
-    async def delete_tracked_jobs_async(self, userid:str, companies_jobs: List[Company]):
-        return await self.application_persist.delete_tracked_jobs(userid, companies_jobs)
+    async def delete_tracked_jobs_async(self, userid: str, companies_jobs: list[Company]):
+        if not userid or not companies_jobs:
+            logging.error("Missing required parameters for delete_tracked_jobs")
+            return False
+        # Convert domain objects to dicts
+        companies_dicts = [asdict(company) for company in companies_jobs]
+        return await self.application_persist.delete_tracked_jobs(userid, companies_dicts)
+
+    def _dict_to_tracked_job(self, job_dict: dict) -> TrackedJob:
+        """Convert dictionary to TrackedJob domain object"""        
+        
+        job_state = job_dict.get("job_state")
+        if isinstance(job_state, int):
+            job_state = JobApplicationState.from_value(job_state)
+        elif isinstance(job_state, str):
+            job_state = JobApplicationState.from_string(job_state)
+        
+        return TrackedJob(
+            job_id=job_dict.get("job_id", ""),
+            job_url=job_dict.get("job_url", ""),
+            job_title=job_dict.get("job_title", ""),
+            job_state=job_state,
+            contact_name=job_dict.get("contact_name"),
+            contact_linkedin=job_dict.get("contact_linkedin"),
+            contact_email=job_dict.get("contact_email"),
+            update_time=job_dict.get("update_time")
+        )
 
     
     async def _get_job_title_keyword(self):

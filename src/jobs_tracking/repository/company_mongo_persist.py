@@ -1,17 +1,13 @@
 import logging
 
-from typing import List
-
 import pymongo.errors as mongo_errors
 from pymongo import UpdateOne
 
-from jobs_tracking.services.models import Company, TrackedJob, JobApplicationState
-
-from repository.models import PersistenceErrorCode, PersistenceResponse
+from jobs_tracking.services.models import TrackedJob
 from repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
+from repository.models import PersistenceErrorCode, PersistenceResponse
 
 class CompanyMongoPersist(AbstractOwnerMongoPersist):
-
 
     def _setup_collections(self):
         self.job_applications = self.async_db.job_applications
@@ -22,23 +18,16 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         
     # ==================== APPLICATION CRUD ====================
        
-    async def get_tracked_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[List[TrackedJob]]:        
+    async def get_tracked_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[list[dict]]:        
         """Get all application by user and company"""
         try:
             result = await self.job_applications.find_one({
-                "user_id": user_id,
-                "company_name": company_name
-                })
+                "user_id": user_id, "company_name": company_name
+            })
             if result and "jobs" in result:
-                tracked_jobs = self._convert_mongo_result_to_tracked_job_list(result)
-                return PersistenceResponse(
-                    data=tracked_jobs,
-                    code=PersistenceErrorCode.SUCCESS
-                )
-            return PersistenceResponse(
-                data=[],
-                code=PersistenceErrorCode.SUCCESS
-            )
+                jobs = result["jobs"]
+                return PersistenceResponse(id=result["company_id"], data=jobs, code=PersistenceErrorCode.SUCCESS)
+            return PersistenceResponse(data=[], code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
@@ -55,31 +44,15 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
                 data=None,
                 code=PersistenceErrorCode.UNKNOWN_ERROR,
                 error_message=str(e)
-            )
-    
-    async def get_all_applications(self, user_id: str) -> PersistenceResponse[List[TrackedJob]]:
+            )    
+
+    async def get_all_applications(self, user_id: str) -> PersistenceResponse[list[dict]]:
         """Get all applications for a user"""
         try:
             cursor = self.job_applications.find({"user_id": user_id})
             results = await cursor.to_list(length=None)
-            tracked_jobs = []
-            for doc in results:
-                if "jobs" in doc:
-                    tracked_jobs.extend(self._convert_mongo_result_to_tracked_job_list(doc))
-            return PersistenceResponse(
-                data=tracked_jobs,
-                code=PersistenceErrorCode.SUCCESS
-            )
-        except mongo_errors.OperationFailure as e:
-            logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
-        except mongo_errors.ConnectionFailure as e:
-            logging.exception(f"MongoDB connection failed: {e}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.CONNECTION_ERROR,
-                error_message=f"MongoDB connection failed: {e}"
-            )
+            companies = results
+            return PersistenceResponse(data=companies, code=PersistenceErrorCode.SUCCESS)
         except Exception as e:
             logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(
@@ -122,30 +95,30 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
     
     # ==================== JOB CRUD ====================
     
-    async def track_job(self, user_id: str, company_name: str, tracked_job: TrackedJob, update_time) -> PersistenceResponse[TrackedJob]:
+    async def track_job(self, user_id: str, company_name: str, tracked_job_dict: dict, update_time) -> PersistenceResponse[dict]:
         """Add or update a job in a company application
         
         Returns:
             A PersistenceResponse with a dictionary indicating if the job was created or updated: `{"created": bool, "updated": bool}`.
         """
         new_job = {
-            "job_id": tracked_job.job_id,
-            "job_url": tracked_job.job_url,
-            "job_title": tracked_job.job_title,
+            "job_id": tracked_job_dict["job_id"],
+            "job_url": tracked_job_dict["job_url"],
+            "job_title": tracked_job_dict["job_title"],
             "update_time": update_time,
-            "job_state": tracked_job.job_state.value if hasattr(tracked_job.job_state, 'value') else tracked_job.job_state,
-            "contact_name": tracked_job.contact_name,
-            "contact_linkedin": tracked_job.contact_linkedin,
-            "contact_email": tracked_job.contact_email
+            "job_state": str(tracked_job_dict["job_state"]),
+            "contact_name": tracked_job_dict.get("contact_name"),
+            "contact_linkedin": tracked_job_dict.get("contact_linkedin"),
+            "contact_email": tracked_job_dict.get("contact_email")
         }
        
         try:
-            existing_job = await self._find_existing_application(user_id, company_name, tracked_job.job_url)
+            existing_job = await self._find_existing_application(user_id, company_name, tracked_job_dict["job_url"])
         
             if existing_job:
                 success = await self._update_existing_application(user_id, company_name, new_job, existing_job)
                 if success:
-                    return PersistenceResponse(data=self._convert_mongo_result_to_tracked_job(new_job), code=PersistenceErrorCode.SUCCESS)
+                    return PersistenceResponse(data=new_job, code=PersistenceErrorCode.SUCCESS)
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to update job")
             else:
                 result = await self.job_applications.update_one(
@@ -155,8 +128,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
                 )
                 if not result or (result.matched_count == 0 and result.upserted_id is None):
                     return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to add job")
-            tracked_job.update_time = update_time
-            return PersistenceResponse(data=tracked_job, code=PersistenceErrorCode.SUCCESS)
+            return PersistenceResponse(data=new_job, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
@@ -195,24 +167,23 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
 
-    async def delete_tracked_jobs(self, userid: str, companies: List[Company]) -> bool:
+    async def delete_tracked_jobs(self, userid: str, companies_dicts: list[dict]) -> bool:
         """
         Removes jobs from the database using company_name and job_url 
             as unique identifiers.
             """
-        # Create a mapping of company_name -> list of urls to delete
-        # This allows us to target specific URLs for specific companies
-        for company in companies:
-            urls_to_remove = [job.job_url for job in company.tracked_jobs]
+        for company_dict in companies_dicts:
+            tracked_jobs = company_dict.get("tracked_jobs", [])
+            urls_to_remove = [job["job_url"] for job in tracked_jobs]
             if not urls_to_remove:
                 continue
             try:
                 requests = [
                     UpdateOne(
-                        {"user_id": userid, "company_name": comp.name},
-                        {"$pull": {"jobs": {"job_url": {"$in": [tracked_job.job_url for tracked_job in comp.tracked_jobs]}}}}
+                        {"user_id": userid, "company_name": comp_dict["name"]},
+                        {"$pull": {"jobs": {"job_url": {"$in": [job["job_url"] for job in comp_dict.get("tracked_jobs", [])]}}}}
                     )
-                    for comp in companies if comp.tracked_jobs
+                    for comp_dict in companies_dicts if comp_dict.get("tracked_jobs")
                 ]
                 
                 if not requests:
@@ -230,7 +201,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
     # ==================== QUERY HELPERS ====================
     
     
-    async def get_jobs_by_state(self, user_id: str, state: str) -> PersistenceResponse[List[TrackedJob]]:
+    async def get_jobs_by_state(self, user_id: str, state: str) -> PersistenceResponse[list[TrackedJob]]:
         """Get all jobs with a specific state across all companies"""
         pipeline = [
             {"$match": {"user_id": user_id}},
@@ -245,7 +216,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
     
 
    
-    async def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[List[TrackedJob]]:
+    async def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[list[dict]]:
         """Get most recently updated jobs"""
         pipeline = [
             {"$match": {"user_id": user_id}},
@@ -259,13 +230,13 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         ]
         return await self._execute_job_aggregation(pipeline)
 
-    async def _execute_job_aggregation(self, pipeline: List[dict]) -> PersistenceResponse[List[TrackedJob]]:
-        """Execute aggregation pipeline and convert results to TrackedJob list"""
+    async def _execute_job_aggregation(self, pipeline: list[dict]) -> PersistenceResponse[list[dict]]:
+        """Execute aggregation pipeline and convert results to dictionary list"""
         try:
             cursor = self.job_applications.aggregate(pipeline)
             results = await cursor.to_list(length=None)
-            tracked_jobs = [self._convert_mongo_result_to_tracked_job(r["job"]) for r in results]
-            return PersistenceResponse(data=tracked_jobs, code=PersistenceErrorCode.SUCCESS)
+            tracked_jobs_dicts = [r["job"] for r in results]
+            return PersistenceResponse(data=tracked_jobs_dicts, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))    
@@ -299,26 +270,23 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             logging.exception(f"Unexpected error in add_job: {e}")
             raise 
 
-    def _has_job_changes(self, existing_job: dict, new_job: dict) -> bool:
+    def _has_job_changes(self, existing_job: dict, new_job: dict, excluded_fields=list[str]) -> bool:
         """Compare existing job with new job data (excluding update_time)"""
-        EXCLUDED_FIELDS = {'job_url', 'user_id', 'company_name', 'update_time'}
-        
         for key, value in new_job.items():
-            if key not in EXCLUDED_FIELDS:
+            if key not in excluded_fields:
                 if existing_job.get(key) != value:
                     return True
         return False
 
     async def _update_existing_application(self, user_id, company_name, new_job, existing_job)-> bool:
-        if not (self._has_job_changes(existing_job=existing_job, new_job=new_job)):
+        excluded_fields = {'job_url', 'user_id', 'company_name'}
+        if not (self._has_job_changes(existing_job=existing_job, new_job=new_job, excluded_fields=excluded_fields)):
             logging.warning(f"tried to update a job with the same values {existing_job['job_url']}")
             return True
 
         # Use the '$' positional operator to update the matched job element in the jobs array
-        EXCLUDED_FIELDS = {'job_url', 'user_id', 'company_name'}
-
         set_fields = {f"jobs.$.{key}": value for key, value in new_job.items()
-              if key not in EXCLUDED_FIELDS}
+              if key not in excluded_fields}
         try:
             result = await self.job_applications.update_one(
                 {
@@ -339,31 +307,4 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             raise
         except Exception as e:
             logging.exception(f"Unexpected error in add_job: {e}")
-            raise 
-
-    def _convert_mongo_result_to_tracked_job(self, job):
-        # Handle job_state conversion - it might be stored as integer or enum value
-        job_state = job["job_state"]
-        if isinstance(job_state, int):
-            job_state = JobApplicationState.from_value(job_state)
-        elif isinstance(job_state, str):
-            try:
-                job_state = JobApplicationState[job_state]
-            except KeyError:
-                job_state = JobApplicationState(job_state)
-        else:
-            job_state = JobApplicationState(job_state)
-            
-        return TrackedJob(
-                        job_id =job['job_id'],
-                        job_url=job["job_url"],
-                        job_title=job["job_title"],
-                        job_state=job_state,
-                        contact_name=job.get("contact_name"),
-                        contact_linkedin=job.get("contact_linkedin"),
-                        contact_email=job.get("contact_email"),
-                        update_time=job.get("update_time")
-                    )
-        
-    def _convert_mongo_result_to_tracked_job_list(self, result):
-        return [self._convert_mongo_result_to_tracked_job(job)for job in result["jobs"]]
+            raise

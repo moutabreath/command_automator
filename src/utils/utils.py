@@ -24,11 +24,13 @@ def cancel_current_async_operation():
 def set_current_llm_task(task: asyncio.Task):
     """Set the current LLM task for tracking"""
     global _current_llm_task
+    logging.debug("setting current LLM task")
     with _llm_task_lock:
         _current_llm_task = task
 
 def clear_current_llm_task():
     """Clear the current LLM task"""
+    logging.debug("Clearing current LLM task")
     global _current_llm_task
     with _llm_task_lock:
         _current_llm_task = None

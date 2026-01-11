@@ -1,17 +1,17 @@
-
-from dataclasses import dataclass
 from enum import Enum
 from typing import Generic, Optional, TypeVar
 
+from attr import dataclass
 
-class PersistenceErrorCode(Enum):
-    SUCCESS = 1
-    NOT_FOUND = 2
-    OPERATION_ERROR = 3
-    DUPLICATE_KEY = 4
-    CONNECTION_ERROR = 5
-    VALIDATION_ERROR = 6
-    UNKNOWN_ERROR = 7
+
+class PersistenceErrorCode(str, Enum):
+    SUCCESS = "SUCCESS"
+    NOT_FOUND = "NOT_FOUND"
+    OPERATION_ERROR = "OPERATION_ERROR"
+    DUPLICATE_KEY = "DUPLICATE_KEY"
+    CONNECTION_ERROR = "CONNECTION_ERROR"
+    VALIDATION_ERROR = "VALIDATION_ERROR"
+    UNKNOWN_ERROR = "UNKNOWN_ERROR"
 
 
 T = TypeVar('T')
@@ -22,9 +22,9 @@ class PersistenceResponse(Generic[T]):
     Note: dataclasses don't support __slots__ directly in Python < 3.10.
     In Python 3.10+, you can use @dataclass(slots=True, frozen=True)
     """
-    
-    data: Optional[T]
     code: PersistenceErrorCode
+    data: Optional[T]
+    id: Optional[str] = None
     error_message: Optional[str] = None
     
     def __repr__(self):

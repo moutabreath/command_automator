@@ -1,5 +1,4 @@
 import logging
-from typing import List, Dict
 import pymongo.errors as mongo_errors
 
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -30,7 +29,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
             self.job_applications = None
    
   
-    async def get_application(self, user_id: str, company_name: str) -> PersistenceResponse[Dict]:
+    async def get_application(self, user_id: str, company_name: str) -> PersistenceResponse[dict]:
         """Get application by user and company"""
         try:
             result = await self.job_applications.find_one({
@@ -65,7 +64,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
                 error_message=str(e)
             )
     
-    async def get_all_applications(self, user_id: str) -> PersistenceResponse[List[Dict]]:
+    async def get_all_applications(self, user_id: str) -> PersistenceResponse[list[dict]]:
         """Get all applications for a user"""
         try:
             cursor = self.job_applications.find({"user_id": user_id})
@@ -92,7 +91,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
                 error_message=str(e)
             )
    
-    async def get_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[List[Dict]]:
+    async def get_jobs(self, user_id: str, company_name: str) -> PersistenceResponse[list[dict]]:
         """Get all jobs for a company"""
         app_response = await self.get_application(user_id, company_name)
         if app_response.code == PersistenceErrorCode.SUCCESS and app_response.data:
@@ -103,7 +102,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
    
     # ==================== QUERY HELPERS ====================
     
-    async def get_jobs_by_state(self, user_id: str, state: str) -> PersistenceResponse[List[Dict]]:
+    async def get_jobs_by_state(self, user_id: str, state: str) -> PersistenceResponse[list[dict]]:
         """Get all jobs with a specific state across all companies"""
         pipeline = [
             {"$match": {"user_id": user_id}},
@@ -131,7 +130,7 @@ class MCPCompanyMongoPersist(AbstractMongoPersist):
             logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
     
-    async def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[List[Dict]]:
+    async def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[list[dict]]:
         """Get most recently updated jobs"""
         pipeline = [
             {"$match": {"user_id": user_id}},

@@ -1,14 +1,16 @@
 from dataclasses import dataclass
 from datetime import datetime
 from enum import Enum
-from typing import List, Optional
+from typing import Optional
 
-class JobApplicationState(Enum):
-    CONNECTION_REQUESTED = 1
-    MESSAGE_SENT = 2
-    EMAIL_SENT = 3
-    APPLIED = 4
-    UNKNOWN = 5
+from repository.models import PersistenceErrorCode
+
+class JobApplicationState(str, Enum):
+    CONNECTION_REQUESTED = "CONNECTION_REQUESTED"
+    MESSAGE_SENT = "MESSAGE_SENT"
+    EMAIL_SENT = "EMAIL_SENT"
+    APPLIED = "APPLIED"
+    UNKNOWN = "UNKNOWN"
     
     @classmethod
     def from_string(cls, state_str: str) -> 'JobApplicationState':
@@ -41,8 +43,8 @@ class TrackedJob:
 @dataclass
 class Company:
     company_id: str
-    name: str
-    tracked_jobs: List[TrackedJob]
+    company_name: str
+    tracked_jobs: list[TrackedJob]
 
     # 2. The Mapper Logic
     @classmethod
@@ -65,23 +67,19 @@ class Company:
             tracked_jobs=domain_jobs
         )
 
-class JobTrackingResponseCode(Enum):
-    OK = 1
-    ERROR = 2
+class JobTrackingResponseCode(str, Enum):
+    OK = "OK"
+    ERROR = "ERROR"
+    NO_TRACKED_JOBS = "NO_TRACKED_JOBS"
     
+@dataclass
 class JobTrackingResponse:
-    def __init__(self, job: TrackedJob, code: JobTrackingResponseCode):
-        self.job = job
-        self.code = code
+    job: TrackedJob
+    code: JobTrackingResponseCode
+    company_id: Optional[str] = None
 
-class JobTrackingListResponse:
-    def __init__(self, jobs: List[TrackedJob], code: JobTrackingResponseCode):
-        self.jobs = jobs
-        self.code = code
-
-
-class JobAndCompanyTrackingResponse:
-    def __init__(self, job: TrackedJob, company_name: str, code: JobTrackingResponseCode):
-        self.job = job
-        self.company_name = company_name
-        self.code = code
+@dataclass
+class CompanyResponse:
+    code: PersistenceErrorCode
+    company: Optional[Company] = None
+    error_message: Optional[str] = None
