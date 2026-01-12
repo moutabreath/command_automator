@@ -101,7 +101,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         Returns:
             A PersistenceResponse with a dictionary indicating if the job was created or updated: `{"created": bool, "updated": bool}`.
         """
-        logging.info(f"started with user {user_id} company {company_name} job {tracked_job_dict['job_title']}")
+        logging.info(f"started with user: {user_id} company: \"{company_name}\" job: \"{tracked_job_dict['job_title']}\"")
         
         if 'job_id' in tracked_job_dict and tracked_job_dict['job_id'] :
             job_id = tracked_job_dict['job_id']
@@ -153,7 +153,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
     async def delete_job(self, user_id: str, company_name: str, job_url: str) -> PersistenceResponse[bool]:
         """Delete a specific job from a company application"""
 
-        logging.info(f"started with user {user_id} company {company_name} job {job_url}")
+        logging.info(f"started with user: {user_id} company: \"{company_name}\" job: \"{job_url}\"")
         try:
             result = await self.job_applications.update_one(
                 {"user_id": user_id, "company_name": company_name},
@@ -287,7 +287,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
 
     async def _update_existing_application(self, user_id, company_name, new_job, existing_job)-> bool:
 
-        logging.info(f"started with user {user_id} company {company_name} new job {new_job['job_title']} existing job {existing_job['job_title']}")
+        logging.info(f"started with user: {user_id} company: \"{company_name}\" new job: \"{new_job['job_title']}\" existing job: \"{existing_job['job_title']}\"")
         
         excluded_fields = {'job_url', 'user_id', 'company_name'}
         if not (self._has_job_changes(existing_job=existing_job, new_job=new_job, excluded_fields=excluded_fields)):

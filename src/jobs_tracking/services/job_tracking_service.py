@@ -29,8 +29,8 @@ class JobTrackingService(AbstractPersistenceService):
         return cls(company_persist)
 
     def track_job(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
-        
-        logging.info(f"started with user {user_id} company {company_name} job {tracked_job.job_title}")
+
+        logging.info(f"started with user: {user_id} company: \"{company_name}\" job: \"{tracked_job.job_title}\"")
         result = AsyncRunner.run_async(
             self.track_job_async(
             user_id=user_id,
@@ -48,7 +48,7 @@ class JobTrackingService(AbstractPersistenceService):
         If the company doesn't exist, it's created automatically.
         
         """
-        logging.info(f"started with user {user_id} company {company_name} job {tracked_job.job_title}")
+        logging.info(f"started with user: {user_id} company: \"{company_name}\" job: \"{tracked_job.job_title}\"")
               
         if not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
             logging.error("Missing required parameters for add_or_update_position")
@@ -84,7 +84,7 @@ class JobTrackingService(AbstractPersistenceService):
     
     def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyResponse:
 
-        logging.info(f"started with user {user_id} company {company_name}")
+        logging.info(f"started with user: {user_id} company: \"{company_name}\"")
         result = AsyncRunner.run_async(
             self.get_tracked_jobs_async(
             user_id=user_id,
@@ -96,7 +96,7 @@ class JobTrackingService(AbstractPersistenceService):
     async def get_tracked_jobs_async(self, user_id: str, company_name: str) -> CompanyResponse:
         """Get all positions for a user at a specific company"""
 
-        logging.info(f"started with user {user_id} company {company_name}")
+        logging.info(f"started with user: {user_id} company: \"{company_name}\"")
         if not user_id or not company_name:
             logging.error("Missing required parameters for get_positions")
             return CompanyResponse(code=JobTrackingResponseCode.ERROR)
@@ -124,18 +124,18 @@ class JobTrackingService(AbstractPersistenceService):
         logging.info(f"start with {url}")
         return extract_linkedin_job(url)       
 
-    def delete_tracked_jobs(self, userid:str, companies_jobs: list[Company]):
-        logging.info(f"started with user {user_id} with {len(companies_jobs)}")
+    def delete_tracked_jobs(self, user_id:str, companies_jobs: list[Company]):
+        logging.info(f"started with user: {user_id} with {len(companies_jobs)} companies")
         result = AsyncRunner.run_async(
             self.delete_tracked_jobs_async(
-            user_id=userid,
+            user_id=user_id,
             companies_jobs=companies_jobs
             )
         )
         return result
     
     async def delete_tracked_jobs_async(self, user_id: str, companies_jobs: list[Company]):
-        logging.info(f"started with user {user_id} with {len(companies_jobs)}")
+        logging.info(f"started with user: {user_id} with {len(companies_jobs)} companies")
         if not user_id or not companies_jobs:
             logging.error("Missing required parameters for delete_tracked_jobs")
             return False
