@@ -30,6 +30,7 @@ class JobTrackingService(AbstractPersistenceService):
 
     def track_job(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         
+        logging.info(f"started with user {user_id} company {company_name} job {tracked_job.job_title}")
         result = AsyncRunner.run_async(
             self.track_job_async(
             user_id=user_id,
@@ -47,6 +48,7 @@ class JobTrackingService(AbstractPersistenceService):
         If the company doesn't exist, it's created automatically.
         
         """
+        logging.info(f"started with user {user_id} company {company_name} job {tracked_job.job_title}")
               
         if not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
             logging.error("Missing required parameters for add_or_update_position")
@@ -81,6 +83,8 @@ class JobTrackingService(AbstractPersistenceService):
         return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
     
     def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyResponse:
+
+        logging.info(f"started with user {user_id} company {company_name}")
         result = AsyncRunner.run_async(
             self.get_tracked_jobs_async(
             user_id=user_id,
@@ -91,6 +95,8 @@ class JobTrackingService(AbstractPersistenceService):
     
     async def get_tracked_jobs_async(self, user_id: str, company_name: str) -> CompanyResponse:
         """Get all positions for a user at a specific company"""
+
+        logging.info(f"started with user {user_id} company {company_name}")
         if not user_id or not company_name:
             logging.error("Missing required parameters for get_positions")
             return CompanyResponse(code=JobTrackingResponseCode.ERROR)
@@ -115,24 +121,27 @@ class JobTrackingService(AbstractPersistenceService):
             return CompanyResponse(company=None, code=JobTrackingResponseCode.ERROR)
 
     def extract_job_title_and_company(self, url:str):
+        logging.info(f"start with {url}")
         return extract_linkedin_job(url)       
 
     def delete_tracked_jobs(self, userid:str, companies_jobs: list[Company]):
+        logging.info(f"started with user {user_id} with {len(companies_jobs)}")
         result = AsyncRunner.run_async(
             self.delete_tracked_jobs_async(
-            userid=userid,
+            user_id=userid,
             companies_jobs=companies_jobs
             )
         )
         return result
     
-    async def delete_tracked_jobs_async(self, userid: str, companies_jobs: list[Company]):
-        if not userid or not companies_jobs:
+    async def delete_tracked_jobs_async(self, user_id: str, companies_jobs: list[Company]):
+        logging.info(f"started with user {user_id} with {len(companies_jobs)}")
+        if not user_id or not companies_jobs:
             logging.error("Missing required parameters for delete_tracked_jobs")
             return False
         # Convert domain objects to dicts
         companies_dicts = [asdict(company) for company in companies_jobs]
-        return await self.application_persist.delete_tracked_jobs(userid, companies_dicts)
+        return await self.application_persist.delete_tracked_jobs(user_id, companies_dicts)
 
     def _dict_to_tracked_job(self, job_dict: dict) -> TrackedJob:
         """Convert dictionary to TrackedJob domain object"""        

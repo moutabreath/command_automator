@@ -116,7 +116,7 @@ class CommandsAutomatorApi:
         if 'job_id' in job_dto_dict:
             job_id = job_dto_dict['job_id']
         else:
-            job_id = str(uuid.uuid4())
+            job_id = None
         job_dto = TrackedJobDto(
             job_id=job_id,
             job_title=job_dto_dict['job_title'],

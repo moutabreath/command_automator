@@ -1,4 +1,5 @@
 import logging
+import uuid
 
 import pymongo.errors as mongo_errors
 from pymongo import UpdateOne
@@ -93,16 +94,21 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
                 error_message=str(e)
             )
     
-    # ==================== JOB CRUD ====================
-    
+     
     async def track_job(self, user_id: str, company_name: str, tracked_job_dict: dict, update_time) -> PersistenceResponse[dict]:
         """Add or update a job in a company application
         
         Returns:
             A PersistenceResponse with a dictionary indicating if the job was created or updated: `{"created": bool, "updated": bool}`.
         """
+        logging.info(f"started with user {user_id} company {company_name} job {tracked_job_dict['job_title']}")
+        
+        if 'job_id' in tracked_job_dict and tracked_job_dict['job_id'] :
+            job_id = tracked_job_dict['job_id']
+        else:
+            job_id = str(uuid.uuid4())
         new_job = {
-            "job_id": tracked_job_dict["job_id"],
+            "job_id": job_id,
             "job_url": tracked_job_dict["job_url"],
             "job_title": tracked_job_dict["job_title"],
             "update_time": update_time,
@@ -113,16 +119,17 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         }
        
         try:
-            existing_job = await self._find_existing_application(user_id, company_name, tracked_job_dict["job_url"])
+            existing_company_application = await self._find_existing_application(user_id, company_name, tracked_job_dict["job_url"])
         
-            if existing_job:
+            if existing_company_application:
+                existing_job = existing_company_application["jobs"][0]
                 success = await self._update_existing_application(user_id, company_name, new_job, existing_job)
                 if success:
                     return PersistenceResponse(data=new_job, code=PersistenceErrorCode.SUCCESS)
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to update job")
             else:
                 result = await self.job_applications.update_one(
-                    {"user_id": user_id, "company_name": company_name},
+                    {"user_id": user_id, "company_name": company_name, "company_id": str(uuid.uuid4())},
                     {"$push": {"jobs": new_job}},
                     upsert=True
                 )
@@ -145,6 +152,8 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         
     async def delete_job(self, user_id: str, company_name: str, job_url: str) -> PersistenceResponse[bool]:
         """Delete a specific job from a company application"""
+
+        logging.info(f"started with user {user_id} company {company_name} job {job_url}")
         try:
             result = await self.job_applications.update_one(
                 {"user_id": user_id, "company_name": company_name},
@@ -167,11 +176,13 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             logging.exception(f"MongoDB encountered an unknown error: {e}")
             return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
 
-    async def delete_tracked_jobs(self, userid: str, companies_dicts: list[dict]) -> bool:
+    async def delete_tracked_jobs(self, user_id: str, companies_dicts: list[dict]) -> bool:
         """
         Removes jobs from the database using company_name and job_url 
             as unique identifiers.
             """
+        logging.info(f"started with user {user_id} with {len(companies_dicts)} companies")
+
         for company_dict in companies_dicts:
             tracked_jobs = company_dict.get("tracked_jobs", [])
             urls_to_remove = [job["job_url"] for job in tracked_jobs]
@@ -180,7 +191,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             try:
                 requests = [
                     UpdateOne(
-                        {"user_id": userid, "company_name": comp_dict["name"]},
+                        {"user_id": user_id, "company_name": comp_dict["name"]},
                         {"$pull": {"jobs": {"job_url": {"$in": [job["job_url"] for job in comp_dict.get("tracked_jobs", [])]}}}}
                     )
                     for comp_dict in companies_dicts if comp_dict.get("tracked_jobs")
@@ -192,10 +203,8 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
                 result = await self.job_applications.bulk_write(requests)
                 return result.modified_count > 0
             except Exception as e:
-                logging.exception(f"Failed to delete jobs for user {userid}: {e}")
+                logging.exception(f"Failed to delete jobs for user {user_id}: {e}")
                 return False
-
-    
     
     
     # ==================== QUERY HELPERS ====================
@@ -213,8 +222,6 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             }}
         ]
         return await self._execute_job_aggregation(pipeline)
-    
-
    
     async def get_recent_jobs(self, user_id: str, limit: int = 10) -> PersistenceResponse[list[dict]]:
         """Get most recently updated jobs"""
@@ -279,6 +286,9 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         return False
 
     async def _update_existing_application(self, user_id, company_name, new_job, existing_job)-> bool:
+
+        logging.info(f"started with user {user_id} company {company_name} new job {new_job['job_title']} existing job {existing_job['job_title']}")
+        
         excluded_fields = {'job_url', 'user_id', 'company_name'}
         if not (self._has_job_changes(existing_job=existing_job, new_job=new_job, excluded_fields=excluded_fields)):
             logging.warning(f"tried to update a job with the same values {existing_job['job_url']}")
