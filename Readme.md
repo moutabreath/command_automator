@@ -56,3 +56,7 @@ for example "help me find jobs from the internet"
 
 4. For applied jobs/ referred jobs, you must install MongoDb: https://www.mongodb.com/products/platform/atlas-database
 Login: Enter your own email. It can be a fake email as well. No passwords needed, yet. Everything is saved locally, and thus no one else has access to the details you put in.
+Keyboard shortcuts:
+ 1. Ctrl+Alt+t: automatically saves the selected row and updates it.
+ 2. Ctrl+Alt+v: views the jobs saved for the company written in the 'company', in the active row.
+ 3. Ctrl+Alt+m: try to extract company name, jobs description from job url, and contact name given linkedin person url.
