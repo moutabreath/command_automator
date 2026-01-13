@@ -149,8 +149,6 @@ class JobTrackingService(AbstractPersistenceService):
         job_state = job_dict.get("job_state")
         if isinstance(job_state, int):
             job_state = JobApplicationState.from_value(job_state)
-        elif isinstance(job_state, str):
-            job_state = JobApplicationState.from_string(job_state)
         
         return TrackedJob(
             job_id=job_dict.get("job_id", ""),

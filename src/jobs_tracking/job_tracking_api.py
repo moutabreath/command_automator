@@ -101,7 +101,6 @@ class JobTrackingApi:
 
     def _map_tracked_job_to_dict(self, job: TrackedJob):
         job_dict = asdict(job)
-        job_dict['job_state'] = job.job_state.name  # Convert enum to string
         if job_dict.get('update_time'):
             job_dict['update_time'] = job_dict['update_time'].isoformat() if hasattr(job_dict['update_time'], 'isoformat') else str(job_dict['update_time'])
         return job_dict

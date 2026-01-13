@@ -80,10 +80,6 @@ async function trackJob(rowData, isFromBlankRow = false, rowElement = null) {
             rowData.company_name,
             jobDto
         );
-    //     class JobTrackingResponse:
-    // job: TrackedJob
-    // code: JobTrackingResponseCode
-    // company_id: Optional[str] = None
 
         if (jobTrackingResponse && jobTrackingResponse.code === 'OK') {
             showAlert('Job application tracked successfully!', 'success');
