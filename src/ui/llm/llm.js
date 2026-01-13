@@ -1,3 +1,10 @@
+// Configure marked to handle code highlighting internally if desired
+marked.setOptions({
+    headerIds: false,
+    mangle: false,
+    breaks: true, // Renders line breaks as <br> (optional)
+});
+
 async function initLLM() {
     console.log('Initializing LLM...');
 
@@ -234,7 +241,6 @@ async function callLLM() {
 
     const sendBtn = document.getElementById('send-btn');
     const responseBox = document.getElementById('response-box');
-    
     const imagePreview = document.getElementById('image-preview');
 
     if (!sendBtn || !queryBox || !responseBox) {
@@ -246,13 +252,12 @@ async function callLLM() {
     sendBtn.disabled = true;
     queryBox.disabled = true;
 
-    // Create query element
+    // Create and append user query element (Plain text is fine here)
     const queryElem = document.createElement('div');
     queryElem.className = 'llm-query';
     queryElem.textContent = query;
-
-    // Append to response box
     responseBox.appendChild(queryElem);
+    
     queryBox.value = '';
     autoResize();
 
@@ -274,24 +279,58 @@ async function callLLM() {
 
     hideSpinneAndCancelButon(spinner, cancelBtn);
     
-    // Create response element
+    // RENDER STEP: This now handles Markdown + Sanitization + Highlighting
     addReponseToResponseBox(response, responseBox);
 
-    // Clear image after sending
+    // Cleanup
     if (imageData) {
         removeImageThumbnail();
     }
-
-    // Re-enable input
     sendBtn.disabled = false;
     queryBox.disabled = false;
     queryBox.focus();
 }
 
+/**
+ * SECURE RENDERING FUNCTION
+ * 1. Converts Markdown to HTML
+ * 2. Sanitizes against XSS
+ * 3. Highlights code syntax
+ */
 function addReponseToResponseBox(response, responseBox) {
     const responseElem = document.createElement('div');
     responseElem.className = 'llm-response';
-    responseElem.textContent = response;
+
+    try {
+        // 1. Convert Markdown string to HTML string
+        // 'marked' will convert ```json into <pre><code class="language-json">
+        const rawHtml = marked.parse(response);
+
+        // 2. Sanitize to prevent LLM-generated XSS attacks
+        // We whitelist 'class' so Prism.js can find the 'language-xxx' classes
+        const cleanHtml = DOMPurify.sanitize(rawHtml, {
+            ALLOWED_TAGS: [
+                'p', 'br', 'strong', 'em', 'pre', 'code', 'span', 
+                'ul', 'li', 'ol', 'h1', 'h2', 'h3', 'blockquote', 'table', 'thead', 'tbody', 'tr', 'th', 'td'
+            ],
+            ALLOWED_ATTR: ['class']
+        });
+
+        // 3. Insert the safe HTML into the DOM
+        responseElem.innerHTML = cleanHtml;
+
+        // 4. Tell Prism to highlight the newly added code blocks
+        const codeBlocks = responseElem.querySelectorAll('pre code');
+        codeBlocks.forEach((block) => {
+            Prism.highlightElement(block);
+        });
+
+    } catch (error) {
+        console.error('Error in markdown/sanitization pipeline:', error);
+        // Fallback: if everything fails, show as plain text to stay safe
+        responseElem.textContent = response;
+    }
+
     responseBox.appendChild(responseElem);
 
     // Scroll to bottom
