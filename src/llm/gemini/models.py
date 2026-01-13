@@ -1,30 +1,30 @@
-from enum import Enum
+from enum import StrEnum
 from dataclasses import dataclass
 from typing import List, Optional, Any
 
-class LLMResponseCode(Enum):
+class LLMResponseCode(StrEnum):
     """Enumeration of possible Gemini API operation results"""
-    OK = 1
-    ERROR_USING_GEMINI_API = 2
-    GEMINI_UNAVAILABLE = 3
-    MODEL_OVERLOADED = 4
-    RESOURCE_EXHAUSTED = 5
+    OK = "OK"
+    ERROR_USING_GEMINI_API = "ERROR_USING_GEMINI_API"
+    GEMINI_UNAVAILABLE = "GEMINI_UNAVAILABLE"
+    MODEL_OVERLOADED = "MODEL_OVERLOADED"
+    RESOURCE_EXHAUSTED = "RESOURCE_EXHAUSTED"
     
 @dataclass
 class LLMResponse:
     text: str
     code: LLMResponseCode
 
-class LLMToolResponseCode(Enum):
+class LLMToolResponseCode(StrEnum):
     """Enumeration of possible Gemini API operation results"""
-    USING_TOOL = 1
-    NOT_USING_TOOL = 2
-    MODEL_OVERLOADED = 3
+    USING_TOOL = "USING_TOOL"
+    NOT_USING_TOOL = "NOT_USING_TOOL"
+    MODEL_OVERLOADED = "MODEL_OVERLOADED"
 
 
 @dataclass
 class LLMToolResponse:
-    code : LLMToolResponseCode
-    selected_tool: str 
+    code: LLMToolResponseCode
+    selected_tool: Optional[str] = None
     args: Optional[List[Any]] = None
     error_message: Optional[str] = None
