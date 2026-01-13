@@ -289,7 +289,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
 
         logging.info(f"started with user: {user_id} company: \"{company_name}\" new job: \"{new_job['job_title']}\" existing job: \"{existing_job['job_title']}\"")
         
-        excluded_fields = {'job_url', 'user_id', 'company_name'}
+        excluded_fields = {'job_url', 'user_id', 'company_name', 'job_id'}
         if not (self._has_job_changes(existing_job=existing_job, new_job=new_job, excluded_fields=excluded_fields)):
             logging.warning(f"tried to update a job with the same values {existing_job['job_url']}")
             return True
