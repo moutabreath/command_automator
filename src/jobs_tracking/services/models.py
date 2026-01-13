@@ -1,11 +1,11 @@
 from dataclasses import dataclass
 from datetime import datetime
-from enum import Enum
+from enum import StrEnum
 from typing import Optional
 
 from repository.models import PersistenceErrorCode
 
-class JobApplicationState(str, Enum):
+class JobApplicationState(StrEnum):
     CONNECTION_REQUESTED = "CONNECTION_REQUESTED"
     MESSAGE_SENT = "MESSAGE_SENT"
     EMAIL_SENT = "EMAIL_SENT"
@@ -67,7 +67,7 @@ class Company:
             tracked_jobs=domain_jobs
         )
 
-class JobTrackingResponseCode(str, Enum):
+class JobTrackingResponseCode(StrEnum):
     OK = "OK"
     ERROR = "ERROR"
     NO_TRACKED_JOBS = "NO_TRACKED_JOBS"

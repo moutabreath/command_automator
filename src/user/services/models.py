@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from enum import Enum
+from enum import StrEnum
 
 
-class UserRegistryResponseCode(Enum):
-    OK = 1
-    ERROR = 2
+class UserRegistryResponseCode(StrEnum):
+    OK = "OK"
+    ERROR = "ERROR"
     
 
 @dataclass

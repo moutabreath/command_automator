@@ -1,13 +1,14 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Optional
 
+from jobs_tracking.services.models import JobApplicationState
 from pydantic import BaseModel
 
 class TrackedJobDto(BaseModel):
     job_id: Optional[str]
     job_url: str
     job_title: str
-    job_state: str
+    job_state: JobApplicationState
     company_id: Optional[str] = None
     contact_name: Optional[str] = None
     contact_linkedin: Optional[str] = None
@@ -19,7 +20,7 @@ class CompanyDto(BaseModel):
     company_id: Optional[str] = None
 
 
-class JobTrackingApiResponseCode(str, Enum):
+class JobTrackingApiResponseCode(StrEnum):
     OK = "OK"
     ERROR = "ERROR"
 

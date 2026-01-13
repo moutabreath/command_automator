@@ -1,8 +1,8 @@
-from enum import Enum
+from enum import StrEnum
 from pydantic import BaseModel
 from typing import Optional
 
-class UserApiResponseCode(str, Enum):
+class UserApiResponseCode(StrEnum):
     OK = "OK"
     ERROR = "ERROR"
 

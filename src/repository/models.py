@@ -1,10 +1,10 @@
-from enum import Enum
+from enum import StrEnum
 from typing import Generic, Optional, TypeVar
 
 from attr import dataclass
 
 
-class PersistenceErrorCode(str, Enum):
+class PersistenceErrorCode(StrEnum):
     SUCCESS = "SUCCESS"
     NOT_FOUND = "NOT_FOUND"
     OPERATION_ERROR = "OPERATION_ERROR"

@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 from pydantic import BaseModel
 from typing import Optional
 
 
-class LLMApiResponseCode(str, Enum):
+class LLMApiResponseCode(StrEnum):
     """Enumeration of possible LLM operation results"""
     OK = "OK"
     ERROR_COMMUNICATING_WITH_LLM = "ERROR_COMMUNICATING_WITH_LLM"
