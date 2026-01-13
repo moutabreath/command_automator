@@ -3,6 +3,7 @@ This software is used for two things:
 2. An LLM Tab that can mimic a client for LLM. It acts as an agent for Gemini and sends requests to it, just like you would, for exapmle, gemini, or chatGPT.
    With this, you can also create a tailored resume and cover letter specific to a given job description.
 3. Search jobs from the internet.
+4. Track applied/referred jobs.
 
 Script Manager:
 
@@ -52,3 +53,6 @@ C:\Users\<user-name>\AppData\Roaming\commands_automator\mcp_servers\resume\job_s
 to add your desired job keywords.
 Then, ask the chat in a natural language to find jobs from the internet.
 for example "help me find jobs from the internet"
+
+4. For applied jobs/ referred jobs, you must install MongoDb: https://www.mongodb.com/products/platform/atlas-database
+Login: Enter your own email. It can be a fake email as well. No passwords needed, yet. Everything is saved locally, and thus no one else has access to the details you put in.
