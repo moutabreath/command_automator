@@ -123,18 +123,21 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         
             if existing_company_application:
                 existing_job = existing_company_application["jobs"][0]
+                new_job['company_id'] = existing_company_application['company_id']
                 success = await self._update_existing_application(user_id, company_name, new_job, existing_job)
                 if success:
                     return PersistenceResponse(data=new_job, code=PersistenceErrorCode.SUCCESS)
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to update job")
             else:
+                company_id = str(uuid.uuid4)
                 result = await self.job_applications.update_one(
-                    {"user_id": user_id, "company_name": company_name, "company_id": str(uuid.uuid4())},
+                    {"user_id": user_id, "company_name": company_name, "company_id": company_id},
                     {"$push": {"jobs": new_job}},
                     upsert=True
                 )
                 if not result or (result.matched_count == 0 and result.upserted_id is None):
                     return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to add job")
+                new_job['company_id'] = company_id
             return PersistenceResponse(data=new_job, code=PersistenceErrorCode.SUCCESS)
         except mongo_errors.OperationFailure as e:
             logging.exception(f"MongoDB operation failed: {e}")
