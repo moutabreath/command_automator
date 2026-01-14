@@ -215,7 +215,7 @@ function addJobToTable(job, companyName, companyId) {
         stateSelectElement.value = job.job_state;
     }
 
-    row.appendChild(createInputCell(formatDateTime(job.update_time), 'date-time', true));
+    row.appendChild(createInputCell(job.update_time, 'date-time', true));
 
     // Contact LinkedIn as editable input
     row.appendChild(createInputCell(job.contact_linkedin, 'contact-linkedin'));
@@ -271,7 +271,7 @@ function updateRow(row, job) {
     if (stateSelect) stateSelect.value = job.job_state || '';
 
     const dateTimeInput = row.querySelector('.date-time');
-    if (dateTimeInput) dateTimeInput.value = formatDateTime(job.update_time) || '';
+    if (dateTimeInput) dateTimeInput.value = job.update_time || '';
 
     const linkedinInput = row.querySelector('.contact-linkedin');
     if (linkedinInput) linkedinInput.value = job.contact_linkedin || '';
@@ -353,14 +353,6 @@ function createStateSelect() {
     stateSelect.className = 'form-select form-select-sm';
     populateStateSelect(stateSelect);
     return stateSelect;
-}
-
-function formatDateTime(dateTimeString) {
-    if (!dateTimeString) return '';
-    return new Date(dateTimeString).toLocaleString('en-GB', {
-        day: '2-digit', month: '2-digit', year: 'numeric',
-        hour: '2-digit', minute: '2-digit', hour12: false
-    });
 }
 
 function getStateLabel(enumName) {
