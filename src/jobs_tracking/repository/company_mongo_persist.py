@@ -129,7 +129,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
                     return PersistenceResponse(data=new_job, code=PersistenceErrorCode.SUCCESS)
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message="Failed to update job")
             else:
-                company_id = str(uuid.uuid4)
+                company_id = str(uuid.uuid4())
                 result = await self.job_applications.update_one(
                     {"user_id": user_id, "company_name": company_name, "company_id": company_id},
                     {"$push": {"jobs": new_job}},
