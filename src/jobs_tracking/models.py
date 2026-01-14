@@ -1,22 +1,25 @@
 from enum import StrEnum
 from typing import Optional
-
-from jobs_tracking.services.models import JobApplicationState
+from datetime import datetime
 from pydantic import BaseModel
 
+from jobs_tracking.services.models import JobApplicationState
+
+
 class TrackedJobDto(BaseModel):
+    company_id: Optional[str] = None
     job_id: Optional[str]
     job_url: str
     job_title: str
     job_state: JobApplicationState
-    company_id: Optional[str] = None
+    update_time: Optional[str] = None   
     contact_name: Optional[str] = None
     contact_linkedin: Optional[str] = None
     contact_email: Optional[str] = None
 
 class CompanyDto(BaseModel):    
     company_name: str
-    tracked_jobs: list[dict]
+    tracked_jobs: list[TrackedJobDto]
     company_id: Optional[str] = None
 
 

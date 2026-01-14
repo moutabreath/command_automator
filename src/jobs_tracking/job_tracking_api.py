@@ -3,7 +3,7 @@ from typing import Any
 from dataclasses import asdict
 
 from jobs_tracking.models import CompanyDto, JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse, TrackedJobDto
-from jobs_tracking.services.models import Company, CompanyResponse, JobApplicationState, TrackedJob
+from jobs_tracking.services.models import Company, CompanyResponse, JobApplicationState, JobTrackingResponse, TrackedJob
 from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
 
 class JobTrackingApi:
@@ -32,7 +32,7 @@ class JobTrackingApi:
             company_name=company_name,
             tracked_job=tracked_job
         )
-        return self._map_job_tracking_response_to_dict(response, company_name)
+        return self.create_job_tracking_response(response)
  
     def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyApiResponse:
         if not user_id or not company_name:
@@ -41,7 +41,7 @@ class JobTrackingApi:
         
         company_response: CompanyResponse = self.job_tracking_service.get_tracked_jobs(user_id, company_name)
         if company_response and company_response.code == JobTrackingResponseCode.OK:
-            serialized_jobs = [self._map_tracked_job_to_dict(job) for job in company_response.company.tracked_jobs]
+            serialized_jobs = [self._map_tracked_job_to_dto(job) for job in company_response.company.tracked_jobs]
             company_dto = CompanyDto(company_id=company_response.company.company_id, company_name=company_response.company.company_name, tracked_jobs=serialized_jobs)
             return CompanyApiResponse(company=company_dto,
                                                 code=JobTrackingApiResponseCode.OK).model_dump(exclude_none=True)
@@ -92,16 +92,22 @@ class JobTrackingApi:
         return domain_companies
         
 
-    def _map_job_tracking_response_to_dict(self, response, company_name: str) -> dict[str, Any]:
+    def create_job_tracking_response(self, response: JobTrackingResponse) -> JobTrackingApiResponse:
         if response and response.code == JobTrackingResponseCode.OK:
-            job_dict = self._map_tracked_job_to_dict(response.job)
-            job_dict['company_name'] = company_name
-            return JobTrackingApiResponse(job=job_dict, code=JobTrackingApiResponseCode.OK).model_dump()
+            job_dto = self._map_tracked_job_to_dto(response.job)
+            return JobTrackingApiResponse(job=job_dto, code=JobTrackingApiResponseCode.OK).model_dump()
         return JobTrackingApiResponse(code=JobTrackingApiResponseCode.ERROR).model_dump()
 
-    def _map_tracked_job_to_dict(self, job: TrackedJob):
-        job_dict = asdict(job)
-        if job_dict.get('update_time'):
-            job_dict['update_time'] = job_dict['update_time'].isoformat() if hasattr(job_dict['update_time'], 'isoformat') else str(job_dict['update_time'])
-        return job_dict
+    def _map_tracked_job_to_dto(self, job: TrackedJob):
+        return TrackedJobDto(
+            job_id=job.job_id,
+            job_url=job.job_url,
+            job_title=job.job_title,
+            job_state=job.job_state,
+            update_time=job.update_time.strftime("%d/%m/%Y"),
+            contact_name=job.contact_name,
+            contact_linkedin=job.contact_linkedin,
+            contact_email=job.contact_email
+        )
+
     

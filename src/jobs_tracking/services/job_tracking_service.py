@@ -78,7 +78,7 @@ class JobTrackingService(AbstractPersistenceService):
         if mongo_result.code == PersistenceErrorCode.SUCCESS:
             # Convert dict back to domain object
             result_job = self._dict_to_tracked_job(mongo_result.data)
-            return JobTrackingResponse(job=result_job, company_id=mongo_result.id, code=JobTrackingResponseCode.OK)
+            return JobTrackingResponse(job=result_job, company_id=mongo_result.data.get("company_id", ""), code=JobTrackingResponseCode.OK)
         logging.error(f"Failed to add job for company {company_name}: {mongo_result.code}")
         return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
     

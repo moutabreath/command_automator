@@ -194,7 +194,7 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
             try:
                 requests = [
                     UpdateOne(
-                        {"user_id": user_id, "company_name": comp_dict["name"]},
+                        {"user_id": user_id, "company_name": comp_dict["company_name"]},
                         {"$pull": {"jobs": {"job_url": {"$in": [job["job_url"] for job in comp_dict.get("tracked_jobs", [])]}}}}
                     )
                     for comp_dict in companies_dicts if comp_dict.get("tracked_jobs")
