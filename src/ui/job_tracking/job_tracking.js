@@ -189,7 +189,15 @@ function addJobToTable(job, companyName, companyId) {
     };
 
     row.appendChild(companyCell);
-    row.appendChild(createInputCell(job.job_title, 'job-title', true));
+
+    const titleCell = document.createElement('td');
+    titleCell.className = "align-middle";
+    const titleDiv = document.createElement('div');
+    titleDiv.className = 'job-title';
+    titleDiv.textContent = job.job_title || '';
+    titleDiv.style.cssText = 'word-wrap: break-word; overflow-wrap: break-word; white-space: normal;';
+    titleCell.appendChild(titleDiv);
+    row.appendChild(titleCell);
 
     // Job URL as clickable link
     const urlCell = document.createElement('td');
@@ -258,8 +266,8 @@ function addJobToTable(job, companyName, companyId) {
 }
 
 function updateRow(row, job) {
-    const jobTitleInput = row.querySelector('.job-title');
-    if (jobTitleInput) jobTitleInput.value = job.job_title || '';
+    const jobTitleDiv = row.querySelector('.job-title');
+    if (jobTitleDiv) jobTitleDiv.textContent = job.job_title || '';
 
     const urlLink = row.querySelector('.job-url-link');
     if (urlLink) {
@@ -306,12 +314,17 @@ async function fillRowFromUrl() {
     if (!targetRow) return;
 
     const companyInput = targetRow.querySelector('.company-name, #company-name');
-    const jobTitleInput = targetRow.querySelector('.job-title, #job_title');
+    const jobTitleElement = targetRow.querySelector('.job-title, #job_title');
     const jobUrlInput = targetRow.querySelector('.job-url, #job_url');
     const contactLinkedInInput = targetRow.querySelector('.contact-linkedin, #contact_linkedin');
     const contactNameInput = targetRow.querySelector('.contact-name, #contact_name');
 
-    if ((companyInput?.value) && (jobTitleInput?.value && (contactNameInput?.value))) {
+    // Check if fields are already filled
+    const titleFilled = jobTitleElement?.tagName === 'INPUT' 
+        ? jobTitleElement.value 
+        : jobTitleElement?.textContent.trim();
+    
+    if ((companyInput?.value) && titleFilled && (contactNameInput?.value)) {
         return;
     }
 
@@ -320,7 +333,15 @@ async function fillRowFromUrl() {
             const result = await window.pywebview.api.extract_job_title_and_company(jobUrlInput.value);
             if (result) {
                 if (!companyInput.value) companyInput.value = result.company_name || '';
-                if (!jobTitleInput.value) jobTitleInput.value = result.job_title || '';
+                
+                // Handle job title for both input and div elements
+                if (jobTitleElement && !titleFilled) {
+                    if (jobTitleElement.tagName === 'INPUT') {
+                        jobTitleElement.value = result.job_title || '';
+                    } else {
+                        jobTitleElement.textContent = result.job_title || '';
+                    }
+                }
             }
         }
     } catch (error) {
@@ -408,7 +429,7 @@ function getRowData(row) {
         job_id: row.getAttribute('data-job-id'), // Get the ID
         company_id: row.getAttribute('data-company-id'),
         company_name: find('.company-name') || find('#company-name'),
-        job_title: find('.job-title') || find('#job_title'),
+        job_title: row.querySelector('.job-title')?.textContent.trim() || find('#job_title'),
         job_url: row.querySelector('.job-url-link')?.textContent.trim() || find('.job-url') || find('#job_url'),
         job_state: find('.state-cell select') || find('#job_state'),
         contact_name: find('.contact-name') || find('#contact_name'),
