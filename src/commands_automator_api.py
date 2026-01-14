@@ -203,7 +203,8 @@ def main():
         logging.info("Starting Commands Automator application...")
 
         AsyncRunner.start()
-
+        
+        webview.settings['REMOTE_DEBUGGING_PORT'] = 9222
         scripts_manager_api, llm_api, user_api, job_tracking_api = AsyncRunner.run_async(initialize_apis())
         # Initialize API and create window
         api = CommandsAutomatorApi(scripts_manager_api, llm_api, user_api, job_tracking_api)
@@ -216,7 +217,7 @@ def main():
         )
         
         logging.info("Starting webview...")
-        webview.start(icon='ui/resources/Commands_Automator.ico')
+        webview.start(icon='ui/resources/Commands_Automator.ico', debug=True)
     except Exception as ex:
         logging.exception(f"Fatal error in main: {ex}")
         raise

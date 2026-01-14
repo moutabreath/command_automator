@@ -65,6 +65,12 @@
       "short_description": "Kill process holding port",
       "detailed_description": "Find and terminate the process holding the specified TCP port. Pass the port number as argument.",
       "free_text_required": true
+    },
+    {
+      "script_name": "update_palo.py",
+      "short_description": "Update Palo Jobs",
+      "detailed_description": "Updates Palo Alto Networks job applications in the database",
+      "free_text_required": false
     }
   ]
 }
