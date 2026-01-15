@@ -91,7 +91,7 @@ function getContactNameFromLinkedin(url) {
     if (!match) return null;
     
     const slug = match[1].replace(/\d+$/, ''); // Remove trailing numbers
-    return slug.split('-')
+    return slug.split('-').slice(0, 2)
         .map(word => word.charAt(0).toUpperCase() + word.slice(1))
         .join(' ');
 }

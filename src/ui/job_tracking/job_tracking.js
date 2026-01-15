@@ -60,6 +60,20 @@ async function trackJob(rowData, isFromBlankRow = false, rowElement = null) {
         return;
     }
 
+    if (rowData.contact_linkedin && !rowData.contact_linkedin.startsWith('https://www.linkedin.com/in')) {
+        showAlert('Contact LinkedIn must start with https://www.linkedin.com/in', 'warning');
+        return;
+    }
+
+    if (rowData.contact_name) {
+        const spaceCount = (rowData.contact_name.match(/ /g) || []).length;
+        const isOnlyLetters = /^[a-zA-Z\s]+$/.test(rowData.contact_name);
+        if (spaceCount !== 1 || !isOnlyLetters) {
+            showAlert('Contact name must have 1 space and only letters', 'warning');
+            return;
+        }
+    }
+
     const jobDto = {
         job_url: rowData.job_url,
         job_title: rowData.job_title,
