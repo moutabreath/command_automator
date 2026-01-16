@@ -1,31 +1,14 @@
 import pytest
 import mongomock
-import uuid
-from typing import Optional, Dict
-import pymongo.errors as mongo_errors
-from jobs_tracking.services.models import TrackedJob
+
 from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
+from user.repository.user_mongo_persist import UserMongoPersist
 
 
 
 @pytest.fixture
 def db():
     return mongomock.MongoClient().job_tracker_test
-
-class MockUserMongoPersist:
-
-    def __init__(self, db):
-        self.users = AsyncMockCollection(db.users)
-
-    async def create_or_update_user(self, email: str) -> Optional[Dict]:
-        user = await self.users.find_one({"email": email})
-        if user:
-            return user
-        
-        user_id = str(uuid.uuid4())
-        new_user = {"_id": user_id, "email": email}
-        await self.users.insert_one(new_user)
-        return new_user
 
 class AsyncMockCursor:
     def __init__(self, cursor):
@@ -39,6 +22,7 @@ class AsyncMockCursor:
             return next(self.cursor)
         except StopIteration:
             raise StopAsyncIteration
+        
     async def to_list(self, length=None):
         if length is None:
             return list(self.cursor)
@@ -83,6 +67,11 @@ class AsyncMockDatabase:
     
     def __getitem__(self, name):
         return AsyncMockCollection(self.db[name])
+
+class MockUserMongoPersist(UserMongoPersist):
+     def __init__(self, db):
+        self.async_db = AsyncMockDatabase(db)
+        self._setup_collections()
 
 class MockCompanyMongoPersist(CompanyMongoPersist):
     def __init__(self, db):

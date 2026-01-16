@@ -14,7 +14,7 @@ def user_service(db):
 @pytest.mark.asyncio
 async def test_register_user_returns_id(user_service):
     email = f"test-async-{uuid.uuid4()}@example.com"
-    response = await user_service.login_or_register_user_async(email)
+    response = await user_service.register_async(email)
     
     assert response.code == UserRegistryResponseCode.OK
     assert response.user_id is not None
