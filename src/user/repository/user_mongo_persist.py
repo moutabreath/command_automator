@@ -1,5 +1,4 @@
 import logging
-from typing import Optional, Dict
 import uuid
 
 from pymongo.errors import DuplicateKeyError
@@ -22,10 +21,12 @@ class UserMongoPersist(AbstractOwnerMongoPersist):
     async def get_user(self, email: str) -> PersistenceResponse:
         """Register a new user"""
         response = await self.get_user_by_email(email)
-        if response:
-            logging.info(f"User {response['_id']} registered")
-            return response
-        
+        if response.data != None:
+            logging.info(f"User {response.data['_id']} registered")
+            return response        
+        return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR,
+                                    error_message=f"encountered an unkown error while trying to find user {email}")
+    
     async def register_user(self, email: str) -> PersistenceResponse:
         response = await self.get_user_by_email(email)
         
@@ -60,11 +61,6 @@ class UserMongoPersist(AbstractOwnerMongoPersist):
                 code=PersistenceErrorCode.UNKNOWN_ERROR,
                 error_message=str(e)
             )
-        
-    
-    async def get_user(self, user_id: str) -> PersistenceResponse:
-        """Get user by ID"""
-        return await self.users.find_one({"_id": user_id})
 
     async def get_user_by_email(self, email: str) -> PersistenceResponse:
         """Get user by email"""
