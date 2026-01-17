@@ -1,4 +1,4 @@
-from dataclasses import dataclass
+from dataclasses import dataclass, fields
 from datetime import datetime
 from enum import StrEnum
 from typing import Optional
@@ -30,14 +30,27 @@ class JobApplicationState(StrEnum):
 
 @dataclass
 class TrackedJob:
-    job_id: str
     job_url: str
     job_title: str
     job_state: JobApplicationState
+    job_id: Optional[str] = None
     contact_name: Optional[str] = None
     contact_linkedin: Optional[str] = None
     contact_email: Optional[str] = None
     update_time: Optional[datetime] = None
+
+    @classmethod
+    def from_dict(cls, job_dict: dict, job_state_override=None):
+        # 1. Start with the raw dict
+        data = job_dict.copy()
+        
+        # 2. Apply the override for the Enum if provided
+        if job_state_override:
+            data['job_state'] = job_state_override
+            
+        # 3. Filter for valid dataclass fields only
+        valid_fields = {field.name for field in fields(cls)}
+        return cls(**{key: value for key, value in data.items() if key in valid_fields})
     
 
 @dataclass

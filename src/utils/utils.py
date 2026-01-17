@@ -2,8 +2,7 @@ import asyncio
 import threading
 import logging
 from typing import TypeVar, Any, Coroutine, Optional, Callable, Set
-
-
+from uuid import UUID
 
 T = TypeVar('T')
 
@@ -171,3 +170,14 @@ class AsyncRunner:
             cls._loop_thread = None
             cls._started = False
         logging.info("AsyncRunner: Shutdown complete.")
+
+def is_valid_uuid4(id: str) -> bool:
+    """Validate if the user_id is a valid UUID4"""
+    if not id or not isinstance(id, str):
+        return False
+
+    try:
+        uuid_obj = UUID(id, version=4)
+        return str(uuid_obj) == id
+    except (ValueError, AttributeError):
+        return False

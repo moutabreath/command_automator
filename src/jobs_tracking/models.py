@@ -26,6 +26,7 @@ class CompanyDto(BaseModel):
 class JobTrackingApiResponseCode(StrEnum):
     OK = "OK"
     ERROR = "ERROR"
+    INVALID_PARAMETER = "INVALID_PARAMETER"
 
 
 class JobTrackingApiResponse(BaseModel):    
