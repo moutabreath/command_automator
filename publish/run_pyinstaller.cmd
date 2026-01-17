@@ -6,7 +6,7 @@
 
 @REM add certifi for https imports such as bootstrap
 ..\.venv\Scripts\python.exe -m PyInstaller ^
-    ..\src\commands_automator_api.py ^
+    ..\src\commands_automator_initializer.py ^
     -i "..\src\ui\resources\Commands_Automator.ico" ^
     -F ^
     --add-data "..\src\ui;ui" ^
