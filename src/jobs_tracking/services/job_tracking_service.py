@@ -28,11 +28,11 @@ class JobTrackingService(AbstractPersistenceService):
         company_persist = await CompanyMongoPersist.create(mongo_connection_string, db_name)
         return cls(company_persist)
 
-    def track_new_job(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    def track_new_job_sync(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
 
         logging.info(f"started with user: {user_id} company: \"{company_name}\" job: \"{tracked_job.job_title}\"")
         result = AsyncRunner.run_async(
-            self.track_new_job_async(
+            self.track_new_job(
             user_id=user_id,
             company_name=company_name,
             tracked_job=tracked_job
@@ -40,11 +40,11 @@ class JobTrackingService(AbstractPersistenceService):
         )
         return result    
     
-    def track_existing_job(self, user_id: str, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    def track_existing_job_sync(self, user_id: str, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
 
         logging.info(f"started with user: {user_id} company: \"{company_id}\" job: \"{tracked_job.job_title}\"")
         result = AsyncRunner.run_async(
-            self.track_existing_job_async(
+            self.track_existing_job(
             user_id=user_id,
             company_id=company_id,
             tracked_job=tracked_job
@@ -52,7 +52,7 @@ class JobTrackingService(AbstractPersistenceService):
         )
         return result
        
-    async def track_new_job_async(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    async def track_new_job(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -82,7 +82,7 @@ class JobTrackingService(AbstractPersistenceService):
         return self._create_job_tracking_response(persistence_response, company_name, tracked_job)
     
 
-    async def track_existing_job_async(self, user_id: str, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    async def track_existing_job(self, user_id: str, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -110,18 +110,18 @@ class JobTrackingService(AbstractPersistenceService):
         )
         return self._create_job_tracking_response(persistence_response, company_id, tracked_job)
     
-    def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyResponse:
+    def get_tracked_jobs_sync(self, user_id: str, company_name: str) -> CompanyResponse:
 
         logging.info(f"started with user: {user_id} company: \"{company_name}\"")
         result = AsyncRunner.run_async(
-            self.get_tracked_jobs_async(
+            self.get_tracked_jobs(
             user_id=user_id,
             company_name=company_name
             )
         )
         return result
     
-    async def get_tracked_jobs_async(self, user_id: str, company_name: str) -> CompanyResponse:
+    async def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyResponse:
         """Get all positions for a user at a specific company"""
 
         logging.info(f"started with user: {user_id} company: \"{company_name}\"")
@@ -136,7 +136,7 @@ class JobTrackingService(AbstractPersistenceService):
             if response.code == PersistenceErrorCode.SUCCESS:
                 if not response.data:
                     logging.warning(f"No tracked jobs found for company {company_name}")
-                    return CompanyResponse(company_id=response.id, code=JobTrackingResponseCode.OK)
+                    return CompanyResponse(company=None, code=JobTrackingResponseCode.NO_TRACKED_JOBS)
                 # Convert dicts back to domain objects
                 tracked_jobs = [TrackedJob.from_dict(job_dict) for job_dict in response.data]
                 company = Company(company_id=response.id, company_name=company_name, tracked_jobs=tracked_jobs)
@@ -152,17 +152,17 @@ class JobTrackingService(AbstractPersistenceService):
         logging.info(f"start with {url}")
         return extract_linkedin_job(url)       
 
-    def delete_tracked_jobs(self, user_id:str, companies_jobs: list[Company]):
+    def delete_tracked_jobs_sync(self, user_id:str, companies_jobs: list[Company]):
         logging.info(f"started with user: {user_id} with {len(companies_jobs)} companies")
         result = AsyncRunner.run_async(
-            self.delete_tracked_jobs_async(
+            self.delete_tracked_jobs(
             user_id=user_id,
             companies_jobs=companies_jobs
             )
         )
         return result
     
-    async def delete_tracked_jobs_async(self, user_id: str, companies_jobs: list[Company]):
+    async def delete_tracked_jobs(self, user_id: str, companies_jobs: list[Company]):
         logging.info(f"started with user: {user_id} with {len(companies_jobs)} companies")
         if not user_id or not companies_jobs:
             logging.error("Missing required parameters for delete_tracked_jobs")
