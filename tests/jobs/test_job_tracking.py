@@ -27,7 +27,7 @@ def user_service(db):
 
 @pytest.fixture
 def job_service(db):
-    mock_persist = MockCompanyMongoPersist(db)
+    mock_persist = MockCompanyMongoPersist(db)    
     return JobTrackingService(mock_persist)
 
 
@@ -67,7 +67,7 @@ async def test_track_and_retrieve_job(user_service, job_service):
         contact_linkedin=contact_linkedin,
         contact_email=contact_email
     )
-    job_res: JobTrackingResponse = await job_service.track_new_job_async(
+    job_res: JobTrackingResponse = await job_service.track_new_job(
         user_id=user_id,
         company_name=company,
         tracked_job=tracked_job
@@ -102,14 +102,14 @@ async def test_get_applications(user_service, job_service):
         contact_linkedin="linkedin.com/jane",
         contact_email="jane@test.com"
     )
-    await job_service.track_new_job_async(
+    await job_service.track_new_job(
         user_id=user_id,
         company_name=company,
         tracked_job=tracked_job
     )
     
     # 2. Test job retrieval
-    company_response = await job_service.get_tracked_jobs_async(user_id, company)
+    company_response = await job_service.get_tracked_jobs(user_id, company)
     assert company_response is not None
     assert company_response.code == JobTrackingResponseCode.OK
     assert len(company_response.company.tracked_jobs) == 1
@@ -120,23 +120,23 @@ async def test_get_applications(user_service, job_service):
 async def test_track_new_job_missing_params(job_service, sample_job):
     """Test validation for missing parameters."""
     # Missing user_id
-    response = await job_service.track_new_job_async("", "Acme", sample_job)
+    response = await job_service.track_new_job("", "Acme", sample_job)
     assert response.code == JobTrackingResponseCode.ERROR
 
     # Missing company_name
-    response = await job_service.track_new_job_async("user1", "", sample_job)
+    response = await job_service.track_new_job("user1", "", sample_job)
     assert response.code == JobTrackingResponseCode.ERROR
 
     # Missing job_url
     sample_job.job_url = ""
-    response = await job_service.track_new_job_async("user1", "Acme", sample_job)
+    response = await job_service.track_new_job("user1", "Acme", sample_job)
     assert response.code == JobTrackingResponseCode.ERROR
 
 @pytest.mark.asyncio
 async def test_track_new_job_invalid_contact_name(job_service, sample_job):
     """Test validation for invalid contact name."""
     sample_job.contact_name = "John123" # Contains numbers
-    response = await job_service.track_new_job_async("user1", "Acme", sample_job)
+    response = await job_service.track_new_job("user1", "Acme", sample_job)
     
     assert response.code == JobTrackingResponseCode.ERROR
     assert response.job == sample_job
@@ -145,22 +145,22 @@ async def test_track_new_job_invalid_contact_name(job_service, sample_job):
 async def test_track_new_job_persistence_failure(job_service, sample_job):
     """Test handling of persistence layer failure."""
 
-    response = await job_service.track_new_job_async("user1", "Acme", sample_job)
+    response = await job_service.track_new_job("user1", "Acme", sample_job)
 
     assert response.code == JobTrackingResponseCode.ERROR
 
 
 @pytest.mark.asyncio
-async def test_track_existing_job_async_missing_params(job_service, sample_job):
+async def test_track_existing_job_missing_params(job_service, sample_job):
     """Test validation for missing parameters in update."""
-    response = await job_service.track_existing_job_async("user1", "", sample_job)
+    response = await job_service.track_existing_job("user1", "", sample_job)
     assert response.code == JobTrackingResponseCode.ERROR
 
 @pytest.mark.asyncio
-async def test_track_existing_job_async_not_found(job_service, sample_job):
+async def test_track_existing_job_not_found(job_service, sample_job):
     """Test handling when job to update is not found."""
 
-    response = await job_service.track_existing_job_async("user1", "Acme", sample_job)
+    response = await job_service.track_existing_job("user1", "Acme", sample_job)
 
     assert response.code == JobTrackingResponseCode.ERROR
 
@@ -182,7 +182,7 @@ async def test_add_new_job_for_existing_company(user_service, job_service):
         contact_name="Alice",
         contact_email="alice@example.com"
     )
-    res1 = await job_service.track_new_job_async(user_id, company, job1)
+    res1 = await job_service.track_new_job(user_id, company, job1)
     assert res1.code == JobTrackingResponseCode.OK
     assert res1.job.job_title == job1.job_title
     
@@ -194,12 +194,12 @@ async def test_add_new_job_for_existing_company(user_service, job_service):
         contact_name="Bob",
         contact_email="bob@example.com"
     )
-    res2 = await job_service.track_new_job_async(user_id, company, job2)
+    res2 = await job_service.track_new_job(user_id, company, job2)
     assert res2.code == JobTrackingResponseCode.OK
     assert res2.job.job_title == job2.job_title
     
     # 4. Verify both jobs are tracked for the company
-    company_res = await job_service.get_tracked_jobs_async(user_id, company)
+    company_res = await job_service.get_tracked_jobs(user_id, company)
     assert company_res.code == JobTrackingResponseCode.OK
     assert len(company_res.company.tracked_jobs) == 2
     job_titles = {job.job_title for job in company_res.company.tracked_jobs}
@@ -224,7 +224,7 @@ async def test_add_new_job_for_new_company(user_service, job_service):
         contact_linkedin="linkedin.com/charlie",
         contact_email="charlie@newcompany.com"
     )
-    res = await job_service.track_new_job_async(user_id, company, job)
+    res = await job_service.track_new_job(user_id, company, job)
     
     # 3. Verify job was created
     assert res.code == JobTrackingResponseCode.OK
@@ -232,7 +232,7 @@ async def test_add_new_job_for_new_company(user_service, job_service):
     assert res.job.contact_name == job.contact_name
     
     # 4. Verify company exists with the job
-    company_res = await job_service.get_tracked_jobs_async(user_id, company)
+    company_res = await job_service.get_tracked_jobs(user_id, company)
     assert company_res.code == JobTrackingResponseCode.OK
     assert company_res.company.company_name == company.lower()
     assert len(company_res.company.tracked_jobs) == 1
@@ -253,7 +253,7 @@ async def test_add_company_for_nonexistent_user(job_service):
         contact_email="david@example.com"
     )
     
-    res = await job_service.track_new_job_async(nonexistent_user, company, job)
+    res = await job_service.track_new_job(nonexistent_user, company, job)
     
     # Should fail because user doesn't exist
     assert res.code == JobTrackingResponseCode.ERROR
@@ -276,7 +276,7 @@ async def test_update_existing_job(user_service, job_service):
         contact_name="Eve",
         contact_email="eve@example.com"
     )
-    res1 = await job_service.track_new_job_async(user_id, company, job1)
+    res1 = await job_service.track_new_job(user_id, company, job1)
     assert res1.code == JobTrackingResponseCode.OK
     
     # 3. Add a second job to the same company
@@ -288,11 +288,11 @@ async def test_update_existing_job(user_service, job_service):
         contact_linkedin="linkedin.com/frank",
         contact_email="frank@example.com"
     )
-    res2 = await job_service.track_new_job_async(user_id, company, job2)
+    res2 = await job_service.track_new_job(user_id, company, job2)
     assert res2.code == JobTrackingResponseCode.OK
     
     # 4. Verify both jobs are tracked
-    company_res = await job_service.get_tracked_jobs_async(user_id, company)
+    company_res = await job_service.get_tracked_jobs(user_id, company)
     assert company_res.code == JobTrackingResponseCode.OK
     assert len(company_res.company.tracked_jobs) == 2
     job_titles = {job.job_title for job in company_res.company.tracked_jobs}
@@ -321,7 +321,7 @@ async def test_update_job_timestamp_changes(user_service, job_service):
         contact_name="Alice",
         contact_email="alice@example.com"
     )
-    res1 = await job_service.track_new_job_async(user_id, company, job)
+    res1 = await job_service.track_new_job(user_id, company, job)
     assert res1.code == JobTrackingResponseCode.OK
     original_job = res1.job
     original_update_time = original_job.update_time
@@ -338,7 +338,7 @@ async def test_update_job_timestamp_changes(user_service, job_service):
         contact_linkedin="linkedin.com/alice",
         contact_email="alice@example.com"
     )
-    res2 = await job_service.track_new_job_async(user_id, company, updated_job)
+    res2 = await job_service.track_new_job(user_id, company, updated_job)
     assert res2.code == JobTrackingResponseCode.OK
 
     updated_job_response = res2.job
@@ -366,7 +366,7 @@ async def test_failed_update_job_returns_error(job_service):
         contact_email="bob@example.com"
     )
     
-    res = await job_service.track_new_job_async(invalid_user_id, company, job)
+    res = await job_service.track_new_job(invalid_user_id, company, job)
     
     # Should fail because user doesn't exist
     assert res.code == JobTrackingResponseCode.ERROR
@@ -390,10 +390,10 @@ async def test_delete_tracked_jobs(user_service, job_service):
         contact_name="Goner",
         contact_email="goner@example.com"
     )
-    await job_service.track_new_job_async(user_id, company_name, job)
+    await job_service.track_new_job(user_id, company_name, job)
     
     # 3. Verify it exists
-    res = await job_service.get_tracked_jobs_async(user_id, company_name)
+    res = await job_service.get_tracked_jobs(user_id, company_name)
     assert res.code == JobTrackingResponseCode.OK
     assert len(res.company.tracked_jobs) == 1
     
@@ -401,10 +401,9 @@ async def test_delete_tracked_jobs(user_service, job_service):
     # Use the company object returned, which contains the job to delete
     company_to_delete = res.company
     
-    success = await job_service.delete_tracked_jobs_async(user_id, [company_to_delete])
+    success = await job_service.delete_tracked_jobs(user_id, [company_to_delete])
     assert success is True
     
     # 5. Verify it is gone
-    res_after = await job_service.get_tracked_jobs_async(user_id, company_name)
-    assert res_after.code == JobTrackingResponseCode.OK
-    assert len(res_after.company.tracked_jobs) == 0
+    res_after = await job_service.get_tracked_jobs(user_id, company_name)
+    assert res_after.code == JobTrackingResponseCode.NO_TRACKED_JOBS
