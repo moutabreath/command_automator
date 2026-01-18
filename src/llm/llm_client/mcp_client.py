@@ -59,7 +59,7 @@ class SmartMCPClient:
 
                 if tool_response.code == LLMToolResponseCode.USING_TOOL:
                     if tool_response.selected_tool is None:
-                        logging.error("Error with tool seletion")
+                        logging.error("Error with tool selection")
                         return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,text="Error with tool selection")
                     selected_tool,tool_args = tool_response.selected_tool, tool_response.args
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
@@ -75,7 +75,8 @@ class SmartMCPClient:
             logging.exception(f"Error communicating with Gemini or MCP server {e}")
             return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
-    def _convert_llm_response_to_mcp_response(self, llm_response: LLMResponse) -> MCPResponse:
+    @staticmethod
+    def _convert_llm_response_to_mcp_response(llm_response: LLMResponse) -> MCPResponse:
         match llm_response.code:
             case LLMResponseCode.OK:
                 return MCPResponse(llm_response.text, MCPResponseCode.OK)
@@ -96,7 +97,8 @@ class SmartMCPClient:
             logging.exception(f"MCP server not ready {e}")
             return False
         
-    def _is_greeting_query(self, query: str) -> bool:
+    @staticmethod
+    def _is_greeting_query(query: str) -> bool:
         """Check if query is a simple greeting that shouldn't use tools"""
         if not query:
             return False
@@ -145,7 +147,8 @@ class SmartMCPClient:
                                                             chat=self.resume_chat,
                                                             available_tools=self.available_tools_names)
    
-    def _get_tool_and_params_using_keywords(self, query:str) -> LLMToolResponse:
+    @staticmethod
+    def _get_tool_and_params_using_keywords(query:str) -> LLMToolResponse:
         query = query.lower().strip()
         if "resume" in query and "job" in query:
             return LLMToolResponse(code=LLMToolResponseCode.USING_TOOL, selected_tool="get_resume_files", args=None)
