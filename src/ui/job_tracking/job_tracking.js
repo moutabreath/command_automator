@@ -94,7 +94,7 @@ async function trackJob(rowData, isFromBlankRow = false, rowElement = null) {
         if (rowData.job_id) {
             jobTrackingResponse = await window.pywebview.api.track_existing_job(
                 userId,
-                rowData.company_name,
+                rowData.company_id,
                 jobDto
             );
         } else {
