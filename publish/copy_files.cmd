@@ -57,8 +57,8 @@ if exist "..\.env.local" (
 )
 
 REM Copy executable file
-if exist ".\dist\commands_automator_api.exe" (
-    copy ".\dist\commands_automator_api.exe" "%APPDATA_DIR%\commands_automator_api.exe" /y
+if exist ".\dist\commands_automator.exe" (
+    copy ".\dist\commands_automator.exe" "%APPDATA_DIR%\commands_automator.exe" /y
     echo Copied executable to APPDATA
 ) else (
     echo Warning: executable not found

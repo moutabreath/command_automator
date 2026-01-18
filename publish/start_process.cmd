@@ -1,7 +1,7 @@
 @echo off
-echo Starting commands_automator_api.exe...
+echo Starting commands_automator.exe...
 
-set EXE_PATH=%APPDATA%\commands_automator\commands_automator_api.exe
+set EXE_PATH=%APPDATA%\commands_automator\commands_automator.exe
 
 if exist "%EXE_PATH%" (
     start "" "%EXE_PATH%"

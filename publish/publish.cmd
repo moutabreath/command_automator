@@ -10,15 +10,16 @@ if "%1"=="--install" (
     )
 )
 
-echo Kill process started
-    
-REM Kill existing processes
-call kill_process.cmd
-echo "%1"
+REM rename exe file
+echo Renaming executable...
+call rename_executable.cmd
 
-echo Copy file started
+REM Kill existing processes
+echo Kill process started    
+call kill_process.cmd
 
 REM Copy configuration files
+echo Copy file started
 call copy_files.cmd
 if errorlevel 1 (
     echo Failed to copy configuration files
