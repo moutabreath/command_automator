@@ -109,7 +109,7 @@ async function registerOrLogin() {
 
     try {
         isLoggingIn = true;
-        const response = await window.pywebview.api.login_or_register(userEmail);
+        const response = await window.pywebview.api.register(userEmail);
 
         if (response && response.code === 'OK') {
             window.userId = response.user_id;

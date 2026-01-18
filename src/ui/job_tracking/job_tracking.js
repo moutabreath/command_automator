@@ -75,6 +75,7 @@ async function trackJob(rowData, isFromBlankRow = false, rowElement = null) {
     }
 
     const jobDto = {
+        job_id: rowData.job_id || null,
         job_url: rowData.job_url,
         job_title: rowData.job_title,
         job_state: rowData.job_state,
@@ -89,11 +90,20 @@ async function trackJob(rowData, isFromBlankRow = false, rowElement = null) {
     }
 
     try {
-        const jobTrackingResponse = await window.pywebview.api.track_job(
-            userId,
-            rowData.company_name,
-            jobDto
-        );
+        let jobTrackingResponse;
+        if (rowData.job_id) {
+            jobTrackingResponse = await window.pywebview.api.track_existing_job(
+                userId,
+                rowData.company_name,
+                jobDto
+            );
+        } else {
+            jobTrackingResponse = await window.pywebview.api.track_new_job(
+                userId,
+                rowData.company_name,
+                jobDto
+            );
+        }
 
         if (jobTrackingResponse && jobTrackingResponse.code === 'OK') {
             showAlert('Job application tracked successfully!', 'success');
