@@ -91,10 +91,10 @@ class CommandsAutomatorApi:
         return webview.windows[0].create_file_dialog(webview.FOLDER_DIALOG)
     
         
-    def login_or_register(self, email:str):
+    def register(self, email:str):
         if self.user_api is None:
             return {"error": "User API not available - MongoDB configuration missing"}
-        return self.user_api.login_or_register(email)
+        return self.user_api.register(email)
     
 
     def get_job_application_states(self):
@@ -108,7 +108,7 @@ class CommandsAutomatorApi:
             return {"error": "Job Tracking API not available - MongoDB configuration missing"}        
         
         job_dto = TrackedJobDto(**job_dto_dict)
-        return self.job_tracking_api.track_job(user_id=user_id, company_name=company_name, job_dto=job_dto)
+        return self.job_tracking_api.track_new_job(user_id=user_id, company_name=company_name, job_dto=job_dto)
     
     def track_existing_job(self, user_id: str, company_id: str, job_dto_dict: dict) -> dict[str, Any]:
         if self.job_tracking_api is None:

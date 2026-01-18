@@ -372,3 +372,39 @@ async def test_failed_update_job_returns_error(job_service):
     assert res.code == JobTrackingResponseCode.ERROR
     assert res.job is not None  # Original job should be returned
     assert res.company_id is None  # No company created due to error
+
+@pytest.mark.asyncio
+async def test_delete_tracked_jobs(user_service, job_service):
+    """Test deleting specific tracked jobs."""
+    # 1. Register user
+    email = "deleter@example.com"
+    auth_res = await user_service.register_async(email)
+    user_id = auth_res.user_id
+    
+    # 2. Add a job
+    company_name = "Delete Test Company"
+    job = TrackedJob(
+        job_url="https://example.com/job/delete",
+        job_title="To Be Deleted",
+        job_state=JobApplicationState.APPLIED,
+        contact_name="Goner",
+        contact_email="goner@example.com"
+    )
+    await job_service.track_new_job_async(user_id, company_name, job)
+    
+    # 3. Verify it exists
+    res = await job_service.get_tracked_jobs_async(user_id, company_name)
+    assert res.code == JobTrackingResponseCode.OK
+    assert len(res.company.tracked_jobs) == 1
+    
+    # 4. Delete the job
+    # Use the company object returned, which contains the job to delete
+    company_to_delete = res.company
+    
+    success = await job_service.delete_tracked_jobs_async(user_id, [company_to_delete])
+    assert success is True
+    
+    # 5. Verify it is gone
+    res_after = await job_service.get_tracked_jobs_async(user_id, company_name)
+    assert res_after.code == JobTrackingResponseCode.OK
+    assert len(res_after.company.tracked_jobs) == 0
