@@ -20,9 +20,9 @@ async def get_resume_files() -> ResumeData:
     return await resume_loader_service.get_resume_files()
 
 @mcp.tool()
-async def search_jobs_from_the_internet(job_title: str | None = None, location: str | None = None, 
-                                        remote: bool | str | None = None,
-                                        user_id: str | None = None) -> list:
+async def search_jobs_on_the_internet(job_title: str | None = None, location: str | None = None,
+                                      remote: bool | str | None = None,
+                                      user_id: str | None = None) -> list:
     """Search for jobs from multiple sources (LinkedIn and Glassdoor)"""
     global job_search_service
     if isinstance(remote, str):

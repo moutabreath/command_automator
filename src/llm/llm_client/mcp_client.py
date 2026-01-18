@@ -30,7 +30,7 @@ class SmartMCPClient:
         # List of MCP tools with their name and parameters
         self.available_tools_descriptions = {}
 
-    async def process_query( self,  query: str, base64_decoded: str = None, output_file_path: str = None, user_id: str = None) -> MCPResponse:
+    async def process_query(self,  query: str, base64_decoded: str = None, output_file_path: str = None, user_id: str = None) -> MCPResponse:
         """
         Process a user query using a combination of Gemini and MCP server.
 
@@ -91,7 +91,7 @@ class SmartMCPClient:
             async with aiohttp.ClientSession() as session, \
                        session.get(self.mcp_server_url, timeout=timeout) as resp:
                 # You can check for a specific status code if needed
-                return resp.status == 406 # (= Not Accepatable) Server is probably reacheable.
+                return resp.status == 406 # (= Not Acceptable) Server is probably reachable.
         except Exception as e:
             logging.exception(f"MCP server not ready {e}")
             return False
@@ -155,11 +155,11 @@ class SmartMCPClient:
         
          
     async def _init_available_tools_descriptions(self, session: ClientSession):
-        if (self.available_tools_names != []):
+        if self.available_tools_names:
             return 
         
         session_tools = await self._init_session_tools(session)
-        if session_tools == None:
+        if session_tools is None:
             return
         
         self.available_tools_names = [tool.name for tool in session_tools.tools]
@@ -206,7 +206,7 @@ Be selective and conservative with tool usage. Be concise. Only output valid JSO
 If no tool should be selected, respond to the query directly. Query: {query}
 """
     
-    async def _use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str):
+    async def _use_tool(self, selected_tool, tool_args, session: ClientSession, output_file_path: str) -> MCPResponse:
         logging.debug(f"Using tool: {selected_tool} with args: {tool_args}")
         try:
             response = await session.call_tool(selected_tool, tool_args)
