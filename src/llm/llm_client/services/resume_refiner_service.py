@@ -28,7 +28,7 @@ class ResumeRefinerService:
         refined_resume_response = await self.get_refined_resume(resume_data_dict)
         
         if refined_resume_response.code == MCPResponseCode.OK:
-            return await self.save_resume_and_cover_letter(output_file_path, resume_data_dict, refined_resume_response)
+            await self.save_resume_and_cover_letter(output_file_path, resume_data_dict, refined_resume_response)
         return refined_resume_response 
     
     async def save_resume_and_cover_letter(self, output_file_path: str, resume_data_dict: dict,
