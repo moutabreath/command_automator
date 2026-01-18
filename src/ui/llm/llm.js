@@ -381,23 +381,22 @@ async function getMessageFromLLMResponse(prompt, imageData, outputPath) {
             return 'Invalid response from LLM';
         }
 
-        const { text = '', code = '' } = resp;
 
         // Handle result codes
-        switch (code) {
+        switch (resp.code) {
             case 'OK':
-                if (!text || text === '') {
+                if (!resp.result_text || resp.result_text === '') {
                     return 'LLM returned empty message';
                 }
-                return text;
+                return resp.result_text;
             case 'ERROR_MODEL_OVERLOADED':
                 return 'Model overloaded. Please try again later.';
             case 'ERROR_LOADING_IMAGE_TO_MODEL':
                 return 'Failed loading image for model.';
             case 'ERROR_COMMUNICATING_WITH_LLM':
-                return text || 'Error communicating with LLM';
+                return resp.error_message || 'Error communicating with LLM';
             default:
-                return text || 'Error communicating with LLM';
+                return resp.error_message || 'Error communicating with LLM';
         }
     } catch (err) {
         console.error('callLLM failed:', err);
