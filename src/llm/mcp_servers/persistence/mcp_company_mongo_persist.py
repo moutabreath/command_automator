@@ -5,7 +5,7 @@ from motor.motor_asyncio import AsyncIOMotorClient
 
 from repository.abstract_mongo_persist import AbstractMongoPersist
 from repository.models import PersistenceErrorCode, PersistenceResponse
-class MCPCompanyMongoPersist(AbstractMongoPersist):
+class CompanyReadPersist(AbstractMongoPersist):
     
     async def initialize_connection(self):
         """

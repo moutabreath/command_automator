@@ -2,14 +2,14 @@ import logging
 from typing import List, Tuple
 
 from llm.mcp_servers.job_search.models import ScrapedJob
-from llm.mcp_servers.services.company_mcp_service import CompanyMCPService
+from llm.mcp_servers.services.company_mcp_service import CompanyReaderService
 from llm.mcp_servers.services.models import UserApplicationResponseCode
 
 
 class JobsFilterService:
     """Handles filtering of scraped jobs against applied jobs"""
     
-    def __init__(self, company_mcp_service: CompanyMCPService):
+    def __init__(self, company_mcp_service: CompanyReaderService):
         self.company_mcp_service = company_mcp_service
     
     async def filter_jobs(self, scraped_jobs: List[ScrapedJob], user_id: str) -> Tuple[List, List]:

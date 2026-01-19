@@ -1,13 +1,13 @@
 import logging
 
-from llm.mcp_servers.persistence.mcp_company_mongo_persist import MCPCompanyMongoPersist
+from llm.mcp_servers.persistence.mcp_company_mongo_persist import CompanyReadPersist
 from llm.mcp_servers.services.models import UserApplicationResponse, UserApplication, UserApplicationResponseCode
 
 from repository.models import PersistenceErrorCode
 
-class CompanyMCPService:
+class CompanyReaderService:
     
-    def __init__(self, company_persist: MCPCompanyMongoPersist):
+    def __init__(self, company_persist: CompanyReadPersist):
         self.mcp_company_persist = company_persist
 
     async def initialize(self):

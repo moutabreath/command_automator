@@ -6,7 +6,7 @@ from llm.mcp_servers.job_search.services.job_scrapers.glassdoor_jobs_scraper_ser
 from llm.mcp_servers.job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
 from llm.mcp_servers.job_search.services.jobs_filter_service import JobsFilterService
 from llm.mcp_servers.job_search.services.jobs_saver_service import JobsSaverService
-from llm.mcp_servers.services.company_mcp_service import CompanyMCPService
+from llm.mcp_servers.services.company_mcp_service import CompanyReaderService
 
 from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
@@ -15,7 +15,7 @@ class JobSearchService:
     """Service class for handling job applicant MCP operations"""
     
     def __init__(self, linkedin_jobs_scraper_service: LinkedInJobsScraperService, glassdoor_jobs_scraper_service: GlassdoorJobsScraperService,
-                 company_mcp_service: CompanyMCPService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
+                 company_mcp_service: CompanyReaderService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
         self.company_mcp_service = company_mcp_service
         self.linkedin_jobs_scraper_service = linkedin_jobs_scraper_service
         self.glasdoor_jobs_scraper_service = glassdoor_jobs_scraper_service
