@@ -1,253 +1,57 @@
-import logging
-import multiprocessing
+import asyncio, logging, multiprocessing
+
 from multiprocessing import freeze_support
 from typing import List
-from typing import TypeVar
 
 from mcp.server.fastmcp import FastMCP
 
-from llm.mcp_servers.job_search.services.glassdoor_jobs_scraper import GlassdoorJobsScraper
-from llm.mcp_servers.job_search.services.jobs_saver import JobsSaver
-from llm.mcp_servers.job_search.services.linkedin_scraper import LinkedInJobScraper
-from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
+from llm.mcp_servers.mcp_dependency_container import MCPContainer
 from llm.mcp_servers.resume.models import ResumeData
-from llm.mcp_servers.services.shared_service import SharedService
-from utils.logger_config import setup_logging
-from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
+from utils.logger_config import setup_logging
 
 # Initialize FastMCP
 mcp = FastMCP("job_applicant_helper")
 
-# Global variable for service access within the child process
-# This will be initialized in the child process only
-_shared_services = None
-
-
-class ServiceNames:
-    RESUME_LOADER = 'resume_loader_service'
-    LINKEDIN_SCRAPER = 'linkedin_job_scraper'
-    GLASSDOOR_SCRAPER = 'glassdoor_jobs_scraper'
-    JOB_SAVER = 'job_saver'
-
-
-T = TypeVar('T', ResumeLoaderService, LinkedInJobScraper, GlassdoorJobsScraper, JobsSaver)
-
-def get_shared_service(shared_service_name: str) -> T:
-    """Get a service from the shared services dict"""
-    global _shared_services
-    if _shared_services is None:
-        raise RuntimeError("Shared services not initialized. This should only be called in the MCP subprocess.")
-    service = _shared_services.get(shared_service_name)
-    if service is None:
-        raise ValueError(f"Service '{shared_service_name}' not found in shared services")
-    return service
-
-
-def init_shared_services():
-    """Initialize services in the child process. Returns a dict of services."""
-    logging.info("Initializing shared services in MCP subprocess")
-    services = {
-        ServiceNames.RESUME_LOADER: ResumeLoaderService(),
-        ServiceNames.LINKEDIN_SCRAPER: LinkedInJobScraper(),
-        ServiceNames.GLASSDOOR_SCRAPER: GlassdoorJobsScraper(),
-        ServiceNames.JOB_SAVER: JobsSaver()
-    }
-    logging.info("Shared services initialized successfully")
-    return services
-
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
-    """
-    Fetch resume file, applicant name, job description and guidelines
-    """    
-    try:
-        resume_loader_service: ResumeLoaderService = get_shared_service(ServiceNames.RESUME_LOADER)
-        resume_content, applicant_name = await resume_loader_service.get_resume_and_applicant_name()
-        if resume_content is None:
-            logging.error("Couldn't parse resume content")
-            return ResumeData(
-                applicant_name="",
-                general_guidelines="",
-                resume="",
-                resume_highlighted_sections=[],
-                job_description="",
-                cover_letter_guidelines=""
-            )
-
-        if applicant_name is None:
-            applicant_name = "John Doe"
-
-        guide_lines = await resume_loader_service.get_main_part_guide_lines()
-        if guide_lines:
-            guide_lines = guide_lines.replace('***applicant_name***', applicant_name)
-        highlighted_sections = await resume_loader_service.get_highlighted_sections()
-
-        job_description_content = await resume_loader_service.get_job_description()
-
-        cover_letter_guide_lines = await resume_loader_service.get_cover_letter_guide_lines()
-
-        # Create dictionary first to validate data
-        data_dict = {
-            "applicant_name": applicant_name or "",
-            "general_guidelines": guide_lines or "",
-            "resume": resume_content or "",
-            "resume_highlighted_sections": highlighted_sections or [],
-            "job_description": job_description_content or "",
-            "cover_letter_guidelines": cover_letter_guide_lines or ""
-        }
-        
-        resume_data = ResumeData(**data_dict)
-        logging.debug(f"Created ResumeData successfully")
-        return resume_data
-    except Exception as e:
-        logging.error(f"Unhandled error in get_resume_files: {e}", exc_info=True)
-        return ResumeData(
-            applicant_name="",
-            general_guidelines="",
-            resume="",
-            resume_highlighted_sections=[],
-            job_description="",
-            cover_letter_guidelines=""
-        )
-
-
+    """Fetch resume file, applicant name, job description and guidelines"""
+    global resume_loader_service
+    return await resume_loader_service.get_resume_files()
 
 @mcp.tool()
-async def search_jobs_from_the_internet(job_title: str | None = None, location:str | None = None, 
-                                        remote: bool | None = None) -> list:
-    """
-    Search for jobs from multiple sources (LinkedIn and Glassdoor).
-    
-    Returns:
-        List of Job objects from all sources
-    """
-
-    jobs = []
-    linkedin_jobs = await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
-    if linkedin_jobs and len(linkedin_jobs) > 0:
-        jobs.extend(linkedin_jobs)
-
-    glassdoor_jobs = await _run_glassdoor_scraper(job_title=job_title, location=location, remote=remote, forbidden_titles=None)
-    if glassdoor_jobs and len(glassdoor_jobs) > 0:
-        jobs.extend(glassdoor_jobs)
-
-    return jobs
+async def search_jobs_on_the_internet(job_title: str | None = None, location: str | None = None,
+                                      remote: bool | str | None = None,
+                                      user_id: str | None = None) -> list:
+    """Search for jobs from multiple sources (LinkedIn and Glassdoor)"""
+    global job_search_service
+    if isinstance(remote, str):
+        remote = remote.lower() in ('true', '1', 'yes', 'on')
+    return await job_search_service.search_jobs_from_internet(job_title, location, remote, user_id)
     
 @mcp.tool()
-async def get_jobs_from_linkedin(job_title: str | None = None,
-    location: str | None = None,
-    remote: bool | None = None)  -> list:
-    """
-    Search for jobs on LinkedIn.    
-    
-    Returns:
-        List of Job objects
-    """ 
-    return await _run_linkedin_scraper(job_title=job_title, location=location, remote=remote)
-    
-
-async def _run_linkedin_scraper(job_title: str, location: str, remote: bool) -> list:
-    """Run the LinkedIn job scraper"""
-    linkedin_scraper: LinkedInJobScraper = get_shared_service(ServiceNames.LINKEDIN_SCRAPER)
-    jobs_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
-    
-    max_pages: int = 2
-    logging.info(f"Searching for '{job_title}' jobs in '{location}'...")
-
-    job_title,location, remote, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote)
-    jobs = []
-    try:
-        jobs = linkedin_scraper.run_scraper(job_title=job_title,
-            location=location,
-            remote=remote,
-            forbidden_titles = forbidden_titles,
-            max_pages=max_pages)
-    
-    except Exception as e:
-        logging.error(f"Error finding jobs from linkedin {e}", exc_info=True)
-        return []
-    
-    logging.info(f"Found {len(jobs)} jobs")
-    logging.debug("=" * 60)
-    if jobs and len(jobs) > 0:    
-        await jobs_saver.save_jobs_to_file(jobs, 'linkedin_jobs.json')
-    else:
-        logging.warning("No jobs found from LinkedIn scraper")
-   
-    return jobs
+async def get_jobs_from_linkedin(job_title: str | None = None, location: str | None = None,
+    remote: bool | str | None = None, user_id: str | None = None) -> list:
+    """Search for jobs on LinkedIn"""
+    global job_search_service
+    if isinstance(remote, str):
+        remote = remote.lower() in ('true', '1', 'yes', 'on')
+    return await job_search_service.get_jobs_from_linkedin(job_title, location, remote, user_id)
 
 @mcp.tool()
 async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
-                                  remote: bool | None = None) -> List:
-    """
-    Search for jobs on Glassdoor.
+                                  remote: bool | str | None = None, user_id: str | None = None) -> List:
+    """Search for jobs on Glassdoor"""
+    global job_search_service
+    if isinstance(remote, str):
+        remote = remote.lower() in ('true', '1', 'yes', 'on')
+    return await job_search_service.get_jobs_from_glassdoor(job_title, location, remote, user_id)
 
-    Returns:
-        List of Job objects
-    """
-    return await _run_glassdoor_scraper(job_title, location, remote)
-
-
-async def _run_glassdoor_scraper(job_title: str, location: str, remote: bool, forbidden_titles: list = None) -> List:
-    """Run the Glassdoor job scraper"""
-    max_pages: int = 3
-    max_jobs_per_page: int = 20
-    glassdoor_scraper: GlassdoorJobsScraper = get_shared_service(ServiceNames.GLASSDOOR_SCRAPER)
-    job_saver: JobsSaver = get_shared_service(ServiceNames.JOB_SAVER)
-
-    job_title,location, _, forbidden_titles = await _get_search_params_from_config_or_default(job_title, location, remote, forbidden_titles)
-    try:
-        jobs = await glassdoor_scraper.run_scraper(
-            job_title=job_title,
-            location=location,
-            forbidden_titles=forbidden_titles,
-            max_pages=max_pages,
-            max_jobs_per_page=max_jobs_per_page)
-
-        if jobs and len(jobs) > 0:
-            await job_saver.save_jobs_to_file(jobs, 'glassdoor_jobs.json')
-        else:
-            logging.warning("No jobs found from Glassdoor scraper")
-
-        return jobs
-    except Exception as e:
-        logging.error("Error finding jobs from glassdoor")
-        return []
-
-async def _get_search_params_from_config_or_default(job_title: str | None = None, location: str | None = None,
-    remote: bool | None = None, forbidden_titles: list | None = None) :
-     # If any parameter is None, try loading defaults from llm-config.json
-    try:
-        llm_conf = await read_json_file(JOB_SEARCH_CONFIG_FILE)
-        logging.debug(f"LLM config loaded for job search defaults: {llm_conf}")
-    except Exception as e:
-        logging.debug(f"Could not load LLM config for defaults: {e}")
-        llm_conf = {}
-
-    # Use values from config when provided, otherwise use hardcoded defaults
-    if job_title is None:
-        job_title = llm_conf.get('job_search', {}).get('job_title') if llm_conf else None
-    if location is None:
-        location = llm_conf.get('job_search', {}).get('location') if llm_conf else None
-    if remote is None:
-        # store boolean default; allow string like 'true' or bool
-        remote_val = llm_conf.get('job_search', {}).get('remote') if llm_conf else None
-        remote = bool(remote_val) if remote_val is not None else True
-
-    # forbidden_titles: try to load from job_keywords.json if not provided
-    if forbidden_titles is None:
-        try:
-            forbidden_titles = llm_conf.get('forbidden_titles', ['QA', 'Devops', 'Junior', 'Graduate', 'Front End'])
-            logging.debug(f"Loaded forbidden_titles from config: {forbidden_titles}")
-        except Exception as e:
-            logging.debug(f"Could not load forbidden_titles from config: {e}")
-            forbidden_titles = ['QA', 'Devops', 'Junior', 'Graduate', 'Front End']
-
-    # Final defaults if nothing found
-    job_title = job_title or "Software Engineer"
-    location = location or "Tel Aviv, Israel"
-    return job_title, location, remote, forbidden_titles
+@mcp.tool()
+async def get_user_applications_for_company(user_id: str, company_name: str) -> dict:    
+    """Get all job applications for a specific user and company"""
+    global job_search_service
+    return await job_search_service.get_user_applications_for_company(user_id, company_name)
 
 class MCPRunner:
     """Manages the MCP server subprocess"""
@@ -284,15 +88,19 @@ class MCPRunner:
 
     def run_mcp(self):
         """Run the MCP server in the subprocess"""
-        global _shared_services
-        
         try:
             # Initialize logging in the child process
             setup_logging()
             
-            # Initialize services in the child process
-            _shared_services = init_shared_services()
+            # Initialize DI container in the child process
+            asyncio.run(MCPContainer.init_container())
             
+            global container
+            container = MCPContainer.get_container()
+            global resume_loader_service, job_search_service
+            resume_loader_service = container.resume_loader_service()
+            job_search_service = container.job_search_service()
+
             # Set server configuration
             mcp.settings.mount_path = "/mcp"
             mcp.settings.port = 8765

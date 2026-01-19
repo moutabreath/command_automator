@@ -1,5 +1,6 @@
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 from typing import List, Any, TypeVar
@@ -28,46 +29,44 @@ def find_project_root(marker_filename: str) -> Path:
 # Determine project root in both dev and frozen (pyinstaller) modes.
 try:
     if getattr(sys, 'frozen', False):
-        # When frozen by PyInstaller, resources are extracted to _MEIPASS
-        meipass = getattr(sys, '_MEIPASS', None)
-        if meipass:
-            PROJECT_ROOT = Path(meipass)
-        else:
-            # Fallback to directory of the executable
-            PROJECT_ROOT = Path(sys.executable).resolve().parent
+        # When frozen, use APPDATA for resources
+        BASE_DIR = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator'
     else:
-        # Use a known file like 'README.md' to find repo root in dev
+        # In development, use source directory
         try:
             PROJECT_ROOT = find_project_root('README.md')
+            BASE_DIR = PROJECT_ROOT / 'src'
         except FileNotFoundError:
             # Fallback to two levels up from this file if marker not present
-            PROJECT_ROOT = Path(__file__).resolve().parents[2]
+            BASE_DIR = Path(__file__).resolve().parents[2] / 'src'
 except Exception as e:
-    logging.error(f"Error determining PROJECT_ROOT: {e}")
-    PROJECT_ROOT = Path(__file__).resolve().parent
+    logging.error(f"Error determining BASE_DIR: {e}")
+    BASE_DIR = Path(__file__).resolve().parent
 
-if (PROJECT_ROOT / 'src').exists():
-    BASE_DIR = PROJECT_ROOT / 'src'
+# Set paths based on BASE_DIR
+if getattr(sys, 'frozen', False):
+    # Frozen mode - use APPDATA structure
+    RESUME_RESOURCES_DIR = BASE_DIR / 'mcp_servers' / 'resume' / 'resources'
+    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+    JOB_FILE_DIR = BASE_DIR / 'mcp_servers' / 'job_search' / 'saved_jobs'
 else:
-    BASE_DIR = PROJECT_ROOT / 'app'
+    # Development mode - use source structure
+    RESUME_RESOURCES_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'resume' / 'resources'    
+    JOB_SEARCH_CONFIG_FILE = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'config' / 'job_keywords.json'
+    JOB_FILE_DIR = BASE_DIR / 'llm' / 'mcp_servers' / 'job_search' / 'saved_jobs'
 
-SCRIPTS_MANAGER_BASE_DIR = BASE_DIR / 'scripts_manager'
 
-SCRIPTS_MANAGER_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'commands-executor-config.json'
-SCRIPTS_CONFIG_FILE = SCRIPTS_MANAGER_BASE_DIR / 'config' / 'scripts_config.json'
-SCRIPTS_DIR = SCRIPTS_MANAGER_BASE_DIR / 'user_scripts'
 
-LLM_BASE_DIR = BASE_DIR / 'llm'
+# Common paths
+CONFIG_FILE = Path(os.getenv('APPDATA', os.path.expanduser('~/.config'))) / 'commands_automator' / 'commands_automator.config'
 
-LLM_CONFIG_FILE = LLM_BASE_DIR / 'config' / 'llm-config.json'
+USER_SCRIPTS_DIR = BASE_DIR / 'scripts_manager' / 'user_scripts'
+USER_SCRIPTS_CONFIG_FILE = USER_SCRIPTS_DIR / 'config' / 'scripts_config.json'
 
-RESUME_RESOURCES_DIR =  LLM_BASE_DIR / 'mcp_servers' /  'resume' / 'resources'
 RESUME_ADDITIONAL_FILES_DIR = RESUME_RESOURCES_DIR / 'additional_files'
 
-
-JOB_FILE_DIR = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'results'
-JOB_SEARCH_CONFIG_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' /'job_keywords.json'
-GLASSDOOR_SELECTORS_FILE = LLM_BASE_DIR / 'mcp_servers' / 'job_search' / 'config' / 'glassdoor_selectors.json'
+GLASSDOOR_SELECTORS_FILE = JOB_SEARCH_CONFIG_FILE.parent / 'glassdoor_selectors.json'
+JOB_TITLES_CONFIG_FILE = BASE_DIR / 'jobs_tracking' / 'config' / 'job_titles_keywords.json'
 
 
 
@@ -83,7 +82,7 @@ async def save_file(file_path: str | Path, content: str) -> bool:
             await f.write(content)
         return True
     except (OSError, IOError) as e:
-        logging.error(f"Error saving file {file_path}: {e}", exc_info=True)
+        logging.exception(f"Error saving file {file_path}: {e}")
         return False    
     
 
@@ -103,7 +102,7 @@ def serialize_to_json(obj: Any) -> str | None:
         serializable_obj = make_serializable(obj)
         return json.dumps(serializable_obj, indent=4)
     except Exception as e:
-        logging.error(f"Error serializing to JSON: {e}", exc_info=True)
+        logging.exception(f"Error serializing to JSON: {e}")
         return None
 
 def serialize_objects(objects: List[T]) -> str | None:
@@ -117,26 +116,25 @@ def serialize_objects(objects: List[T]) -> str | None:
     try:
         return json.dumps([obj.model_dump(mode='json') for obj in objects], indent=4)
     except Exception as e:
-        logging.error(f"Error converting list to JSON: {e}", exc_info=True)
+        logging.exception(f"Error converting list to JSON: {e}")
         return None
     
-async def read_json_file(file_path: str) -> dict | None:
+async def read_json_file(file_path: str) -> dict:
     data = await read_text_file(file_path)
-    if (data == None):
-        return None
+    if data == "":
+        return {}
     try:
         return json.loads(data)
     except (json.JSONDecodeError, OSError) as e:
-        logging.error(f"Error reading JSON file {file_path}: {e}", exc_info=True)
-        return None
+        logging.exception(f"Error reading JSON file {file_path}: {e}")
+        return {}
     
-async def read_text_file(file_path: str | Path) -> str | None:
+async def read_text_file(file_path: str | Path) -> str:
     content: str = ""
     logging.debug(f"Reading file: {file_path}")
     try:
         async with aiofiles.open(file_path, 'r', encoding="utf-8") as file:
             content = await file.read()
-        return content
     except (FileNotFoundError, PermissionError, UnicodeDecodeError, OSError) as e:
-        logging.error(f"Error reading file: {file_path} - {e}", exc_info=True)
-        return None
+        logging.exception(f"Error reading file: {file_path} - {e}")
+    return content
