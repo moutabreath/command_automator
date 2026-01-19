@@ -5,7 +5,7 @@ from llm.mcp_servers.services.models import UserApplicationResponse, UserApplica
 
 from repository.models import PersistenceErrorCode
 
-class CompanyReaderService:
+class CompanyReadService:
     
     def __init__(self, company_persist: CompanyReadPersist):
         self.mcp_company_persist = company_persist

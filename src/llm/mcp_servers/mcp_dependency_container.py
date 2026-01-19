@@ -8,7 +8,7 @@ from llm.mcp_servers.services.job_search_service import JobSearchService
 from llm.mcp_servers.job_search.services.jobs_filter_service import JobsFilterService
 from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
 from llm.mcp_servers.persistence.mcp_company_mongo_persist import CompanyReadPersist
-from llm.mcp_servers.services.company_mcp_service import CompanyReaderService
+from llm.mcp_servers.services.company_mcp_service import CompanyReadService
 
 from utils.dependency_container import Container
 
@@ -29,7 +29,7 @@ class MCPContainer(Container):
 
     # Company MCP Service
     company_mcp_service = providers.Singleton(
-        CompanyReaderService,
+        CompanyReadService,
         company_persist=mcp_mongo_company_persist
     )
     
