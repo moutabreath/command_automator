@@ -19,4 +19,3 @@ src/config/commands_automator.config
 src/llm/mcp_servers/job_search/saved_jobs/*
 /publish/dist/*
 /publish/commands_automator_initializer.spec
-src/llm/mcp_servers/resume/resources/additional_files/job_description.txt
