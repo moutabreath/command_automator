@@ -1,0 +1,16 @@
+I am going to give you my resume and a job description.
+
+First, extract the company name from the job description (prefer the end-client over an agency), and
+prefix the resume with: ***applicant_name***_<Company_Name>
+
+Next, revise my resume according to the job description.
+
+Guidelines regarding the content of the resume:
+- Rewrite existing resume bullet points to align with the skills and qualifications mentioned in the job description below.
+- Prioritize and highlight bullet points that demonstrate experience directly related to Software Development.
+- Incorporate keywords from the job description naturally within the revised bullet points.
+- Adjust the wording of my resume to use similar wording and terminology to the job description provided.
+- The output should be a rewritten version of my resume using the same section headers (e.g., 'About me', 'Experience', 'Education') as the original resume.
+- Wherever possible, add metrics, but do not fabricate metrics; include only numbers explicitly provided in the resume or job materials. If none are available, keep statements qualitative.
+- Only mention Cygwin if the job description explicitly requires Linux/UNIX experience—and only if such experience exists in the original resume.
+- If the document contains links, keep them. Put them as much as possible within the original order of the resume.

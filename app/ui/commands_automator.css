@@ -1,0 +1,262 @@
+/* Commands Automator - Dark Theme Styles */
+
+:root {
+    --primary-color: #9EA3F5;
+    --primary-hover: #8a8fe5;
+    --dark-bg: #1a1a1a;
+    --dark-bg-secondary: #2a2a2a;
+    --dark-bg-tertiary: #222;
+    --border-color: #444;
+    --text-primary: #ffffff;
+    --text-secondary: #888;
+    --success-color: #caffbf;
+    --error-color: #ffadad;
+    --warning-color: #fdffb6;
+    --info-color: #a0c4ff;
+}
+
+/* Global Styles */
+body {
+    background-color: var(--dark-bg);
+    color: var(--text-primary);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    margin: 0;
+    padding: 0;
+}
+
+/* Container Styles */
+.container-fluid {
+    padding: 20px;
+    max-width: 100%;
+}
+
+/* Form Elements - Dark Theme */
+.form-label {
+    color: var(--primary-color);
+    font-weight: 500;
+    margin-top: 15px;
+    margin-bottom: 8px;
+}
+
+.form-control, 
+.form-select {
+    background-color: var(--dark-bg-secondary);
+    border: 2px solid var(--border-color);
+    color: var(--text-primary);
+    transition: all 0.3s ease;
+}
+
+.form-control:focus, 
+.form-select:focus {
+    background-color: var(--dark-bg-secondary);
+    border-color: var(--primary-color);
+    color: var(--text-primary);
+    box-shadow: 0 0 0 0.25rem rgba(158, 163, 245, 0.25);
+}
+
+.form-control::placeholder {
+    color: var(--text-secondary);
+}
+
+.form-control:disabled,
+.form-select:disabled {
+    background-color: var(--dark-bg-tertiary);
+    opacity: 0.6;
+}
+
+/* Textarea specific */
+textarea.form-control {
+    resize: vertical;
+    font-family: 'Courier New', monospace;
+}
+
+/* Button Styles */
+.btn {
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+}
+
+.btn-primary {
+    background-color: var(--primary-color);
+    border-color: var(--primary-color);
+    color: var(--dark-bg-tertiary);
+}
+
+.btn-primary:hover,
+.btn-primary:focus {
+    background-color: var(--primary-hover);
+    border-color: var(--primary-hover);
+    color: var(--dark-bg-tertiary);
+    box-shadow: 0 0 0 0.25rem rgba(158, 163, 245, 0.25);
+}
+
+.btn-primary:disabled {
+    background-color: var(--border-color);
+    border-color: var(--border-color);
+    opacity: 0.6;
+}
+
+.btn-secondary {
+    background-color: var(--border-color);
+    border-color: var(--border-color);
+    color: var(--text-primary);
+}
+
+.btn-secondary:hover,
+.btn-secondary:focus {
+    background-color: #555;
+    border-color: #555;
+    color: var(--text-primary);
+}
+
+.btn-lg {
+    padding: 12px 24px;
+    font-size: 1.1rem;
+}
+
+/* Card Styles */
+.card {
+    background-color: var(--dark-bg-secondary);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 20px;
+}
+
+.card-body {
+    padding: 20px;
+}
+
+.card-title {
+    color: var(--primary-color);
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+/* Input Group Styles */
+.input-group .btn {
+    border-left: 1px solid var(--border-color);
+}
+
+.input-group .form-control {
+    border-right: none;
+}
+
+.input-group .form-control:focus {
+    border-right: none;
+}
+
+/* Grid System Adjustments */
+.row {
+    margin-left: -10px;
+    margin-right: -10px;
+}
+
+.row > [class*='col-'] {
+    padding-left: 10px;
+    padding-right: 10px;
+}
+
+/* Responsive Utilities */
+@media (max-width: 768px) {
+    .container-fluid {
+        padding: 15px;
+    }
+    
+    .form-label {
+        font-size: 0.9rem;
+    }
+    
+    .btn-lg {
+        padding: 10px 20px;
+        font-size: 1rem;
+    }
+}
+
+@media (max-width: 576px) {
+    .container-fluid {
+        padding: 10px;
+    }
+    
+    textarea.form-control {
+        font-size: 0.9rem;
+    }
+}
+
+/* Custom Scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: var(--dark-bg-tertiary);
+}
+
+::-webkit-scrollbar-thumb {
+    background: var(--border-color);
+    border-radius: 5px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: #555;
+}
+
+/* Selection Color */
+::selection {
+    background-color: var(--primary-color);
+    color: var(--dark-bg-tertiary);
+}
+
+::-moz-selection {
+    background-color: var(--primary-color);
+    color: var(--dark-bg-tertiary);
+}
+/* Tab Navigation Styles */
+.nav-tabs {
+    border-bottom: 2px solid var(--border-color);
+}
+
+.nav-tabs .nav-link {
+    color: var(--text-secondary);
+    background-color: transparent;
+    border: none;
+    border-bottom: 3px solid transparent;
+    padding: 12px 20px;
+    transition: all 0.3s ease;
+}
+
+.nav-tabs .nav-link:hover {
+    color: var(--primary-color);
+    border-bottom-color: var(--primary-hover);
+}
+
+.nav-tabs .nav-link.active {
+    color: var(--primary-color);
+    background-color: transparent;
+    border-bottom-color: var(--primary-color);
+    font-weight: 600;
+}
+
+/* CRITICAL: Ensure Bootstrap tab functionality works */
+.tab-pane {
+    display: none !important;
+}
+
+.tab-pane.active {
+    display: block !important;
+}
+
+.tab-pane.show {
+    display: block !important;
+}
+
+/* Ensure fade transition works */
+.tab-pane.fade {
+    opacity: 0;
+    transition: opacity 0.15s linear;
+}
+
+.tab-pane.fade.show {
+    opacity: 1;
+}

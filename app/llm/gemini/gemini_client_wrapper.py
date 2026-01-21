@@ -1,0 +1,187 @@
+import io, json, logging, mimetypes, os
+
+from google import genai
+from google.genai.chats import Chat
+from google.genai.types import FileData, Part, File
+
+from PIL import Image
+
+from llm.gemini.models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
+from utils import file_utils
+
+class GeminiClientWrapper:
+    GEMINI_MODEL = "gemini-2.5-flash"
+
+    CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"
+
+    def __init__(self, cleanup_files: bool = False):
+        """
+        Initialize the Gemini client wrapper.
+        
+        Args:
+            cleanup_files: WARNING - If True, deletes ALL files from the Gemini client.
+                          Use with extreme caution in shared environments.
+        """
+        api_key = os.environ.get("GOOGLE_API_KEY")
+        if not api_key:
+            raise ValueError("GOOGLE_API_KEY environment variable is required")
+        self.gemini_client: genai.Client = genai.Client(api_key=api_key)
+        if cleanup_files:
+            self._delete_all_files()
+            
+    def init_chat(self) -> Chat:
+        """
+        Initialize a chat session with Gemini.
+        """
+        self.base_config = {
+            "temperature": 0,   # Creativity (0: deterministic, 1: high variety)
+            "top_p": 0.95,       # Focus on high-probability words
+            "top_k": 64,        # Consider top-k words for each step
+            "max_output_tokens": 8192,  # Limit response length
+            self.CONFIG_RESPONSE_MIME_TYPE: mimetypes.types_map['.json'],
+        }
+        chat = self.gemini_client.chats.create(
+            model=self.GEMINI_MODEL,
+            config=self.base_config.copy(),
+            history=[]
+        )
+
+        return chat
+
+    def _handle_gemini_exception(self, e: Exception) -> LLMResponse:
+        """Handle Gemini API exceptions and return appropriate response"""
+        status = getattr(e, 'code', None) or (e.args[0] if e.args else None)
+        message = getattr(e, 'message', str(e))
+        if status == 503:                
+            if 'overloaded' in message.lower():
+                return LLMResponse(message, LLMResponseCode.MODEL_OVERLOADED)
+            logging.exception(f"Error using Gemini: {e}")
+            return LLMResponse(message, LLMResponseCode.GEMINI_UNAVAILABLE)
+        if status == 429:
+            return LLMResponse(message, LLMResponseCode.RESOURCE_EXHAUSTED)
+        logging.exception(f"Error using Gemini: {e}")
+        return LLMResponse(f"Sorry, I couldn't process your request with Gemini", LLMResponseCode.ERROR_USING_GEMINI_API)
+
+    async def get_response_from_gemini(self, prompt: str,
+                                 chat: Chat,
+                                 response_mime_type: str = mimetypes.types_map['.txt'],
+                                 base64_decoded: str = None,
+                                 file_paths: list[str] = None,
+                                 ) -> LLMResponse:
+
+        config = self.base_config.copy()
+        config[self.CONFIG_RESPONSE_MIME_TYPE] = response_mime_type        
+
+        if file_paths:
+            prompt = f"{prompt} \n\n\n {await self._get_json_files_content_for_prompt(file_paths)}"
+            parts = [Part(text=prompt)]
+        # Handle single image from base64
+        elif base64_decoded:
+            parts = [Part(text=prompt)]
+            try:
+                image = Image.open(io.BytesIO(base64_decoded))
+                parts.append(Part(image=image))
+                
+            except Exception as e:
+                logging.error(f"Error processing image data: {e}", exc_info=True)
+                return LLMResponse(
+                    f"Failed to process image: {str(e)}", 
+                    LLMResponseCode.ERROR_USING_GEMINI_API
+                )
+        else:
+            parts = [Part(text=prompt)]
+        try:
+            response = chat.send_message(message=parts, config=config)
+            if response:
+                return LLMResponse(response.text, LLMResponseCode.OK)
+            return LLMResponse(f"Couldn't get result from gemini Api", LLMResponseCode.ERROR_USING_GEMINI_API)
+        except Exception as e:
+            return self._handle_gemini_exception(e)
+        
+    def get_mcp_tool_response(self, prompt: str, chat: Chat, available_tools) -> LLMToolResponse:
+        config = self.base_config.copy()
+        config[self.CONFIG_RESPONSE_MIME_TYPE] = mimetypes.types_map['.json']
+        try:
+            tool_response = chat.send_message(message=prompt, config=config)
+            decision = tool_response.model_dump()
+            candidates = decision.get('candidates', [])
+            if not candidates:
+                return None, None
+            content = candidates[0].get('content', {})
+            parts = content.get('parts', [])
+            if not parts:
+                return None, None
+            tools_text = parts[0].get('text')
+            if not tools_text:
+                return None, None
+            tools_json = json.loads(tools_text)    
+            selected_tool = tools_json.get("tool")
+            args = tools_json.get("args", {})
+            if selected_tool and selected_tool in available_tools:
+                logging.debug(f"Gemini decided to use tool: {selected_tool}")
+                return LLMToolResponse(selected_tool=selected_tool, args=args, code=LLMToolResponseCode.USING_TOOL)
+        except Exception as ex:
+            llm_exception = self._handle_gemini_exception(ex)
+            logging.warning(f"Error using Gemini: {llm_exception.text}")
+            if llm_exception.code in (LLMResponseCode.MODEL_OVERLOADED, LLMResponseCode.RESOURCE_EXHAUSTED):
+                return LLMToolResponse(code=LLMToolResponseCode.MODEL_OVERLOADED, error_message=llm_exception.text)
+            return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL, error_message=llm_exception.text)
+        
+        return LLMToolResponse(code=LLMToolResponseCode.NOT_USING_TOOL)
+        
+    async def _get_json_files_content_for_prompt(self, file_paths: list[str]) -> str:
+        result = ""
+        for file_path in file_paths:
+            content = await file_utils.read_text_file(file_path)
+            if content:
+                result = f"{result}\n\n\n{content}"
+        return result
+    
+    def _get_json_file_parts(self, file_paths: list[str]) -> list[Part]:
+        parts = []
+        # Upload files
+        for file_path in file_paths:            
+            file = self._upload_large_file_to_google_cloud(file_path)            
+            if file:
+                file_data = self._get_file_data_from_uploaded_files(file, file_path)
+                if file_data:
+                    parts.append(Part(file_data=file_data))
+            else:
+                logging.warning(f"Skipping file that failed to upload: {file_path}")        
+
+        return parts      
+
+    def _upload_large_file_to_google_cloud(self, file_path: str) -> File:
+        logging.debug(f"Uploading file: {file_path}")
+        try:
+            file: File = self.gemini_client.files.upload(file=file_path)       
+            logging.debug(f"Successfully uploaded '{file.display_name}' as: {file.uri}")
+            return file      
+        except Exception as e:
+            logging.error(f"Couldn't upload file {file_path}: {e}", exc_info=True)
+            return None
+            
+    def _get_file_data_from_uploaded_files(self, file: File, file_path: str) -> FileData:        
+        mime_type = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
+        if file and file.uri:            
+            logging.debug(f"Uploaded file '{file.display_name}' as: {file.uri}")
+            file_data: FileData = FileData(file_uri=file.uri, mime_type=mime_type)
+            return file_data
+        
+        return None
+    
+    def _delete_all_files(self):
+        """
+        WARNING: Deletes ALL files from the Gemini client.
+        Use with caution in shared environments.
+        Consider using selective deletion instead.
+        """
+        if self.gemini_client.files:
+            try:
+                for f in self.gemini_client.files.list():
+                    try:
+                        self.gemini_client.files.delete(name=f.name)
+                    except Exception as ex:
+                        logging.error(f"Error deleting file {f.name}: {ex}", exc_info=True)
+            except Exception as e:
+                logging.error(f"Error listing files: {e}", exc_info=True)
