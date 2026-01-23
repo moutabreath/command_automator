@@ -1,16 +1,13 @@
 /.idea/*
 /.venv/*
 /build/*
-dist/*
 *.docx
 *.pdf
 **/__pycache__/
 commands_automator.log
 uv.lock
-app/commandautomator.egg-info/
 app/llm/mcp_servers/job_search/results/*
 app/llm/mcp_servers/resume/resources/additional_files/job_description.txt
-app/llm/config/llm-config.json
 app/llm/mcp_servers/resume/resources/Tal_Druckmann.txt
 publish/build/*
 app/config/commands_automator.config
