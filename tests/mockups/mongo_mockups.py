@@ -1,8 +1,8 @@
 import pytest
 import mongomock
 
-from jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
-from user.repository.user_mongo_persist import UserMongoPersist
+from app.jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
+from app.user.repository.user_mongo_persist import UserMongoPersist
 
 
 

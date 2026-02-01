@@ -1,10 +1,8 @@
 import pytest
 from dependency_injector import containers, providers
 
-from jobs_tracking.job_tracking_linkedin_parser import extract_linkedin_job
-from llm.mcp_servers.job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
-from llm.mcp_servers.job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
-from llm.mcp_servers.job_search.models import ScrapedJob
+from app.jobs_tracking.services.job_tracking_linkedin_parser import extract_linkedin_job
+from app.llm.mcp_servers.job_search import GlassdoorJobsScraperService, LinkedInJobsScraperService, ScrapedJob
 
 class Container(containers.DeclarativeContainer):
     linkedin_scraper = providers.Factory(LinkedInJobsScraperService)

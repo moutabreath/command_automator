@@ -1,9 +1,9 @@
 import pytest
 import uuid
 
-from user.services.user_registry_service import UserRegistryService, UserRegistryResponseCode
+from app.user.services.user_registry_service import UserRegistryService, UserRegistryResponseCode
 
-from tests.mockups.mongo_mockups import MockUserMongoPersist
+from ..mockups.mongo_mockups import MockUserMongoPersist
 
  
 @pytest.fixture
