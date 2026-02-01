@@ -1,0 +1,19 @@
+from typing import Optional
+from pydantic import BaseModel
+from ...services.domain.job_application_state import JobApplicationState
+
+class TrackedJobDto(BaseModel):
+    company_id: Optional[str] = None
+    job_id: Optional[str]
+    job_url: str
+    job_title: str
+    job_state: JobApplicationState
+    update_time: Optional[str] = None
+    contact_name: Optional[str] = None
+    contact_linkedin: Optional[str] = None
+    contact_email: Optional[str] = None
+
+class CompanyDto(BaseModel):
+    company_name: str
+    tracked_jobs: list[TrackedJobDto]
+    company_id: Optional[str] = None

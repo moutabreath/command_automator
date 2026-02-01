@@ -4,7 +4,7 @@ from abc import abstractmethod
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from repository.abstract_mongo_persist import AbstractMongoPersist
+from .abstract_mongo_persist import AbstractMongoPersist
 
 class AbstractOwnerMongoPersist(AbstractMongoPersist):
     """

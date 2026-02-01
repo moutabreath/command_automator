@@ -1,7 +1,7 @@
 from enum import StrEnum
 from typing import Generic, Optional, TypeVar
 
-from attr import dataclass
+from dataclasses import dataclass
 
 
 class PersistenceErrorCode(StrEnum):

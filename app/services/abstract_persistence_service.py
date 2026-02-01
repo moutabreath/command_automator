@@ -1,4 +1,4 @@
-from repository.abstract_mongo_persist import AbstractMongoPersist
+from ..repository.abstract_mongo_persist import AbstractMongoPersist
 
 
 class AbstractPersistenceService:

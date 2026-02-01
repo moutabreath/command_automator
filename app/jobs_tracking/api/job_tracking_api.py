@@ -1,9 +1,20 @@
 import logging
 
-from jobs_tracking.models import CompanyDto, JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse, TrackedJobDto
-from jobs_tracking.services.models import Company, CompanyResponse, JobApplicationState, JobTrackingResponse, TrackedJob
-from jobs_tracking.services.job_tracking_service import JobTrackingResponseCode, JobTrackingService
-from utils.utils import is_valid_uuid4
+from .schemas.models import CompanyDto, TrackedJobDto
+from .schemas.requests import TrackNewJobRequest, TrackExistingJobRequest, GetTrackedJobsRequest, DeleteTrackedJobsRequest
+from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
+from ..services.domain.models import JobApplicationState, TrackedJob, Company
+from ..services.domain.results import JobTrackingResponseCode, CompanyResponse, JobTrackingResponse
+from ..services.job_tracking_service import JobTrackingService
+from ..services.domain.commands import (
+    TrackNewJobCommand,
+    TrackExistingJobCommand,
+    GetTrackedJobsCommand,
+    DeleteTrackedJobsCommand,
+    ExtractJobInfoCommand
+)
+from ...utils.utils import is_valid_uuid4
+
 
 class JobTrackingApi:
     
@@ -11,7 +22,8 @@ class JobTrackingApi:
         self.job_tracking_service = job_tracking_service
 
  
-    def get_job_application_states(self) -> list[str]:
+    @staticmethod
+    def get_job_application_states() -> list[str]:
         """Get list of available job application states"""
         try:
             return [state.name for state in JobApplicationState if not state == JobApplicationState.UNKNOWN]
@@ -19,59 +31,62 @@ class JobTrackingApi:
             logging.exception(f"Error getting job application states: {e}")
             return []    
         
-    def track_new_job(self, user_id: str, company_name: str, job_dto: TrackedJobDto) -> JobTrackingApiResponse:
+    def track_new_job(self, request: TrackNewJobRequest) -> JobTrackingApiResponse:
         
-        if not is_valid_uuid4(user_id):
-            logging.error(f"Invalid user_id: '{user_id}' is not a valid UUID4")
+        if not is_valid_uuid4(request.user_id):
+            logging.error(f"Invalid user_id: '{request.user_id}' is not a valid UUID4")
             return JobTrackingApiResponse(job=None, code=JobTrackingApiResponseCode.ERROR).model_dump()
         
-        if not company_name or not job_dto or not  job_dto.job_title or not job_dto.job_url:
+        if not request.company_name or not request.job_dto or not request.job_dto.job_title or not request.job_dto.job_url:
             logging.error("Missing required parameter: user_id, company_name, job_dto , job url or job title")
             return JobTrackingApiResponse(job=None, code=JobTrackingApiResponseCode.ERROR).model_dump()
                
-        tracked_job = self._map_dto_to_tracked_job(job_dto)
+        tracked_job = self._map_dto_to_tracked_job(request.job_dto)
         
-        response = self.job_tracking_service.track_new_job_sync(
-            user_id=user_id,
-            company_name=company_name,
+        command = TrackNewJobCommand(
+            user_id=request.user_id,
+            company_name=request.company_name,
             tracked_job=tracked_job
         )
+        response = self.job_tracking_service.track_new_job_sync(command)
         return self.create_job_tracking_response(response)
 
-    def track_existing_job(self, user_id: str, company_id: str, job_dto: TrackedJobDto) -> JobTrackingApiResponse:
+    def track_existing_job(self, request: TrackExistingJobRequest) -> JobTrackingApiResponse:
         
-        if not is_valid_uuid4(user_id) or not is_valid_uuid4(company_id):
-            logging.error(f"Invalid id: '{user_id}' or '{company_id} is not a valid UUID4")
+        if not is_valid_uuid4(request.user_id) or not is_valid_uuid4(request.company_id):
+            logging.error(f"Invalid id: '{request.user_id}' or '{request.company_id} is not a valid UUID4")
             return JobTrackingApiResponse(job=None, code=JobTrackingApiResponseCode.INVALID_PARAMETER).model_dump()
         
-        if not job_dto:
+        if not request.job_dto:
             logging.error("Missing required parameter: job_dto")
             return JobTrackingApiResponse(job=None, code=JobTrackingApiResponseCode.INVALID_PARAMETER).model_dump()
         
-        if not is_valid_uuid4(job_dto.job_id):
+        if not is_valid_uuid4(request.job_dto.job_id):
             logging.error("invalid parameter: job_dto.job_id")
             return JobTrackingApiResponse(job=None, code=JobTrackingApiResponseCode.INVALID_PARAMETER).model_dump()
         
-        tracked_job = self._map_dto_to_tracked_job(job_dto)
+        tracked_job = self._map_dto_to_tracked_job(request.job_dto)
         
-        response = self.job_tracking_service.track_existing_job_sync(
-            user_id=user_id,
-            company_id=company_id,
+        command = TrackExistingJobCommand(
+            user_id=request.user_id,
+            company_id=request.company_id,
             tracked_job=tracked_job
         )
+        response = self.job_tracking_service.track_existing_job_sync(command)
         return self.create_job_tracking_response(response)
  
-    def get_tracked_jobs(self, user_id: str, company_name: str) -> CompanyApiResponse:
+    def get_tracked_jobs(self, request: GetTrackedJobsRequest) -> CompanyApiResponse:
         
-        if not is_valid_uuid4(user_id):
-            logging.error(f"Invalid user_id: '{user_id}' is not a valid UUID4")
+        if not is_valid_uuid4(request.user_id):
+            logging.error(f"Invalid user_id: '{request.user_id}' is not a valid UUID4")
             return CompanyApiResponse(company=None, code=JobTrackingApiResponseCode.ERROR).model_dump()
         
-        if not company_name:
+        if not request.company_name:
             logging.error("Missing required parameter: company_name")
             return CompanyApiResponse(company=None, code=JobTrackingApiResponseCode.ERROR).model_dump()
         
-        company_response: CompanyResponse = self.job_tracking_service.get_tracked_jobs_sync(user_id, company_name)
+        command = GetTrackedJobsCommand(user_id=request.user_id, company_name=request.company_name)
+        company_response: CompanyResponse = self.job_tracking_service.get_tracked_jobs_sync(command)
         if company_response and company_response.code == JobTrackingResponseCode.OK:
             serialized_jobs = [self._map_tracked_job_to_dto(job) for job in company_response.company.tracked_jobs]
             company_dto = CompanyDto(company_id=company_response.company.company_id, company_name=company_response.company.company_name, tracked_jobs=serialized_jobs)
@@ -85,23 +100,25 @@ class JobTrackingApi:
             return {"error": "URL is required"}
 
         try:
-            return self.job_tracking_service.extract_job_title_and_company(url)
+            command = ExtractJobInfoCommand(url=url)
+            return self.job_tracking_service.extract_job_title_and_company(command)
         except Exception as e:
             logging.exception(f"Error extracting job info from URL: {e}")
             return {"error": "Failed to extract job information"}
     
-    def delete_tracked_jobs(self, user_id:str, companies_jobs:list[CompanyDto]):
+    def delete_tracked_jobs(self, request: DeleteTrackedJobsRequest):
         
-        if not is_valid_uuid4(user_id):
-            logging.error(f"Invalid user_id: '{user_id}' is not a valid UUID4")
+        if not is_valid_uuid4(request.user_id):
+            logging.error(f"Invalid user_id: '{request.user_id}' is not a valid UUID4")
             return {"success": False}
         
-        if not companies_jobs or len(companies_jobs) == 0:
+        if not request.companies_jobs or len(request.companies_jobs) == 0:
             logging.error("Missing required parameter: companies_jobs")
             return {"success": False}
         
-        domain_companies = self._map_dto_to_domain_companies(companies_jobs)
-        success = self.job_tracking_service.delete_tracked_jobs_sync(user_id, domain_companies)
+        domain_companies = self._map_dto_to_domain_companies(request.companies_jobs)
+        command = DeleteTrackedJobsCommand(user_id=request.user_id, companies_jobs=domain_companies)
+        success = self.job_tracking_service.delete_tracked_jobs_sync(command)
         return {"success" : success}
 
     def _map_dto_to_tracked_job(self, job_dto: TrackedJobDto) -> TrackedJob:
@@ -135,7 +152,8 @@ class JobTrackingApi:
             return JobTrackingApiResponse(job=job_dto, code=JobTrackingApiResponseCode.OK).model_dump()
         return JobTrackingApiResponse(code=JobTrackingApiResponseCode.ERROR).model_dump()
 
-    def _map_tracked_job_to_dto(self, job: TrackedJob):
+    @staticmethod
+    def _map_tracked_job_to_dto(job: TrackedJob):
         return TrackedJobDto(
             job_id=job.job_id,
             job_url=job.job_url,
@@ -146,5 +164,3 @@ class JobTrackingApi:
             contact_linkedin=job.contact_linkedin,
             contact_email=job.contact_email
         )
-
-    
