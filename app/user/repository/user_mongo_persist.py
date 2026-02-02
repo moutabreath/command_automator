@@ -4,8 +4,8 @@ import uuid
 from pymongo.errors import DuplicateKeyError
 import pymongo.errors as mongo_errors
 
-from repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
-from repository.models import PersistenceErrorCode, PersistenceResponse
+from ...repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
+from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
 
 class UserMongoPersist(AbstractOwnerMongoPersist):

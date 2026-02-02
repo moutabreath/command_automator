@@ -6,8 +6,8 @@ from typing import List, Optional
 from bs4 import BeautifulSoup
 import urllib.parse
 
-from llm.mcp_servers.job_search.models import ScrapedJob
-from llm.mcp_servers.job_search.services.job_scrapers.abstract_jobs_scraper_service import AbstractJobsScraperService
+from ...models import ScrapedJob
+from .abstract_jobs_scraper_service import AbstractJobsScraperService
 
 class LinkedInJobsScraperService(AbstractJobsScraperService):
     def __init__(self):

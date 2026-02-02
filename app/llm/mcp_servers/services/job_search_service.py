@@ -1,14 +1,14 @@
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 
-from llm.mcp_servers.job_search.services.job_scrapers.abstract_jobs_scraper_service import AbstractJobsScraperService
-from llm.mcp_servers.job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
-from llm.mcp_servers.job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
-from llm.mcp_servers.job_search.services.jobs_filter_service import JobsFilterService
-from llm.mcp_servers.job_search.services.jobs_saver_service import JobsSaverService
-from llm.mcp_servers.services.company_mcp_service import CompanyReadService
+from ..job_search.services.job_scrapers.abstract_jobs_scraper_service import AbstractJobsScraperService
+from ..job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
+from ..job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
+from ..job_search.services.jobs_filter_service import JobsFilterService
+from ..job_search.services.jobs_saver_service import JobsSaverService
+from .company_mcp_service import CompanyReadService
 
-from utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
+from ....utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
 
 class JobSearchService:

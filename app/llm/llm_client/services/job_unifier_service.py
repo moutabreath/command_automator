@@ -3,9 +3,10 @@ import mimetypes
 import os
 from google.genai.chats import Chat
 
-from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponseCode
-from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
-from utils import file_utils
+from ...gemini.models import LLMResponseCode
+from ...gemini.gemini_client_wrapper import GeminiClientWrapper
+from ..mcp_client import MCPResponse, MCPResponseCode
+from ....utils import file_utils
 
 class JobUnifierService:
 

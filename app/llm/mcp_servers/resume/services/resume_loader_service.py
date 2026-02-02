@@ -2,8 +2,8 @@ import logging
 from pathlib import Path
 from typing import Tuple, List, Optional
 
-from llm.mcp_servers.resume.models import ResumeData
-from utils import file_utils
+from ..models import ResumeData
+from .....utils import file_utils
 
 class ResumeLoaderService:
 

@@ -1,9 +1,9 @@
 import logging
 
-from llm.mcp_servers.persistence.mcp_company_mongo_persist import CompanyReadPersist
-from llm.mcp_servers.services.models import UserApplicationResponse, UserApplication, UserApplicationResponseCode
+from ....repository.models import PersistenceErrorCode
+from ..persistence.mcp_company_mongo_persist import CompanyReadPersist
+from .models import UserApplicationResponse, UserApplication, UserApplicationResponseCode
 
-from repository.models import PersistenceErrorCode
 
 class CompanyReadService:
     

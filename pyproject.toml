@@ -41,5 +41,4 @@ dev = [
 asyncio_mode = "auto"
 
 [tool.setuptools]
-package-dir = {"" = "src"}
-package-data = { "commands_automator" = ["user/config/user_config.json", "jobs_tracking/config/job_tracking_config.json"] }
+package-dir = {"" = "app"}

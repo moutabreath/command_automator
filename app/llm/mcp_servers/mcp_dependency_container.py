@@ -1,16 +1,16 @@
 import logging
 from dependency_injector import providers
 
-from llm.mcp_servers.job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
-from llm.mcp_servers.job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
-from llm.mcp_servers.job_search.services.jobs_saver_service import JobsSaverService
-from llm.mcp_servers.services.job_search_service import JobSearchService
-from llm.mcp_servers.job_search.services.jobs_filter_service import JobsFilterService
-from llm.mcp_servers.resume.services.resume_loader_service import ResumeLoaderService
-from llm.mcp_servers.persistence.mcp_company_mongo_persist import CompanyReadPersist
-from llm.mcp_servers.services.company_mcp_service import CompanyReadService
+from .job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
+from .job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
+from .job_search.services.jobs_saver_service import JobsSaverService
+from .job_search.services.jobs_filter_service import JobsFilterService
+from .services.job_search_service import JobSearchService
+from .services.company_mcp_service import CompanyReadService
+from .resume.services.resume_loader_service import ResumeLoaderService
+from .persistence.mcp_company_mongo_persist import CompanyReadPersist
 
-from utils.dependency_container import Container
+from ...utils.dependency_container import Container
 
 class MCPContainer(Container):
     

@@ -2,9 +2,9 @@ import json
 import logging
 from google.genai.chats import Chat
 
-from llm.gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
-from llm.llm_client.mcp_client import MCPResponse, MCPResponseCode
-from llm.llm_client.services.resume_saver_service import ResumeSaverService
+from ...gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
+from ..mcp_client import MCPResponse, MCPResponseCode
+from .resume_saver_service import ResumeSaverService
 
 class ResumeRefinerService:
     def __init__(self, resume_chat: Chat, gemini_utils: GeminiClientWrapper):

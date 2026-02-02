@@ -2,10 +2,10 @@ import base64, logging
 import asyncio
 from typing import Dict, Any
 
-from utils.utils import run_async_method, cancel_current_async_operation
-from llm.llm_client.models import MCPResponse, MCPResponseCode
-from llm.services.llm_service import LLMService
-from llm.models import LLMApiResponse, LLMApiResponseCode
+from ..utils.utils import run_async_method, cancel_current_async_operation
+from .llm_client.models import MCPResponse, MCPResponseCode
+from .services.llm_service import LLMService
+from .models import LLMApiResponse, LLMApiResponseCode
 
 class LLMApi:
 

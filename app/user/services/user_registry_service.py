@@ -1,7 +1,7 @@
-from services.abstract_persistence_service import AbstractPersistenceService
-from user.repository.user_mongo_persist import UserMongoPersist
-from user.services.models import UserRegistryResponse, UserRegistryResponseCode
-from utils.utils import AsyncRunner
+from ...services.abstract_persistence_service import AbstractPersistenceService
+from ..repository.user_mongo_persist import UserMongoPersist
+from .models import UserRegistryResponse, UserRegistryResponseCode
+from ...utils.utils import AsyncRunner
 import logging
 
         

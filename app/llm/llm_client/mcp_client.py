@@ -4,12 +4,12 @@ import json, aiohttp, logging, asyncio
 from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
-from llm.gemini.models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
-from llm.gemini.gemini_client_wrapper import GeminiClientWrapper
+from ..gemini.models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
+from ..gemini.gemini_client_wrapper import GeminiClientWrapper
 
-from llm.llm_client.models import MCPResponse, MCPResponseCode
-from llm.llm_client.services.job_unifier_service import JobUnifierService
-from llm.llm_client.services.resume_refiner_service import ResumeRefinerService
+from .models import MCPResponse, MCPResponseCode
+from .services.job_unifier_service import JobUnifierService
+from ..llm_client.services.resume_refiner_service import ResumeRefinerService
 
 
 class SmartMCPClient:

@@ -1,6 +1,6 @@
 from abc import ABC, abstractmethod
 from typing import List
-from llm.mcp_servers.job_search.models import ScrapedJob
+from ...models import ScrapedJob
 
 
 class AbstractJobsScraperService(ABC):

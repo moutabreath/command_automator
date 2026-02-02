@@ -3,8 +3,8 @@ import pymongo.errors as mongo_errors
 
 from motor.motor_asyncio import AsyncIOMotorClient
 
-from repository.abstract_mongo_persist import AbstractMongoPersist
-from repository.models import PersistenceErrorCode, PersistenceResponse
+from ....repository.abstract_mongo_persist import AbstractMongoPersist
+from ....repository.models import PersistenceErrorCode, PersistenceResponse
 class CompanyReadPersist(AbstractMongoPersist):
     
     async def initialize_connection(self):

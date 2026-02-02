@@ -5,10 +5,10 @@ from typing import List
 
 from mcp.server.fastmcp import FastMCP
 
-from llm.mcp_servers.mcp_dependency_container import MCPContainer
-from llm.mcp_servers.resume.models import ResumeData
+from .mcp_dependency_container import MCPContainer
+from .resume import ResumeData
 
-from utils.logger_config import setup_logging
+from ...utils.logger_config import setup_logging
 
 # Initialize FastMCP
 mcp = FastMCP("job_applicant_helper")
