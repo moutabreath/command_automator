@@ -2,8 +2,7 @@ import logging, os
 from typing import List
 
 from ..models import ScrapedJob
-from .....utils import file_utils
-
+from ....utils import file_utils
 
 class JobsSaverService:
     

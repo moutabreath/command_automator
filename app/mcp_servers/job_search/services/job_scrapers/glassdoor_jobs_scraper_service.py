@@ -7,11 +7,13 @@ from datetime import datetime
 
 from playwright.async_api import async_playwright
 
+from .....utils.file_utils import GLASSDOOR_SELECTORS_FILE
+
 from .abstract_jobs_scraper_service import AbstractJobsScraperService
 from ...models import ScrapedJob
 from ...utils.time_parser import parse_time_expression
 
-from ......utils.file_utils import GLASSDOOR_SELECTORS_FILE
+
 
 
 class GlassdoorJobsScraperService(AbstractJobsScraperService):

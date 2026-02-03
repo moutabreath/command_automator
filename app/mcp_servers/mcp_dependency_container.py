@@ -10,7 +10,7 @@ from .services.company_mcp_service import CompanyReadService
 from .resume.services.resume_loader_service import ResumeLoaderService
 from .persistence.mcp_company_mongo_persist import CompanyReadPersist
 
-from ...utils.dependency_container import Container
+from ..utils.dependency_container import Container
 
 class MCPContainer(Container):
     

@@ -9,7 +9,7 @@ from ..gemini.gemini_client_wrapper import GeminiClientWrapper
 
 from .models import MCPResponse, MCPResponseCode
 from .services.job_unifier_service import JobUnifierService
-from ..llm_client.services.resume_refiner_service import ResumeRefinerService
+from .services.resume_refiner_service import ResumeRefinerService
 
 
 class SmartMCPClient:

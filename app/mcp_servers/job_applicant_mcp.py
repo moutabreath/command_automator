@@ -8,7 +8,7 @@ from mcp.server.fastmcp import FastMCP
 from .mcp_dependency_container import MCPContainer
 from .resume import ResumeData
 
-from ...utils.logger_config import setup_logging
+from ..utils.logger_config import setup_logging
 
 # Initialize FastMCP
 mcp = FastMCP("job_applicant_helper")

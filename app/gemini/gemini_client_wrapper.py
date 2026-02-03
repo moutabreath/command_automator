@@ -7,7 +7,7 @@ from google.genai.types import FileData, Part, File
 from PIL import Image
 
 from .models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
-from ...utils import file_utils
+from ..utils import file_utils
 
 class GeminiClientWrapper:
     GEMINI_MODEL = "gemini-2.5-flash"

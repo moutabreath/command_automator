@@ -2,8 +2,9 @@ import base64, logging
 import asyncio
 from typing import Dict, Any
 
+from ..llm_proxy.models import MCPResponse, MCPResponseCode
+
 from ..utils.utils import run_async_method, cancel_current_async_operation
-from .llm_client.models import MCPResponse, MCPResponseCode
 from .services.llm_service import LLMService
 from .models import LLMApiResponse, LLMApiResponseCode
 

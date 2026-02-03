@@ -1,9 +1,8 @@
 import logging
 
-from ..llm_client.mcp_client import SmartMCPClient
-from ..llm_client.models import MCPResponse, MCPResponseCode
-
-from ..mcp_servers.job_applicant_mcp import MCPRunner
+from app.llm_proxy.mcp_client import SmartMCPClient
+from app.llm_proxy.models import MCPResponse
+from app.mcp_servers.job_applicant_mcp import MCPRunner
 
 class LLMService:
 

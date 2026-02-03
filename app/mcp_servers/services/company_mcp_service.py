@@ -1,6 +1,6 @@
 import logging
 
-from ....repository.models import PersistenceErrorCode
+from ...repository.models import PersistenceErrorCode
 from ..persistence.mcp_company_mongo_persist import CompanyReadPersist
 from .models import UserApplicationResponse, UserApplication, UserApplicationResponseCode
 

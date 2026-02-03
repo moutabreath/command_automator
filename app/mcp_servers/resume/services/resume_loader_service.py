@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Tuple, List, Optional
 
 from ..models import ResumeData
-from .....utils import file_utils
+from ....utils import file_utils
 
 class ResumeLoaderService:
 

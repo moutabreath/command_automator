@@ -8,7 +8,7 @@ from ..job_search.services.jobs_filter_service import JobsFilterService
 from ..job_search.services.jobs_saver_service import JobsSaverService
 from .company_mcp_service import CompanyReadService
 
-from ....utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
+from ...utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
 
 class JobSearchService:
