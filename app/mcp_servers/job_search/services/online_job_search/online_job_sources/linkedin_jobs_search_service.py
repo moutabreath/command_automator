@@ -6,10 +6,10 @@ from typing import List, Optional
 from bs4 import BeautifulSoup
 import urllib.parse
 
-from ...models import ScrapedJob
-from .abstract_jobs_scraper_service import AbstractJobsScraperService
+from ....models import ScrapedJob
+from .abstract_jobs_search_service import AbstractJobsSearchService
 
-class LinkedInJobsScraperService(AbstractJobsScraperService):
+class LinkedInJobsSearchService(AbstractJobsSearchService):
     def __init__(self):
         super().__init__()
         self.session = requests.Session()

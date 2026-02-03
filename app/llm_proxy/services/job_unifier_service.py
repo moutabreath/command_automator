@@ -5,7 +5,7 @@ from google.genai.chats import Chat
 
 from ...gemini.models import LLMResponseCode
 from ...gemini.gemini_client_wrapper import GeminiClientWrapper
-from ..llm_proxy import MCPResponse, MCPResponseCode
+from ..llm_proxy_service import MCPResponse, MCPResponseCode
 from ...utils import file_utils
 
 class JobUnifierService:

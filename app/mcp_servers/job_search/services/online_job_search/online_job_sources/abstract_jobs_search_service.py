@@ -1,9 +1,9 @@
 from abc import ABC, abstractmethod
 from typing import List
-from ...models import ScrapedJob
+from ....models import ScrapedJob
 
 
-class AbstractJobsScraperService(ABC):
+class AbstractJobsSearchService(ABC):
 
     def __init__(self):
         self.headers = {

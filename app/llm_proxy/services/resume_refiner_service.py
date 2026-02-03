@@ -3,7 +3,7 @@ import logging
 from google.genai.chats import Chat
 
 from ...gemini.gemini_client_wrapper import GeminiClientWrapper, LLMResponse, LLMResponseCode
-from ..llm_proxy import MCPResponse, MCPResponseCode
+from ..llm_proxy_service import MCPResponse, MCPResponseCode
 from .resume_saver_service import ResumeSaverService
 
 class ResumeRefinerService:

@@ -7,16 +7,16 @@ from datetime import datetime
 
 from playwright.async_api import async_playwright
 
-from .....utils.file_utils import GLASSDOOR_SELECTORS_FILE
+from ......utils.file_utils import GLASSDOOR_SELECTORS_FILE
 
-from .abstract_jobs_scraper_service import AbstractJobsScraperService
-from ...models import ScrapedJob
-from ...utils.time_parser import parse_time_expression
-
-
+from .abstract_jobs_search_service import AbstractJobsSearchService
+from ....models import ScrapedJob
+from ....utils.time_parser import parse_time_expression
 
 
-class GlassdoorJobsScraperService(AbstractJobsScraperService):
+
+
+class GlassdoorJobsSearchService(AbstractJobsSearchService):
     def __init__(self):
         super().__init__()
         self.base_url = "https://www.glassdoor.com"

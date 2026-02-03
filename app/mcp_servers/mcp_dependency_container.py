@@ -1,11 +1,11 @@
 import logging
 from dependency_injector import providers
 
-from .job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
-from .job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
+from .job_search.services.online_job_search.sources.glassdoor_jobs_search_service import GlassdoorJobsSearchService
+from .job_search.services.online_job_search.sources.linkedin_jobs_search_service import LinkedInJobsSearchService
 from .job_search.services.jobs_saver_service import JobsSaverService
 from .job_search.services.jobs_filter_service import JobsFilterService
-from .services.job_search_service import JobSearchService
+from .job_search.services.online_job_search.job_search_runner import JobSearchRunnerService
 from .services.company_mcp_service import CompanyReadService
 from .resume.services.resume_loader_service import ResumeLoaderService
 from .persistence.mcp_company_mongo_persist import CompanyReadPersist
@@ -23,8 +23,8 @@ class MCPContainer(Container):
     
     # Services
     resume_loader_service = providers.Factory(ResumeLoaderService)
-    linkedin_jobs_scraper_service = providers.Factory(LinkedInJobsScraperService)
-    glassdoor_jobs_scraper_service = providers.Factory(GlassdoorJobsScraperService)
+    linkedin_jobs_scraper_service = providers.Factory(LinkedInJobsSearchService)
+    glassdoor_jobs_scraper_service = providers.Factory(GlassdoorJobsSearchService)
     job_saver_service = providers.Factory(JobsSaverService)
 
     # Company MCP Service
@@ -40,7 +40,7 @@ class MCPContainer(Container):
     )
     
     job_search_service = providers.Factory(
-        JobSearchService,
+        JobSearchRunnerService,
         linkedin_jobs_scraper_service=linkedin_jobs_scraper_service,
         glassdoor_jobs_scraper_service=glassdoor_jobs_scraper_service,
         jobs_saver_service=job_saver_service,

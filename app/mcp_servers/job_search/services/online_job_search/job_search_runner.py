@@ -1,20 +1,20 @@
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 
-from ..job_search.services.job_scrapers.abstract_jobs_scraper_service import AbstractJobsScraperService
-from ..job_search.services.job_scrapers.glassdoor_jobs_scraper_service import GlassdoorJobsScraperService
-from ..job_search.services.job_scrapers.linkedin_jobs_scraper_service import LinkedInJobsScraperService
-from ..job_search.services.jobs_filter_service import JobsFilterService
-from ..job_search.services.jobs_saver_service import JobsSaverService
-from .company_mcp_service import CompanyReadService
+from .online_job_sources.abstract_jobs_search_service import AbstractJobsSearchService
+from .online_job_sources.glassdoor_jobs_search_service import GlassdoorJobsSearchService
+from .online_job_sources.linkedin_jobs_search_service import LinkedInJobsSearchService
+from ..jobs_filter_service import JobsFilterService
+from ..jobs_saver_service import JobsSaverService
+from ....services.company_mcp_service import CompanyReadService
 
-from ...utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
+from .....utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
 
-class JobSearchService:
+class JobSearchRunnerService:
     """Service class for handling job applicant MCP operations"""
     
-    def __init__(self, linkedin_jobs_scraper_service: LinkedInJobsScraperService, glassdoor_jobs_scraper_service: GlassdoorJobsScraperService,
+    def __init__(self, linkedin_jobs_scraper_service: LinkedInJobsSearchService, glassdoor_jobs_scraper_service: GlassdoorJobsSearchService,
                  company_mcp_service: CompanyReadService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
         self.company_mcp_service = company_mcp_service
         self.linkedin_jobs_scraper_service = linkedin_jobs_scraper_service
@@ -32,13 +32,13 @@ class JobSearchService:
         jobs = []
         
         # LinkedIn jobs
-        linkedin_jobs = await self._run_scraper_with_filtering(
+        linkedin_jobs = await self._run_job_search_with_filtering(
             'linkedin', self.linkedin_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
         if linkedin_jobs:
             jobs.extend(linkedin_jobs)
 
         # Glassdoor jobs
-        glassdoor_jobs = await self._run_scraper_with_filtering(
+        glassdoor_jobs = await self._run_job_search_with_filtering(
             'glassdoor', self.glasdoor_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
         if glassdoor_jobs:
             jobs.extend(glassdoor_jobs)
@@ -50,7 +50,7 @@ class JobSearchService:
         """Search for jobs on LinkedIn"""
         job_title, location, remote, forbidden_titles = await self._get_search_params_from_config_or_default(
             job_title, location, remote)
-        return await self._run_scraper_with_filtering(
+        return await self._run_job_search_with_filtering(
             'linkedin', self.linkedin_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
 
     async def get_jobs_from_glassdoor(self, job_title: Optional[str] = None, 
@@ -61,7 +61,7 @@ class JobSearchService:
         job_title, location, remote, forbidden_titles = await self._get_search_params_from_config_or_default(
             job_title, location, remote)
 
-        return await self._run_scraper_with_filtering(
+        return await self._run_job_search_with_filtering(
             'glassdoor', self.glasdoor_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
 
     async def get_user_applications_for_company(self, user_id: str, company_name: str) -> Dict[str, Any]:
@@ -72,7 +72,7 @@ class JobSearchService:
             logging.error(f"Error getting user applications: {e}", exc_info=True)
             return {"success": False, "error": str(e)}
 
-    async def _run_scraper_with_filtering(self, scraper_name: str, scraper: AbstractJobsScraperService, 
+    async def _run_job_search_with_filtering(self, searcher_name: str, scraper: AbstractJobsSearchService, 
                                         job_title: str, location: str, remote: bool,
                                         user_id: Optional[str], forbidden_titles: List[str]) -> List:
         """Run a specific scraper and filter out applied jobs"""
@@ -88,7 +88,7 @@ class JobSearchService:
         )
         
         if not jobs:
-            logging.warning(f"No jobs found from {scraper_name} scraper")
+            logging.warning(f"No jobs found from {searcher_name} scraper")
             return []
         
         # Filter applied jobs
@@ -97,13 +97,13 @@ class JobSearchService:
         # Save filtered results
         if non_applied_jobs:
             await self.jobs_saver_service.save_jobs_to_file(
-                non_applied_jobs, f'non_applied_jobs_{scraper_name}.json')
+                non_applied_jobs, f'non_applied_jobs_{searcher_name}.json')
         
         if suspected_applied_jobs:
             await self.jobs_saver_service.save_jobs_to_file(
-                suspected_applied_jobs, f'suspected_applied_jobs_{scraper_name}.json')
+                suspected_applied_jobs, f'suspected_applied_jobs_{searcher_name}.json')
         
-        logging.info(f"Found {len(non_applied_jobs)} new jobs and {len(suspected_applied_jobs)} suspected applied jobs from {scraper_name}")
+        logging.info(f"Found {len(non_applied_jobs)} new jobs and {len(suspected_applied_jobs)} suspected applied jobs from {searcher_name}")
         
         return non_applied_jobs
 
