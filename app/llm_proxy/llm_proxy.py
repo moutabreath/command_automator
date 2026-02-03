@@ -12,7 +12,7 @@ from .services.job_unifier_service import JobUnifierService
 from .services.resume_refiner_service import ResumeRefinerService
 
 
-class SmartMCPClient:
+class LLMProxyService:
     """An intelligent client that uses LLM to decide when to use MCP tools."""
 
     def __init__(self, mcp_server_url=None):

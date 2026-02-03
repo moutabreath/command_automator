@@ -2,16 +2,17 @@ import base64, logging
 import asyncio
 from typing import Dict, Any
 
+from ..llm_proxy.llm_proxy import LLMProxyService
+
 from ..llm_proxy.models import MCPResponse, MCPResponseCode
 
 from ..utils.utils import run_async_method, cancel_current_async_operation
-from .services.llm_service import LLMService
 from .models import LLMApiResponse, LLMApiResponseCode
 
 class LLMApi:
 
-    def __init__(self,llm_service: LLMService):
-        self.llm_service = llm_service
+    def __init__(self,llm_proxy: LLMProxyService):
+        self.llm_proxy = llm_proxy
 
     def cancel_operation(self):
         """Cancel the current LLM operation"""
@@ -45,7 +46,7 @@ class LLMApi:
         try:
             # Create and track the LLM task
             async def llm_task():
-                return await self.llm_service.chat_with_bot(prompt, decoded_data, output_file_path, user_id)
+                return await self.llm_proxy.process_query(prompt, decoded_data, output_file_path, user_id)
             
             result: MCPResponse = run_async_method(llm_task)
             return self._convert_mcp_response_to_api_response(result)
