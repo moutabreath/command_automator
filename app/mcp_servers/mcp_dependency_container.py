@@ -1,8 +1,8 @@
 import logging
 from dependency_injector import providers
 
-from .job_search.services.online_job_search.sources.glassdoor_jobs_search_service import GlassdoorJobsSearchService
-from .job_search.services.online_job_search.sources.linkedin_jobs_search_service import LinkedInJobsSearchService
+from .job_search.services.online_job_search.online_job_sources.glassdoor_jobs_search_service import GlassdoorJobsSearchService
+from .job_search.services.online_job_search.online_job_sources.linkedin_jobs_search_service import LinkedInJobsSearchService
 from .job_search.services.jobs_saver_service import JobsSaverService
 from .job_search.services.jobs_filter_service import JobsFilterService
 from .job_search.services.online_job_search.job_search_runner import JobSearchRunnerService
