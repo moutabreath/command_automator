@@ -1,9 +1,8 @@
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 
-from .online_job_sources.abstract_jobs_search_service import AbstractJobsSearchService
-from .online_job_sources.glassdoor_jobs_search_service import GlassdoorJobsSearchService
-from .online_job_sources.linkedin_jobs_search_service import LinkedInJobsSearchService
+from .online_job_sources import AbstractJobsSearchService, GlassdoorJobsSearchService, LinkedInJobsSearchService
+
 from ..jobs_filter_service import JobsFilterService
 from ..jobs_saver_service import JobsSaverService
 from ....services.company_mcp_service import CompanyReadService
