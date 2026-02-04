@@ -23,7 +23,6 @@ from .job_tracking_linkedin_parser import extract_linkedin_job
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 from ...services.abstract_persistence_service import AbstractPersistenceService
 from ...utils import file_utils
-from ...utils.utils import AsyncRunner
 
 
 class JobTrackingService(AbstractPersistenceService):
@@ -32,28 +31,8 @@ class JobTrackingService(AbstractPersistenceService):
         self.application_persist = company_mongo_persist
         super().__init__(self.application_persist)
 
-    @classmethod
-    async def create(cls, mongo_connection_string, db_name):
-        # 1. Create the initialized persistence layer
-        # This will fail if DB is down or logic is wrong, preventing "Zombie" services
-        company_persist = await CompanyMongoPersist.create(mongo_connection_string, db_name)
-        return cls(company_persist)
+ 
 
-    def track_new_job_sync(self, track_new_job_command: TrackNewJobCommand) -> JobTrackingResponse:
-
-        logging.info(f"started with user: {track_new_job_command.user_id} company: \"{track_new_job_command.company_name}\" job: \"{track_new_job_command.tracked_job.job_title}\"")
-        result = AsyncRunner.run_async(
-            self.track_new_job(track_new_job_command)
-        )
-        return result    
-    
-    def track_existing_job_sync(self, track_existing_job_command: TrackExistingJobCommand) -> JobTrackingResponse:
-
-        logging.info(f"started with user: {track_existing_job_command.user_id} company: \"{track_existing_job_command.company_id}\" job: \"{track_existing_job_command.tracked_job.job_title}\"")
-        result = AsyncRunner.run_async(
-            self.track_existing_job(track_existing_job_command)
-        )
-        return result
        
     async def track_new_job(self, track_new_job_command: TrackNewJobCommand) -> JobTrackingResponse:
         """Add or update a job in a company application
@@ -121,13 +100,6 @@ class JobTrackingService(AbstractPersistenceService):
         )
         return self._create_job_tracking_response(persistence_response, company_id, tracked_job)
     
-    def get_tracked_jobs_sync(self, get_tracked_jobs_command: GetTrackedJobsCommand) -> CompanyResponse:
-
-        logging.info(f"started with user: {get_tracked_jobs_command.user_id} company: \"{get_tracked_jobs_command.company_name}\"")
-        result = AsyncRunner.run_async(
-            self.get_tracked_jobs(get_tracked_jobs_command)
-        )
-        return result
     
     async def get_tracked_jobs(self, get_tracked_jobs_command: GetTrackedJobsCommand) -> CompanyResponse:
         """Get all positions for a user at a specific company"""
@@ -161,14 +133,7 @@ class JobTrackingService(AbstractPersistenceService):
 
     def extract_job_title_and_company(self, extract_job_info_command: ExtractJobInfoCommand):
         logging.info(f"start with {extract_job_info_command.url}")
-        return extract_linkedin_job(extract_job_info_command.url)       
-
-    def delete_tracked_jobs_sync(self, delete_tracked_jobs_command: DeleteTrackedJobsCommand):
-        logging.info(f"started with user: {delete_tracked_jobs_command.user_id} with {len(delete_tracked_jobs_command.companies_jobs)} companies")
-        result = AsyncRunner.run_async(
-            self.delete_tracked_jobs(delete_tracked_jobs_command)
-        )
-        return result
+        return extract_linkedin_job(extract_job_info_command.url)    
     
     async def delete_tracked_jobs(self, delete_tracked_jobs_command: DeleteTrackedJobsCommand):
         user_id, companies_jobs = delete_tracked_jobs_command.user_id, delete_tracked_jobs_command.companies_jobs
