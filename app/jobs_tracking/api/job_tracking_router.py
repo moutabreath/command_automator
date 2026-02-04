@@ -2,11 +2,10 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
-from .schemas.models import CompanyDto, TrackedJobDto
 from .schemas.requests import TrackNewJobRequest, TrackExistingJobRequest, GetTrackedJobsRequest, DeleteTrackedJobsRequest
 from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
 from ..services.domain.models import JobApplicationState
-from ..services.domain.results import JobTrackingResponseCode, CompanyResponse
+from ..services.domain.results import CompanyResponse
 from ..services.job_tracking_service import JobTrackingService
 from ..services.domain.commands import (
     TrackNewJobCommand,
@@ -20,16 +19,18 @@ from .job_tracking_mapper import (
     map_dto_to_tracked_job,
     map_dto_to_domain_companies,
     create_job_tracking_response,
-    map_tracked_job_to_dto
+    create_company_api_response
 )
+
+
+from ...utils.dependency_container import Container
 
 router = APIRouter(prefix="/api/jobs", tags=["job-tracking"])
 
 
 def get_job_tracking_service() -> JobTrackingService:
     """Dependency injection for JobTrackingService"""
-    from ...utils.dependency_container import container
-    return container.job_tracking_service()
+    return Container.get_container().job_tracking_service()
 
 
 @router.get("/application-states", response_model=List[str])
@@ -63,15 +64,13 @@ async def track_new_job(
         company_name=request.company_name,
         tracked_job=tracked_job
     )
-    response = job_tracking_service.track_new_job_sync(command)
+    response = await job_tracking_service.track_new_job(command)
     return create_job_tracking_response(response)
 
 
 @router.post("/track-existing", response_model=JobTrackingApiResponse)
-async def track_existing_job(
-    request: TrackExistingJobRequest,
-    job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)
-):
+async def track_existing_job(request: TrackExistingJobRequest,
+                             job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)):
     """Track an existing job for a user"""
     if not is_valid_uuid4(request.user_id) or not is_valid_uuid4(request.company_id):
         logging.error(f"Invalid id: '{request.user_id}' or '{request.company_id}' is not a valid UUID4")
@@ -92,7 +91,7 @@ async def track_existing_job(
         company_id=request.company_id,
         tracked_job=tracked_job
     )
-    response = job_tracking_service.track_existing_job_sync(command)
+    response = await job_tracking_service.track_existing_job(command)
     return create_job_tracking_response(response)
 
 
@@ -111,16 +110,12 @@ async def get_tracked_jobs(
         raise HTTPException(status_code=400, detail="Missing company_name")
     
     command = GetTrackedJobsCommand(user_id=request.user_id, company_name=request.company_name)
-    company_response: CompanyResponse = job_tracking_service.get_tracked_jobs_sync(command)
+    company_response: CompanyResponse = await job_tracking_service.get_tracked_jobs(command)
     
-    if company_response and company_response.code == JobTrackingResponseCode.OK:
-        serialized_jobs = [map_tracked_job_to_dto(job) for job in company_response.company.tracked_jobs]
-        company_dto = CompanyDto(
-            company_id=company_response.company.company_id,
-            company_name=company_response.company.company_name,
-            tracked_jobs=serialized_jobs
-        )
-        return CompanyApiResponse(company=company_dto, code=JobTrackingApiResponseCode.OK)
+    if company_response:
+        api_response = create_company_api_response(company_response)
+        if api_response.code != JobTrackingApiResponseCode.ERROR:
+            return api_response
     
     raise HTTPException(status_code=500, detail="Error retrieving tracked jobs")
 
@@ -159,5 +154,5 @@ async def delete_tracked_jobs(
     
     domain_companies = map_dto_to_domain_companies(request.companies_jobs)
     command = DeleteTrackedJobsCommand(user_id=request.user_id, companies_jobs=domain_companies)
-    success = job_tracking_service.delete_tracked_jobs_sync(command)
+    success = await job_tracking_service.delete_tracked_jobs(command)
     return {"success": success}

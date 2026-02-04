@@ -5,9 +5,9 @@ Handles conversion between DTOs, domain models, and API responses
 from typing import List
 
 from .schemas.models import CompanyDto, TrackedJobDto
-from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode
+from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
 from ..services.domain.models import TrackedJob, Company
-from ..services.domain.results import JobTrackingResponseCode, JobTrackingResponse
+from ..services.domain.results import JobTrackingResponseCode, JobTrackingResponse, CompanyResponse
 
 
 def map_dto_to_tracked_job(job_dto: TrackedJobDto) -> TrackedJob:
@@ -56,3 +56,20 @@ def map_tracked_job_to_dto(job: TrackedJob) -> TrackedJobDto:
         contact_linkedin=job.contact_linkedin,
         contact_email=job.contact_email
     )
+
+
+def create_company_api_response(response: CompanyResponse) -> CompanyApiResponse:
+    """Convert CompanyResponse to CompanyApiResponse"""
+    if response and response.code == JobTrackingResponseCode.OK:
+        serialized_jobs = [map_tracked_job_to_dto(job) for job in response.company.tracked_jobs]
+        company_dto = CompanyDto(
+            company_id=response.company.company_id,
+            company_name=response.company.company_name,
+            tracked_jobs=serialized_jobs
+        )
+        return CompanyApiResponse(company=company_dto, code=JobTrackingApiResponseCode.OK)
+    
+    if response and response.code == JobTrackingResponseCode.NO_TRACKED_JOBS:
+        return CompanyApiResponse(company=None, code=JobTrackingApiResponseCode.NO_TRACKED_JOBS)
+
+    return CompanyApiResponse(code=JobTrackingApiResponseCode.ERROR)

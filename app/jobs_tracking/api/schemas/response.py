@@ -10,7 +10,7 @@ class JobTrackingApiResponseCode(StrEnum):
     OK = "OK"
     ERROR = "ERROR"
     INVALID_PARAMETER = "INVALID_PARAMETER"
-
+    NO_TRACKED_JOBS = "NO_TRACKED_JOBS"
 
 class JobTrackingApiResponse(BaseModel):    
     code: JobTrackingApiResponseCode
