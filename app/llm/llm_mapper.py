@@ -8,7 +8,7 @@ from ..llm_proxy.models import MCPResponse, MCPResponseCode
 from .models import LLMApiResponse, LLMApiResponseCode
 
 
-def convert_mcp_response_to_api_response(result: MCPResponse) -> Dict[str, Any]:
+def mcp_response_to_api_response(result: MCPResponse) -> Dict[str, Any]:
     """Convert MCPResponse to LLMApiResponse dictionary"""
     if not result:
         resp = LLMApiResponse(
