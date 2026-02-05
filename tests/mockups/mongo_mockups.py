@@ -1,7 +1,7 @@
 import pytest
 import mongomock
 
-from app.jobs_tracking.repository.company_mongo_persist import CompanyMongoPersist
+from app.jobs_tracking.repository.company_writer_persist_mongo import CompanyWriterPersistMongo
 from app.user.repository.user_mongo_persist import UserMongoPersist
 
 
@@ -124,7 +124,7 @@ class MockUserMongoPersist(UserMongoPersist):
         self.async_db = AsyncMockDatabase(db)
         self._setup_collections()
 
-class MockCompanyMongoPersist(CompanyMongoPersist):
+class MockCompanyMongoPersist(CompanyWriterPersistMongo):
     def __init__(self, db):
         self.async_db = AsyncMockDatabase(db)
         self._setup_collections()
