@@ -6,80 +6,39 @@ from datetime import datetime, timezone
 
 import pymongo.errors as mongo_errors
 from pymongo import UpdateOne
+from motor.motor_asyncio import AsyncIOMotorClient
+
 
 from .models.entities import CompanyJobsDocument, JobEntity
 from .mapper import EntitiesMapper
 from .models.projections import JobWithCompanyContext
-from ..services.domain.models import TrackedJob, Company
-from ...repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
+from ..services.domain.models import TrackedJob
 from ...repository.models import PersistenceResponse, PersistenceErrorCode
 from .models.queries import (
-    GetTrackedJobsQuery,
     TrackNewJobDbQuery,
     TrackExistingJobDbQuery,
     DeleteApplicationDbQuery,
     DeleteJobDbQuery,
-    DeleteTrackedJobsDbQuery,
-    GetAllApplicationsQuery,
-    GetJobsByStateQuery,
-    GetRecentJobsQuery
+    DeleteTrackedJobsDbQuery
 )
 
 
-class CompanyMongoPersist(AbstractOwnerMongoPersist):
+class CompanyWriterPersistMongo:
 
-    def _setup_collections(self):
+    
+    def __init__(self, connection_string: str, db_name: str):
+        
+        self.async_client = AsyncIOMotorClient(
+            connection_string
+        )
+        logging.getLogger("pymongo").setLevel(logging.WARNING)
+        self.job_applications = self.async_client[db_name]
         #fields to ignore on update
         self.excluded_fields = {'job_url', 'user_id', 'company_name', 'job_id', 'company_id'}
-        self.job_applications = self.async_db.job_applications
-        self.users = self.async_db.users
       
-    async def create_index(self):
-        if self.job_applications is not None:
-            await self.job_applications.create_index([("user_id", 1), ("company_id", 1)])
         
     # ==================== APPLICATION CRUD ====================
        
-    async def get_tracked_jobs(self, query: GetTrackedJobsQuery) -> PersistenceResponse[list[JobWithCompanyContext]]:        
-        """Get all application by user and company"""
-        user_id, company_name = query.user_id, query.company_name
-        try:
-            result_dict = await self.job_applications.find_one({
-                "user_id": user_id, "company_name": company_name
-            })
-
-            entity = EntitiesMapper.to_company_document(result_dict)
-            tracked_jobs_context = [
-                JobWithCompanyContext(
-                    company_id=entity.company_id,
-                    company_name=entity.company_name,
-                    # Entity handles the inner Job data
-                    job=EntitiesMapper.to_domain(job_entity)
-                ) for job_entity in entity.jobs
-            ]
-        
-            return PersistenceResponse(
-                id=entity.company_id, 
-                data=tracked_jobs_context, 
-                code=PersistenceErrorCode.SUCCESS
-            )
-        except mongo_errors.OperationFailure as e:
-            logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.OPERATION_ERROR, error_message=str(e))
-        except mongo_errors.ConnectionFailure as e:
-            logging.exception(f"MongoDB connection failed: {e}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.CONNECTION_ERROR,
-                error_message=f"MongoDB connection failed: {e}"
-            )
-        except Exception as e:
-            logging.exception(f"MongoDB encountered an unknown error: {e}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
-                error_message=str(e)
-            )
 
     async def track_new_job(self, query: TrackNewJobDbQuery) -> PersistenceResponse[JobWithCompanyContext]:
         """Add or update a job in a company application
@@ -319,101 +278,11 @@ class CompanyMongoPersist(AbstractOwnerMongoPersist):
         except Exception as e:
             logging.exception(f"Failed to delete jobs for user {user_id}: {e}")
             return False
-    
-    async def get_all_applications(self, query: GetAllApplicationsQuery) -> PersistenceResponse[list[Company]]:
-        """Get all applications for a user"""
-        user_id = query.user_id
-        try:
-            cursor = self.job_applications.find({"user_id": user_id})
-            results = await cursor.to_list(length=None)
-            
-            domain_companies = []
-            for doc in results:
-                jobs = [TrackedJob.from_dict(j) for j in doc.get("jobs", [])]
-                domain_companies.append(Company(company_id=doc.get("company_id"), company_name=doc.get("company_name"), tracked_jobs=jobs))
-                
-            return PersistenceResponse(data=domain_companies, code=PersistenceErrorCode.SUCCESS)
-        except Exception as e:
-            logging.exception(f"MongoDB encountered an unknown error: {e}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
-                error_message=str(e)
-            )
+  
     
     # ==================== QUERY HELPERS ====================
     
-    
-    async def get_jobs_by_state(self, query: GetJobsByStateQuery) -> PersistenceResponse[list[JobWithCompanyContext]]:
-        """Get all jobs with a specific state across all companies"""
-        user_id, state = query.user_id, query.state
-        pipeline = [
-            {"$match": {"user_id": user_id}},
-            {"$unwind": "$jobs"},
-            {"$match": {"jobs.job_state": state}},
-            {"$project": {
-                "company_id": 1,
-                "company_name": 1,
-                "job": "$jobs"
-            }}
-        ]
-        # Assuming result.data contains the list of dicts from MongoDB
-        result = await self._execute_job_aggregation(pipeline)
-
-        if not result:
-            return PersistenceResponse(error_message="couldn't find anything", code=PersistenceErrorCode.OPERATION_ERROR)
-
-        # Map the list of dicts to your Projection objects
-        projected_jobs = [
-            JobWithCompanyContext.from_mongo(item)
-            for item in result.data
-        ]
-
-        return PersistenceResponse(data=projected_jobs, code=PersistenceErrorCode.SUCCESS)
-
-   
-    async def get_recent_jobs(self, query: GetRecentJobsQuery) -> PersistenceResponse[list[JobWithCompanyContext]]:
-        """Get most recently updated jobs"""
-        user_id, limit = query.user_id, query.limit
-        pipeline = [
-            {"$match": {"user_id": user_id}},
-            {"$unwind": "$jobs"},
-            {"$sort": {"jobs.update_time": -1}},
-            {"$limit": limit},
-            {"$project": {
-                "company_id": 1,
-                "company_name": 1,
-                "job": "$jobs"
-            }}
-        ]
-        result = await self._execute_job_aggregation(pipeline)
-        if result.code == PersistenceErrorCode.SUCCESS and result.data:
-            projected_jobs = [JobWithCompanyContext.from_mongo(item) for item in result.data]
-            return PersistenceResponse(data=projected_jobs, code=PersistenceErrorCode.SUCCESS)
-            
-        return PersistenceResponse(data=[], code=result.code, error_message=result.error_message)
-
-    async def _execute_job_aggregation(self, pipeline: list[dict]) -> PersistenceResponse[list[dict]]:
-        """Execute aggregation pipeline and convert results to dictionary list"""
-        try:
-            cursor = self.job_applications.aggregate(pipeline)
-            results = await cursor.to_list(length=None)
-            tracked_jobs_dicts = [r["job"] for r in results]
-            return PersistenceResponse(data=tracked_jobs_dicts, code=PersistenceErrorCode.SUCCESS)
-        except mongo_errors.OperationFailure as e:
-            logging.exception(f"MongoDB operation failed: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))    
-        except mongo_errors.ConnectionFailure as e:
-            logging.exception(f"MongoDB connection failed: {e}")
-            return PersistenceResponse(
-                data=None,
-                code=PersistenceErrorCode.UNKNOWN_ERROR,
-                error_message=f"MongoDB connection failed: {e}"
-            )
-        except Exception as e:
-            logging.exception(f"MongoDB encountered an unknown error: {e}")
-            return PersistenceResponse(data=None, code=PersistenceErrorCode.UNKNOWN_ERROR, error_message=str(e))
-    
+ 
     async def _find_existing_application(self, user_id: str, company_name: str) -> Optional[CompanyJobsDocument]:
         try:
             # Check if job already exists

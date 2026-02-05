@@ -4,9 +4,9 @@ from dependency_injector import providers
 from .job_search.services.online_job_search.online_job_sources import GlassdoorJobsSearchService, LinkedInJobsSearchService
 from .job_search.services import JobsSaverService, JobsFilterService
 from .job_search.services.online_job_search.job_search_runner import JobSearchRunnerService
-from .services.company_mcp_service import CompanyReadService
+from .services.company_reader_service import CompanyReaderService
 from .resume.services import ResumeLoaderService
-from .persistence.mcp_company_mongo_persist import CompanyReadPersist
+from ..jobs_tracking.repository.company_reader_persist_mongo import CompanyReaderPersistMongo
 
 from ..utils.dependency_container import Container
 
@@ -14,7 +14,7 @@ class MCPContainer(Container):
     
     # MongoDB persistence
     mcp_mongo_company_persist = providers.Resource(
-        CompanyReadPersist,
+        CompanyReaderPersistMongo,
         connection_string=Container.config.mongo.connection_string,
         db_name=Container.config.mongo.db_name
     )
@@ -27,7 +27,7 @@ class MCPContainer(Container):
 
     # Company MCP Service
     company_mcp_service = providers.Singleton(
-        CompanyReadService,
+        CompanyReaderService,
         company_persist=mcp_mongo_company_persist
     )
     

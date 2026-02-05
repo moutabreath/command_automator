@@ -1,14 +1,14 @@
 import logging
 from typing import List, Tuple
 from ..models import ScrapedJob
-from ...services.company_mcp_service import CompanyReadService
+from ...services.company_reader_service import CompanyReaderService
 from ...services.models import UserApplicationResponseCode
 
 
 class JobsFilterService:
     """Handles filtering of scraped jobs against applied jobs"""
     
-    def __init__(self, company_read_service: CompanyReadService):
+    def __init__(self, company_read_service: CompanyReaderService):
         self.company_mcp_service = company_read_service
     
     async def filter_jobs(self, scraped_jobs: List[ScrapedJob], user_id: str) -> Tuple[List, List]:

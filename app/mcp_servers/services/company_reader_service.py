@@ -1,13 +1,13 @@
 import logging
 
 from ...repository.models import PersistenceErrorCode
-from ..persistence.mcp_company_mongo_persist import CompanyReadPersist
+from ...jobs_tracking.repository.company_reader_persist_mongo import CompanyReaderPersistMongo
 from .models import UserApplicationResponse, UserApplication, UserApplicationResponseCode
 
 
-class CompanyReadService:
+class CompanyReaderService:
     
-    def __init__(self, company_persist: CompanyReadPersist):
+    def __init__(self, company_persist: CompanyReaderPersistMongo):
         self.mcp_company_persist = company_persist
 
     async def initialize(self):

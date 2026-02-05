@@ -3,16 +3,22 @@ import uuid
 
 from pymongo.errors import DuplicateKeyError
 import pymongo.errors as mongo_errors
+from motor.motor_asyncio import AsyncIOMotorClient
 
-from ...repository.abstract_owner_mongo_persist import AbstractOwnerMongoPersist
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
 
-class UserMongoPersist(AbstractOwnerMongoPersist):
+class UserMongoPersist:
+    
+    def __init__(self, connection_string: str, db_name: str):
+        
+        self.async_client = AsyncIOMotorClient(
+            connection_string
+        )
+        
+        logging.getLogger("pymongo").setLevel(logging.WARNING)
+        self.users = self.async_client[db_name]
 
-    def _setup_collections(self):
-        self.users = self.async_db.users
-        self.job_applications = self.async_db.job_applications
 
     async def create_index(self):
         if self.users is not None:

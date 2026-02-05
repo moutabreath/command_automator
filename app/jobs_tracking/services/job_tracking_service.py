@@ -2,7 +2,7 @@ import logging
 from urllib.parse import urlparse
 from typing import Optional
 
-from ..repository.company_mongo_persist import CompanyMongoPersist
+from ..repository.company_writer_persist_mongo import CompanyWriterPersistMongo
 from ..repository.models.projections import JobWithCompanyContext
 from .domain.models import Company, TrackedJob
 from .domain.results import CompanyResponse, JobTrackingResponse, JobTrackingResponseCode
@@ -27,7 +27,7 @@ from ...utils import file_utils
 
 class JobTrackingService(AbstractPersistenceService):
 
-    def __init__(self, company_mongo_persist: CompanyMongoPersist):        
+    def __init__(self, company_mongo_persist: CompanyWriterPersistMongo):        
         self.application_persist = company_mongo_persist
         super().__init__(self.application_persist)
 

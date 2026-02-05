@@ -5,7 +5,7 @@ from .online_job_sources import AbstractJobsSearchService, GlassdoorJobsSearchSe
 
 from ..jobs_filter_service import JobsFilterService
 from ..jobs_saver_service import JobsSaverService
-from ....services.company_mcp_service import CompanyReadService
+from ....services.company_reader_service import CompanyReaderService
 
 from .....utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 
@@ -14,7 +14,7 @@ class JobSearchRunnerService:
     """Service class for handling job applicant MCP operations"""
     
     def __init__(self, linkedin_jobs_scraper_service: LinkedInJobsSearchService, glassdoor_jobs_scraper_service: GlassdoorJobsSearchService,
-                 company_mcp_service: CompanyReadService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
+                 company_mcp_service: CompanyReaderService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
         self.company_mcp_service = company_mcp_service
         self.linkedin_jobs_scraper_service = linkedin_jobs_scraper_service
         self.glasdoor_jobs_scraper_service = glassdoor_jobs_scraper_service
