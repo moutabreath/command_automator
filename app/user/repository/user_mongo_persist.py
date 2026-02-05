@@ -18,11 +18,6 @@ class UserMongoPersist:
         
         logging.getLogger("pymongo").setLevel(logging.WARNING)
         self.users = self.async_client[db_name]
-
-
-    async def create_index(self):
-        if self.users is not None:
-            await self.users.create_index([("userid", 1)], unique=True)
     
     async def get_user(self, email: str) -> PersistenceResponse:
         """Register a new user"""
