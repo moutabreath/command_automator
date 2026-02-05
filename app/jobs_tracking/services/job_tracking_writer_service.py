@@ -2,32 +2,30 @@ import logging
 from urllib.parse import urlparse
 from typing import Optional
 
-from ..repository.company_writer_persist_mongo import CompanyWriterPersistMongo
+from ..repository.job_tracking_writer_persist_mongo import JobTrackingWriterPersistMongo
 from ..repository.models.projections import JobWithCompanyContext
-from .domain.models import Company, TrackedJob
-from .domain.results import CompanyResponse, JobTrackingResponse, JobTrackingResponseCode
+from .domain.models import TrackedJob
+from .domain.results import JobTrackingResponse, JobTrackingResponseCode
 from .domain.commands import (
     TrackNewJobCommand,
     TrackExistingJobCommand,
-    GetTrackedJobsCommand,
     DeleteTrackedJobsCommand,
     ExtractJobInfoCommand
 )
 from ..repository.models.queries import (
     TrackNewJobDbQuery,
     TrackExistingJobDbQuery,
-    GetTrackedJobsQuery,
     DeleteTrackedJobsDbQuery
 )
-from .job_tracking_linkedin_parser import extract_linkedin_job
+from .job_tracking_attributes_parser import extract_linkedin_job
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 from ...utils import file_utils
 
 
 class JobTrackingService:
 
-    def __init__(self, company_mongo_persist: CompanyWriterPersistMongo):        
-        self.application_persist = company_mongo_persist
+    def __init__(self, company_writer_persist_mongo: JobTrackingWriterPersistMongo):        
+        self.application_persist = company_writer_persist_mongo
 
        
     async def track_new_job(self, track_new_job_command: TrackNewJobCommand) -> JobTrackingResponse:
@@ -97,36 +95,6 @@ class JobTrackingService:
         return self._create_job_tracking_response(persistence_response, company_id, tracked_job)
     
     
-    async def get_tracked_jobs(self, get_tracked_jobs_command: GetTrackedJobsCommand) -> CompanyResponse:
-        """Get all positions for a user at a specific company"""
-
-        user_id, company_name = get_tracked_jobs_command.user_id, get_tracked_jobs_command.company_name
-
-        logging.info(f"started with user: {user_id} company: \"{company_name}\"")
-        if not user_id or not company_name:
-            logging.error("Missing required parameters for get_positions")
-            return CompanyResponse(code=JobTrackingResponseCode.ERROR)
-            
-        company_name = company_name.lower()
-        
-        try:
-            response: PersistenceResponse[list[JobWithCompanyContext]] = await self.application_persist.get_tracked_jobs(
-                GetTrackedJobsQuery(user_id=user_id, company_name=company_name)
-            )
-            if response.code == PersistenceErrorCode.SUCCESS:
-                if not response.data:
-                    logging.warning(f"No tracked jobs found for company {company_name}")
-                    return CompanyResponse(company=None, code=JobTrackingResponseCode.NO_TRACKED_JOBS)
-                tracked_jobs = [context.job for context in response.data]
-                company = Company(company_id=response.id, company_name=company_name, tracked_jobs=tracked_jobs)
-                return CompanyResponse(company=company, code=JobTrackingResponseCode.OK)
-            else:
-                logging.warning(f"No tracked jobs found for company {company_name}")
-                return CompanyResponse(company=None, code=JobTrackingResponseCode.NO_TRACKED_JOBS, error_message="No tracked jobs for this company")
-        except Exception as e:
-            logging.error(f"Failed to get tracked jobs for company {company_name}: {e}")
-            return CompanyResponse(company=None, code=JobTrackingResponseCode.ERROR)
-
     def extract_job_title_and_company(self, extract_job_info_command: ExtractJobInfoCommand):
         logging.info(f"start with {extract_job_info_command.url}")
         return extract_linkedin_job(extract_job_info_command.url)    
@@ -162,14 +130,3 @@ class JobTrackingService:
             logging.error("Contact name must contain only letters")
             return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
         return None
-
-    
-    async def _get_job_title_keyword(self):
-        job_title_keywords = await file_utils.read_json_file(file_utils.JOB_TITLES_CONFIG_FILE)        
-        if job_title_keywords == {}:            
-            return  ["senior", "junior", "manager", "engineer", "analyst", "administrator", "designer", "writer"]
-        titles = []
-        titles.extend(job_title_keywords.get("software_engineer", []))
-        titles.extend(job_title_keywords.get("general", []))
-
-        return titles

@@ -6,7 +6,7 @@ from .schemas.requests import TrackNewJobRequest, TrackExistingJobRequest, GetTr
 from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
 from ..services.domain.models import JobApplicationState
 from ..services.domain.results import CompanyResponse
-from ..services.job_tracking_service import JobTrackingService
+from ..services.job_tracking_writer_service import JobTrackingService
 from ..services.domain.commands import (
     TrackNewJobCommand,
     TrackExistingJobCommand,

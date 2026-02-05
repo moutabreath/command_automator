@@ -1,0 +1,87 @@
+import logging
+from typing import Optional
+
+from ..repository import JobTrackingReaderPersistMongo
+from ..repository.models.projections import JobWithCompanyContext
+from .domain.models import Company, TrackedJob
+from .domain.results import CompanyResponse, JobTrackingResponse, JobTrackingResponseCode
+from .domain.commands import (
+    GetTrackedJobsCommand,
+    ExtractJobInfoCommand
+)
+from ..repository.models.queries import (
+    GetTrackedJobsQuery
+)
+from .job_tracking_attributes_parser import extract_job_title_and_company
+from ...repository.models import PersistenceErrorCode, PersistenceResponse
+from ...utils import file_utils
+
+
+class JobTrackingReaderService:
+
+    def __init__(self, job_tracking_reader_persist_mongo: JobTrackingReaderPersistMongo):        
+        self.application_persist = job_tracking_reader_persist_mongo
+
+      
+    async def get_tracked_jobs(self, get_tracked_jobs_command: GetTrackedJobsCommand) -> CompanyResponse:
+        """Get all positions for a user at a specific company"""
+
+        user_id, company_name = get_tracked_jobs_command.user_id, get_tracked_jobs_command.company_name
+
+        logging.info(f"started with user: {user_id} company: \"{company_name}\"")
+        if not user_id or not company_name:
+            logging.error("Missing required parameters for get_positions")
+            return CompanyResponse(code=JobTrackingResponseCode.ERROR)
+            
+        company_name = company_name.lower()
+        
+        try:
+            response: PersistenceResponse[list[JobWithCompanyContext]] = await self.application_persist.get_tracked_jobs(
+                GetTrackedJobsQuery(user_id=user_id, company_name=company_name)
+            )
+            if response.code == PersistenceErrorCode.SUCCESS:
+                if not response.data:
+                    logging.warning(f"No tracked jobs found for company {company_name}")
+                    return CompanyResponse(company=None, code=JobTrackingResponseCode.NO_TRACKED_JOBS)
+                tracked_jobs = [context.job for context in response.data]
+                company = Company(company_id=response.id, company_name=company_name, tracked_jobs=tracked_jobs)
+                return CompanyResponse(company=company, code=JobTrackingResponseCode.OK)
+            else:
+                logging.warning(f"No tracked jobs found for company {company_name}")
+                return CompanyResponse(company=None, code=JobTrackingResponseCode.NO_TRACKED_JOBS, error_message="No tracked jobs for this company")
+        except Exception as e:
+            logging.error(f"Failed to get tracked jobs for company {company_name}: {e}")
+            return CompanyResponse(company=None, code=JobTrackingResponseCode.ERROR)
+  
+
+    def _create_job_tracking_response(self, persistence_response: PersistenceResponse, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+        if persistence_response.code == PersistenceErrorCode.SUCCESS:
+            data = persistence_response.data
+            if isinstance(data, JobWithCompanyContext):
+                return JobTrackingResponse(job=data.job, company_id=data.company_id, code=JobTrackingResponseCode.OK)
+            elif isinstance(data, TrackedJob):
+                return JobTrackingResponse(job=data, company_id=company_id, code=JobTrackingResponseCode.OK)
+            
+        logging.error(f"Failed to add job for company {company_id}: {persistence_response.code}")
+        return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+
+    def _validate_job_parameters(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> Optional[JobTrackingResponse]:
+        if not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
+            logging.error("Missing required parameters for job operation")
+            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+        
+        if tracked_job.contact_name and not all(c.isalpha() or c in (' ', '-', "'") for c in tracked_job.contact_name):
+            logging.error("Contact name must contain only letters")
+            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+        return None
+
+    
+    async def _get_job_title_keyword(self):
+        job_title_keywords = await file_utils.read_json_file(file_utils.JOB_TITLES_CONFIG_FILE)        
+        if job_title_keywords == {}:            
+            return  ["senior", "junior", "manager", "engineer", "analyst", "administrator", "designer", "writer"]
+        titles = []
+        titles.extend(job_title_keywords.get("software_engineer", []))
+        titles.extend(job_title_keywords.get("general", []))
+
+        return titles

@@ -23,7 +23,7 @@ from .models.queries import (
 )
 
 
-class CompanyWriterPersistMongo:
+class JobTrackingWriterPersistMongo:
 
     
     def __init__(self, connection_string: str, db_name: str):
@@ -34,7 +34,7 @@ class CompanyWriterPersistMongo:
         logging.getLogger("pymongo").setLevel(logging.WARNING)
         self.job_applications = self.async_client[db_name]
         #fields to ignore on update
-        self.excluded_fields = {'job_url', 'user_id', 'company_name', 'job_id', 'company_id'}
+        self.excluded_fields = {'job_url', 'user_id', 'company_name', 'job_id', 'company_id', 'update_time'}
       
         
     # ==================== APPLICATION CRUD ====================
@@ -81,21 +81,28 @@ class CompanyWriterPersistMongo:
                                                     existing_company_application: CompanyJobsDocument
     ) -> PersistenceResponse[JobWithCompanyContext]:
         # find a tracked job with the same job url
-        existing_job = next((existing_job for existing_job in existing_company_application.jobs 
-                    if existing_job.job_url == new_tracked_job.job_url and 
-                    self._has_job_changes(new_tracked_job, existing_job)), None)
+        existing_job = next((job for job in existing_company_application.jobs 
+                    if job.job_url == new_tracked_job.job_url), None)
+        
         if existing_job:
-            new_tracked_job.job_id = existing_job.job_id
-            response = await self.track_existing_job(TrackExistingJobDbQuery(
-                user_id=user_id,
-                company_id=company_id,
-                tracked_job=new_tracked_job
-            ))
-            if response.code == PersistenceErrorCode.SUCCESS:
-                return PersistenceResponse(data=JobWithCompanyContext(company_id=company_id, company_name=company_name, job=response.data),
+            if self._has_job_changes(new_tracked_job, existing_job):
+                new_tracked_job.job_id = existing_job.job_id
+                response = await self.track_existing_job(TrackExistingJobDbQuery(
+                    user_id=user_id,
+                    company_id=company_id,
+                    tracked_job=new_tracked_job
+                ))
+                if response.code == PersistenceErrorCode.SUCCESS:
+                    return PersistenceResponse(data=JobWithCompanyContext(company_id=company_id, company_name=company_name, job=response.data),
+                        code=PersistenceErrorCode.SUCCESS
+                    )
+                return PersistenceResponse(data=None, code=response.code, error_message=response.error_message)
+            else:
+                # Job exists but no changes detected; return success without DB write
+                return PersistenceResponse(
+                    data=JobWithCompanyContext(company_id=company_id, company_name=company_name, job=EntitiesMapper.to_domain(existing_job)),
                     code=PersistenceErrorCode.SUCCESS
                 )
-            return PersistenceResponse(data=None, code=response.code, error_message=response.error_message)
         
         new_job_entity=EntitiesMapper.to_job_entity(new_tracked_job)
         response = await self._add_new_job_to_existing_company(
