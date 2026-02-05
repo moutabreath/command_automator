@@ -21,17 +21,13 @@ from ..repository.models.queries import (
 )
 from .job_tracking_linkedin_parser import extract_linkedin_job
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
-from ...services.abstract_persistence_service import AbstractPersistenceService
 from ...utils import file_utils
 
 
-class JobTrackingService(AbstractPersistenceService):
+class JobTrackingService:
 
     def __init__(self, company_mongo_persist: CompanyWriterPersistMongo):        
         self.application_persist = company_mongo_persist
-        super().__init__(self.application_persist)
-
- 
 
        
     async def track_new_job(self, track_new_job_command: TrackNewJobCommand) -> JobTrackingResponse:
