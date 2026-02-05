@@ -44,7 +44,7 @@ class JobSearchRunnerService:
 
         return jobs
     
-    async def get_jobs_from_linkedin(self, job_title: Optional[str] = None, remote: Optional[bool] = None,
+    async def search_jobs_on_linkedin(self, job_title: Optional[str] = None, remote: Optional[bool] = None,
                                    user_id: Optional[str] = None) -> List:
         """Search for jobs on LinkedIn"""
         job_title, location, remote, forbidden_titles = await self._get_search_params_from_config_or_default(
@@ -52,7 +52,7 @@ class JobSearchRunnerService:
         return await self._run_job_search_with_filtering(
             'linkedin', self.linkedin_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
 
-    async def get_jobs_from_glassdoor(self, job_title: Optional[str] = None, 
+    async def search_jobs_on_glassdoor(self, job_title: Optional[str] = None, 
                                     location: Optional[str] = None, 
                                     remote: Optional[bool] = None, 
                                     user_id: Optional[str] = None) -> List:
@@ -78,7 +78,7 @@ class JobSearchRunnerService:
         
         
         # Run the scraper
-        jobs = await scraper.run_scraper(
+        jobs = await scraper.search_jobs(
             job_title=job_title,
             location=location,
             remote=remote,

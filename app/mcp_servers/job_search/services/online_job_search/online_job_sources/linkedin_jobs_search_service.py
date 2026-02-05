@@ -15,7 +15,7 @@ class LinkedInJobsSearchService(AbstractJobsSearchService):
         self.session = requests.Session()
         self.session.headers.update(self.headers)
 
-    async def run_scraper(self, job_title: str, location: str = "", remote: bool = False, 
+    async def search_jobs(self, job_title: str, location: str = "", remote: bool = False, 
                     forbidden_titles: List[str] = None, max_pages: int = 3,
                     job_type: str = "", experience_level: str = "") -> List[ScrapedJob]:
             loop = asyncio.get_event_loop()

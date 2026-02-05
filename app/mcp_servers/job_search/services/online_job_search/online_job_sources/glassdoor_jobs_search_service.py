@@ -30,9 +30,9 @@ class GlassdoorJobsSearchService(AbstractJobsSearchService):
         except Exception as e:
             raise Exception(f"Failed to load selectors configuration: {e}") from e
         
-    def run_scraper_sync(self, job_title: str, location: str, remote: bool = False,
+    def search_jobs_sync(self, job_title: str, location: str, remote: bool = False,
                         forbidden_titles: List[str] = None, max_pages: int = 3) -> List[ScrapedJob]:
-        return asyncio.run(self.run_scraper(
+        return asyncio.run(self.search_jobs(
             job_title=job_title,
             location=location,
             remote=remote,
@@ -40,7 +40,7 @@ class GlassdoorJobsSearchService(AbstractJobsSearchService):
             max_pages=max_pages
         ))
     
-    async def run_scraper(self, job_title: str, location: str, remote: bool = False, forbidden_titles: List[str] = None, 
+    async def search_jobs(self, job_title: str, location: str, remote: bool = False, forbidden_titles: List[str] = None, 
                           max_pages: int = 3, max_jobs_per_page: int = 20) -> List[ScrapedJob]:
         if job_title is None or location is None:
             logging.error("Job title and location must be provided.")

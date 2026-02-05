@@ -15,7 +15,7 @@ class AbstractJobsSearchService(ABC):
         }
         
     @abstractmethod
-    async def run_scraper(self, job_title: str, location: str, remote: bool = False, 
+    async def search_jobs(self, job_title: str, location: str, remote: bool = False, 
                    forbidden_titles: List[str] = None, max_pages: int = 3) -> List[ScrapedJob]:
         """Run the job scraper with specified parameters"""        
         pass
