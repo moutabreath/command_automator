@@ -1,25 +1,16 @@
-from ...services.abstract_persistence_service import AbstractPersistenceService
+
 from ..repository.user_mongo_persist import UserMongoPersist
 from .models import UserRegistryResponse, UserRegistryResponseCode
 from ...utils.utils import AsyncRunner
 import logging
 
         
-class UserRegistryService(AbstractPersistenceService):
+class UserRegistryService:
     
     def __init__(self, user_persist: UserMongoPersist):
         # We now REQUIRE an initialized persistence object to be passed in
         self.user_persist = user_persist
-        super().__init__(self.user_persist)
 
-    @classmethod
-    async def create(cls, mongo_connection_string, db_name):
-        # 1. Create the initialized persistence layer
-        # This will fail if DB is down or logic is wrong, preventing "Zombie" services
-        user_persist = await UserMongoPersist.create(mongo_connection_string, db_name)
-        
-        # 2. Return the fully formed service
-        return cls(user_persist)
 
     def login(self, user_email: str) -> UserRegistryResponse:        
         try:
