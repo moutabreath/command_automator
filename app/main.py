@@ -9,7 +9,7 @@ from .utils.logger_config import setup_logging
 
 # Import routers
 from .jobs_tracking.api.job_tracking_router import router as job_tracking_router
-from .llm.llm_router import router as llm_router
+from .llm_api.llm_router import router as llm_router
 from .user.user_router import router as user_router
 
 # Configure logging
