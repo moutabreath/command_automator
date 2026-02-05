@@ -3,6 +3,8 @@ import logging.handlers
 import os
 import sys
 
+from ..core.config import settings
+
 def setup_logging():
     """
     Configures the root logger for the application with UTF-8 encoding.
@@ -18,12 +20,12 @@ def setup_logging():
         except (AttributeError, ValueError):
             # stdout/stderr may not support reconfigure in some environments
             pass
-    log_file = os.environ.get("LOGFILE", "commands_automator.log")
+    log_file = settings.log_file
     log_dir = os.path.dirname(log_file)
     if log_dir and not os.path.exists(log_dir):
         os.makedirs(log_dir, exist_ok=True)
         
-    log_level_str = os.environ.get("LOGLEVEL", "DEBUG").upper()
+    log_level_str = settings.log_level.value.upper()
     log_level = getattr(logging, log_level_str, logging.DEBUG)
 
     # Create file handler with UTF-8 encoding

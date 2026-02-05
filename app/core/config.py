@@ -1,8 +1,8 @@
 from pydantic import MongoDsn, Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
-from enum import str
+from enum import Enum
 
-class LogLevel(str):
+class LogLevel(str, Enum):
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -19,6 +19,7 @@ class Settings(BaseSettings):
     # Scaling/Logging Levels
     # Optionally different levels for Read vs Write services
     log_level: LogLevel = Field(default=LogLevel.INFO, validation_alias="LOG_LEVEL")
+    log_file: str = Field(default="commands_automator.log", validation_alias="LOG_FILE")
     
     # Database Names
     mongo_db_name: str = Field(default="job_tracker_db", validation_alias="MONGODB_DB_NAME")
