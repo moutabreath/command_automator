@@ -1,30 +1,32 @@
 import pytest
 from dependency_injector import containers, providers
 
-from app.jobs_tracking.services.job_tracking_linkedin_parser import extract_linkedin_job
-from app.llm.mcp_servers.job_search import GlassdoorJobsScraperService, LinkedInJobsScraperService, ScrapedJob
+from app.jobs_tracking.services.domain.commands import ExtractJobInfoCommand
+from app.jobs_tracking.services.job_tracking_attributes_parser import extract_job_title_and_company
+from app.mcp_servers.job_search.models import ScrapedJob
+from app.mcp_servers.job_search.services.online_job_search import GlassdoorJobsSearchService, LinkedInJobsSearchService
 
 class Container(containers.DeclarativeContainer):
-    linkedin_scraper = providers.Factory(LinkedInJobsScraperService)
-    glassdoor_scraper = providers.Factory(GlassdoorJobsScraperService)
+    linkedin_jobs_search_service = providers.Factory(LinkedInJobsSearchService)
+    glassdoor_jobs_search_service = providers.Factory(GlassdoorJobsSearchService)
 
 @pytest.fixture
 def container():
     return Container()
 
 @pytest.fixture
-def linkedin_jobs_scraper(container):
-    return container.linkedin_scraper()
+def linkedin_jobs_search_service(container):
+    return container.linkedin_jobs_search_service()
 
 @pytest.fixture
 def glassdoor_jobs_scraper(container):
-    return container.glassdoor_scraper()
+    return container.glassdoor_jobs_search_service()
 
 @pytest.mark.asyncio
-async def test_linkedin_scraper(linkedin_jobs_scraper):
+async def test_linkedin_scraper(linkedin_jobs_search_service):
     """Test LinkedIn scraper can search for jobs"""
     job_title = "python developer"
-    jobs: list[ScrapedJob] = await linkedin_jobs_scraper.run_scraper(job_title=job_title, location="Israel", max_pages=1)
+    jobs: list[ScrapedJob] = await linkedin_jobs_search_service.run_scraper(job_title=job_title, location="Israel", max_pages=1)
     
     assert isinstance(jobs, list)
     if jobs:
@@ -45,9 +47,9 @@ async def test_glassdoor_scraper(glassdoor_jobs_scraper):
 
 
 @pytest.mark.asyncio
-async def test_scraper_empty_query(linkedin_jobs_scraper, glassdoor_jobs_scraper):
+async def test_scraper_empty_query(linkedin_jobs_search_service, glassdoor_jobs_scraper):
     """Test scrapers handle empty queries gracefully"""
-    linkedin_jobs = await linkedin_jobs_scraper.run_scraper("", "")
+    linkedin_jobs = await linkedin_jobs_search_service.run_scraper("", "")
     glassdoor_jobs = await glassdoor_jobs_scraper.run_scraper("", "")
     
     assert isinstance(linkedin_jobs, list)
@@ -55,7 +57,7 @@ async def test_scraper_empty_query(linkedin_jobs_scraper, glassdoor_jobs_scraper
 
 def test_linkedin_job_and_company_scaper():
     url = "https://www.linkedin.com/jobs/view/4343611949/"
-    result = extract_linkedin_job(url)
+    result = extract_job_title_and_company(ExtractJobInfoCommand(url))
     assert isinstance(result, dict)
     assert "job_title" in result
     assert "company_name" in result

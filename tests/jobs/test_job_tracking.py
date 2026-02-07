@@ -3,10 +3,10 @@ import pytest
 from app.jobs_tracking.services.domain.commands import DeleteTrackedJobsCommand, GetTrackedJobsCommand, TrackExistingJobCommand, TrackNewJobCommand
 from app.jobs_tracking.services.domain.models import JobApplicationState, TrackedJob
 from app.jobs_tracking.services.domain.results import JobTrackingResponse, JobTrackingResponseCode
-from app.jobs_tracking.services.job_tracking_service import JobTrackingService
+from app.jobs_tracking.services.job_tracking_writer_service import JobTrackingService
 
 from app.user.services.user_registry_service import UserRegistryService
-from ..mockups.mongo_mockups import MockCompanyMongoPersist, MockUserMongoPersist
+from ..mockups.mongo_mockups import MockCompanyMongoWritePersist, MockUserMongoPersist
 import mongomock
 import time
 
@@ -30,7 +30,7 @@ def user_service(db):
 
 @pytest.fixture
 def job_service(db):
-    mock_persist = MockCompanyMongoPersist(db)    
+    mock_persist = MockCompanyMongoWritePersist(db)    
     return JobTrackingService(mock_persist)
 
 
