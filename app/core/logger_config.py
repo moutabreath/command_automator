@@ -3,7 +3,7 @@ import logging.handlers
 import os
 import sys
 
-from ..core.config import settings
+from .config import settings
 
 def setup_logging():
     """
