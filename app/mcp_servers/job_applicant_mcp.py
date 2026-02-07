@@ -8,7 +8,7 @@ from mcp.server.fastmcp import FastMCP
 from .mcp_dependency_container import MCPContainer
 from .resume import ResumeData
 
-from ..utils.logger_config import setup_logging
+from ..core.logger_config import setup_logging
 
 # Initialize FastMCP
 mcp = FastMCP("job_applicant_helper")
@@ -16,15 +16,14 @@ mcp = FastMCP("job_applicant_helper")
 @mcp.tool()
 async def get_resume_files() -> ResumeData:
     """Fetch resume file, applicant name, job description and guidelines"""
-    global resume_loader_service
-    return await resume_loader_service.get_resume_files()
+    return await MCPContainer.get_container().resume_loader_service().get_resume_files()
 
 @mcp.tool()
 async def search_jobs_on_the_internet(job_title: str | None = None, location: str | None = None,
                                       remote: bool | str | None = None,
                                       user_id: str | None = None) -> list:
     """Search for jobs from multiple sources (LinkedIn and Glassdoor)"""
-    global job_search_service
+    job_search_service = MCPContainer.get_container().job_search_service()
     if isinstance(remote, str):
         remote = remote.lower() in ('true', '1', 'yes', 'on')
     return await job_search_service.search_jobs_from_internet(job_title, location, remote, user_id)
@@ -33,7 +32,7 @@ async def search_jobs_on_the_internet(job_title: str | None = None, location: st
 async def get_jobs_from_linkedin(job_title: str | None = None, location: str | None = None,
     remote: bool | str | None = None, user_id: str | None = None) -> list:
     """Search for jobs on LinkedIn"""
-    global job_search_service
+    job_search_service = MCPContainer.get_container().job_search_service()
     if isinstance(remote, str):
         remote = remote.lower() in ('true', '1', 'yes', 'on')
     return await job_search_service.get_jobs_from_linkedin(job_title, location, remote, user_id)
@@ -42,7 +41,7 @@ async def get_jobs_from_linkedin(job_title: str | None = None, location: str | N
 async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
                                   remote: bool | str | None = None, user_id: str | None = None) -> List:
     """Search for jobs on Glassdoor"""
-    global job_search_service
+    job_search_service = MCPContainer.get_container().job_search_service()
     if isinstance(remote, str):
         remote = remote.lower() in ('true', '1', 'yes', 'on')
     return await job_search_service.get_jobs_from_glassdoor(job_title, location, remote, user_id)
@@ -50,8 +49,7 @@ async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | 
 @mcp.tool()
 async def get_user_applications_for_company(user_id: str, company_name: str) -> dict:    
     """Get all job applications for a specific user and company"""
-    global job_search_service
-    return await job_search_service.get_user_applications_for_company(user_id, company_name)
+    return await MCPContainer.get_container().job_search_service().get_user_applications_for_company(user_id, company_name)
 
 class MCPRunner:
     """Manages the MCP server subprocess"""
@@ -95,11 +93,6 @@ class MCPRunner:
             # Initialize DI container in the child process
             asyncio.run(MCPContainer.init_container())
             
-            global container
-            container = MCPContainer.get_container()
-            global resume_loader_service, job_search_service
-            resume_loader_service = container.resume_loader_service()
-            job_search_service = container.job_search_service()
 
             # Set server configuration
             mcp.settings.mount_path = "/mcp"

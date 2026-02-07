@@ -3,9 +3,8 @@ FastAPI application for Commands Automator
 """
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-import logging
 
-from .utils.logger_config import setup_logging
+from .core.logger_config import setup_logging
 
 # Import routers
 from .jobs_tracking.api.job_tracking_router import router as job_tracking_router
