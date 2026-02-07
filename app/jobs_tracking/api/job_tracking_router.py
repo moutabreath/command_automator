@@ -22,6 +22,8 @@ from .job_tracking_mapper import (
     create_company_api_response
 )
 
+from ..services.job_tracking_attributes_parser import extract_job_title_and_company
+
 
 from ...utils.dependency_container import Container
 
@@ -122,8 +124,7 @@ async def get_tracked_jobs(
 
 @router.get("/extract-job-info", response_model=dict)
 async def extract_job_title_and_company(
-    url: str,
-    job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)
+    url: str
 ):
     """Extract job title and company from a URL"""
     if not url:
@@ -132,7 +133,7 @@ async def extract_job_title_and_company(
 
     try:
         command = ExtractJobInfoCommand(url=url)
-        return job_tracking_service.extract_job_title_and_company(command)
+        return extract_job_title_and_company(command)
     except Exception as e:
         logging.exception(f"Error extracting job info from URL: {e}")
         raise HTTPException(status_code=500, detail="Failed to extract job information")

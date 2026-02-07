@@ -14,11 +14,11 @@ from .....utils.file_utils import JOB_SEARCH_CONFIG_FILE, read_json_file
 class JobSearchRunnerService:
     """Service class for handling job applicant MCP operations"""
     
-    def __init__(self, linkedin_jobs_scraper_service: LinkedInJobsSearchService, glassdoor_jobs_scraper_service: GlassdoorJobsSearchService,
-                 company_mcp_service: JobTrackingReaderService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
-        self.company_mcp_service = company_mcp_service
-        self.linkedin_jobs_scraper_service = linkedin_jobs_scraper_service
-        self.glasdoor_jobs_scraper_service = glassdoor_jobs_scraper_service
+    def __init__(self, linkedin_jobs_search_service: LinkedInJobsSearchService, glassdoor_jobs_search_service: GlassdoorJobsSearchService,
+                 job_tracking_reader_service: JobTrackingReaderService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
+        self.job_tracking_reader_service = job_tracking_reader_service
+        self.linkedin_jobs_search_service = linkedin_jobs_search_service
+        self.glasdoor_jobs_search_service = glassdoor_jobs_search_service
         self.jobs_filter_service = jobs_filter_service
         self.jobs_saver_service = jobs_saver_service
   
@@ -33,13 +33,13 @@ class JobSearchRunnerService:
         
         # LinkedIn jobs
         linkedin_jobs = await self._run_job_search_with_filtering(
-            'linkedin', self.linkedin_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
+            'linkedin', self.linkedin_jobs_search_service, job_title, location, remote, user_id, forbidden_titles)
         if linkedin_jobs:
             jobs.extend(linkedin_jobs)
 
         # Glassdoor jobs
         glassdoor_jobs = await self._run_job_search_with_filtering(
-            'glassdoor', self.glasdoor_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
+            'glassdoor', self.glasdoor_jobs_search_service, job_title, location, remote, user_id, forbidden_titles)
         if glassdoor_jobs:
             jobs.extend(glassdoor_jobs)
 
@@ -51,7 +51,7 @@ class JobSearchRunnerService:
         job_title, location, remote, forbidden_titles = await self._get_search_params_from_config_or_default(
             job_title, location, remote)
         return await self._run_job_search_with_filtering(
-            'linkedin', self.linkedin_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
+            'linkedin', self.linkedin_jobs_search_service, job_title, location, remote, user_id, forbidden_titles)
 
     async def search_jobs_on_glassdoor(self, job_title: Optional[str] = None, 
                                     location: Optional[str] = None, 
@@ -62,12 +62,12 @@ class JobSearchRunnerService:
             job_title, location, remote)
 
         return await self._run_job_search_with_filtering(
-            'glassdoor', self.glasdoor_jobs_scraper_service, job_title, location, remote, user_id, forbidden_titles)
+            'glassdoor', self.glasdoor_jobs_search_service, job_title, location, remote, user_id, forbidden_titles)
 
     async def get_user_applications_for_company(self, user_id: str, company_name: str) -> Dict[str, Any]:
         """Get all job applications for a specific user and company"""
         try:        
-            return await self.company_mcp_service.get_user_applications_for_company(user_id, company_name)
+            return await self.job_tracking_reader_service.get_user_applications_for_company(user_id, company_name)
         except Exception as e:
             logging.error(f"Error getting user applications: {e}", exc_info=True)
             return {"success": False, "error": str(e)}

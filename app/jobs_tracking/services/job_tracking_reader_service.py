@@ -4,10 +4,9 @@ from typing import Optional
 from ..repository import JobTrackingReaderPersistMongo
 from ..repository.models.projections import JobWithCompanyContext
 from .domain.models import Company, TrackedJob
-from .domain.results import CompanyResponse, JobTrackingResponse, JobTrackingResponseCode
+from .domain.results import CompanyResponse, JobTrackingResponse, JobTrackingResponseCode, UserApplicationResponse, UserApplicationResponseCode
 from .domain.commands import (
     GetTrackedJobsCommand,
-    ExtractJobInfoCommand
 )
 from ..repository.models.queries import (
     GetTrackedJobsQuery
@@ -52,7 +51,29 @@ class JobTrackingReaderService:
         except Exception as e:
             logging.error(f"Failed to get tracked jobs for company {company_name}: {e}")
             return CompanyResponse(company=None, code=JobTrackingResponseCode.ERROR)
-  
+      
+    async def get_all_user_applications(self, user_id: str) -> UserApplicationResponse:
+        """
+        Get all job applications for a specific user.
+        """
+        response = await self.application_persist.get_all_applications(user_id)
+        if response.code == PersistenceErrorCode.SUCCESS:
+            user_applications = [
+                UserApplicationResponse(
+                    company_name=app["company_name"], 
+                    tracked_job=app["jobs"]
+                ) for app in response.data
+            ]
+            return UserApplicationResponse(
+                code=UserApplicationResponseCode.SUCCESS,
+                user_applications=user_applications
+            )
+        else:
+            return UserApplicationResponse(
+                code=UserApplicationResponseCode.ERROR, 
+                user_applications=[], 
+                error_message=response.error_message or "Unknown error occurred"
+            )                
 
     def _create_job_tracking_response(self, persistence_response: PersistenceResponse, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
         if persistence_response.code == PersistenceErrorCode.SUCCESS:

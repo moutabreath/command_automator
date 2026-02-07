@@ -2,6 +2,8 @@ import logging
 from urllib.parse import urlparse
 from typing import Optional
 
+from .job_tracking_attributes_parser import extract_job_title_and_company
+
 from ..repository.job_tracking_writer_persist_mongo import JobTrackingWriterPersistMongo
 from ..repository.models.projections import JobWithCompanyContext
 from .domain.models import TrackedJob
@@ -17,9 +19,7 @@ from ..repository.models.queries import (
     TrackExistingJobDbQuery,
     DeleteTrackedJobsDbQuery
 )
-from .job_tracking_attributes_parser import extract_linkedin_job
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
-from ...utils import file_utils
 
 
 class JobTrackingService:
@@ -94,10 +94,7 @@ class JobTrackingService:
         )
         return self._create_job_tracking_response(persistence_response, company_id, tracked_job)
     
-    
-    def extract_job_title_and_company(self, extract_job_info_command: ExtractJobInfoCommand):
-        logging.info(f"start with {extract_job_info_command.url}")
-        return extract_linkedin_job(extract_job_info_command.url)    
+
     
     async def delete_tracked_jobs(self, delete_tracked_jobs_command: DeleteTrackedJobsCommand):
         user_id, companies_jobs = delete_tracked_jobs_command.user_id, delete_tracked_jobs_command.companies_jobs
