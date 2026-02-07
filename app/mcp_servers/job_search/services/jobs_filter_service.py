@@ -1,15 +1,17 @@
 import logging
 from typing import List, Tuple
+
+from app.jobs_tracking.services.job_tracking_reader_service import JobTrackingReaderService
 from ..models import ScrapedJob
-from ...services.company_reader_service import CompanyReaderService
+
 from ...services.models import UserApplicationResponseCode
 
 
 class JobsFilterService:
     """Handles filtering of scraped jobs against applied jobs"""
     
-    def __init__(self, company_read_service: CompanyReaderService):
-        self.company_mcp_service = company_read_service
+    def __init__(self, job_tracking_reader_service: JobTrackingReaderService):
+        self.job_tracking_reader_service = job_tracking_reader_service
     
     async def filter_jobs(self, scraped_jobs: List[ScrapedJob], user_id: str) -> Tuple[List, List]:
         """Filter jobs that have already been applied for"""
@@ -18,7 +20,7 @@ class JobsFilterService:
             logging.info("No jobs to filter")
             return [], []
 
-        response = await self.company_mcp_service.get_all_user_applications(user_id)
+        response = await self.job_tracking_reader_service.get_all_user_applications(user_id)
         if response.code != UserApplicationResponseCode.SUCCESS:
             logging.error(f"Failed to get user applications for user_id {user_id}: {response.error_message}")
             return scraped_jobs, []

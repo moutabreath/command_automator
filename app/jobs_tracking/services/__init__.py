@@ -1,3 +1,3 @@
-from .job_tracking_linkedin_parser import extract_linkedin_job
+from .job_tracking_attributes_parser import extract_job_title_and_company
 
-__all__ = ["extract_linkedin_job"]
+__all__ = ["extract_job_title_and_company"]

@@ -11,6 +11,10 @@ class JobTrackingResponseCode(StrEnum):
     ERROR = "ERROR"
     NO_TRACKED_JOBS = "NO_TRACKED_JOBS"
 
+class UserApplicationResponseCode(StrEnum):
+    SUCCESS = "SUCCESS"
+    ERROR = "ERROR"
+
 
 @dataclass
 class JobTrackingResponse:
@@ -24,3 +28,8 @@ class CompanyResponse:
     code: PersistenceErrorCode
     company: Optional[Company] = None
     error_message: Optional[str] = None
+
+@dataclass
+class UserApplicationResponse:
+    code: UserApplicationResponseCode
+    company_jobs: list[Company]

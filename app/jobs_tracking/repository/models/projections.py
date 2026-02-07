@@ -17,3 +17,8 @@ class JobWithCompanyContext:
             # Leverage your existing from_dict logic for the inner job
             job=TrackedJob.from_dict(data["job"])
         )
+@dataclass
+class CompanyContext:
+    company_id: str
+    company_name: str
+    tracked_jobs: list[TrackedJob]

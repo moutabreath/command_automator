@@ -2,8 +2,9 @@ import logging
 import pymongo.errors as mongo_errors
 from motor.motor_asyncio import AsyncIOMotorClient
 
+
 from .mapper import EntitiesMapper
-from .models.projections import JobWithCompanyContext
+from .models.projections import CompanyContext, JobWithCompanyContext
 from .models.queries import GetTrackedJobsQuery
 
 
@@ -70,13 +71,30 @@ class JobTrackingReaderPersistMongo:
                 error_message=str(e)
             )
 
-    async def get_all_applications(self, user_id: str) -> PersistenceResponse[list[dict]]:
+    async def get_all_applications(self, user_id: str) -> PersistenceResponse[CompanyContext]:
         """Get all applications for a user"""
         try:
             cursor = self.job_applications.find({"user_id": user_id})
-            results = await cursor.to_list(length=None)
+            # 1. Fetch raw dictionaries from the cursor
+            results_dicts = await cursor.to_list(length=None)
+            if not results_dicts:
+                return PersistenceResponse(data=[], code=PersistenceErrorCode.SUCCESS)
+
+            # Map the first document to our root Entity
+            company_document = EntitiesMapper.to_company_document(results_dicts[0])
+
+            # 3. Transform into the Context projection
+            data = [
+                JobWithCompanyContext(
+                    company_id=company_document.company_id,
+                    company_name=company_document.company_name,
+                    job=EntitiesMapper.to_domain(job_entity)
+                )
+                for job_entity in company_document.jobs
+            ]
+
             return PersistenceResponse(
-                data=results,
+                data=data,
                 code=PersistenceErrorCode.SUCCESS
             )
         except mongo_errors.OperationFailure as e:
