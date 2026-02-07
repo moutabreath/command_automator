@@ -1,6 +1,7 @@
 import logging
 import asyncio
 from dependency_injector import containers, providers
+from ..core.config import settings
 
 
 class Container(containers.DeclarativeContainer):
@@ -22,8 +23,8 @@ class Container(containers.DeclarativeContainer):
     # Configuration
     config = providers.Configuration()
     
-    config.mongo.connection_string.from_value("mongodb://localhost:27017/")
-    config.mongo.db_name.from_value("job_tracker")
+    config.mongo.connection_string.from_value(str(settings.mongo_uri))
+    config.mongo.db_name.from_value(settings.mongo_db_name)
 
     @classmethod
     def get_container(cls) -> 'Container':
