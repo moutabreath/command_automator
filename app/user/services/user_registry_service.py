@@ -1,38 +1,16 @@
 
 from ..repository.user_mongo_persist import UserMongoPersist
 from .models import UserRegistryResponse, UserRegistryResponseCode
-from ...utils.utils import AsyncRunner
 import logging
 
         
 class UserRegistryService:
     
     def __init__(self, user_persist: UserMongoPersist):
-        # We now REQUIRE an initialized persistence object to be passed in
         self.user_persist = user_persist
 
 
-    def login(self, user_email: str) -> UserRegistryResponse:        
-        try:
-            response: UserRegistryResponse = AsyncRunner.run_async(
-                self.login_user_async(user_email)
-            )
-            return response
-        except Exception:
-            logging.exception("Error during login")
-            return UserRegistryResponse(error_message="Error during login", code=UserRegistryResponseCode.ERROR)
-
-    def register(self, user_email: str) -> UserRegistryResponse:        
-        try:
-            response: UserRegistryResponse = AsyncRunner.run_async(
-                self.register_async(user_email)
-            )
-            return response
-        except Exception:
-            logging.exception("Error during registration")
-            return UserRegistryResponse(error_message="Error during registration", code=UserRegistryResponseCode.ERROR)
-
-    async def login_user_async(self, user_email: str) -> UserRegistryResponse:
+    async def login(self, user_email: str) -> UserRegistryResponse:
         if not user_email or not user_email.strip():
             return UserRegistryResponse(code=UserRegistryResponseCode.ERROR, error_message="Email is required")
         user_email = user_email.strip().lower()
@@ -42,7 +20,7 @@ class UserRegistryService:
         logging.error("User not found")
         return UserRegistryResponse(error_message="User not found", code=UserRegistryResponseCode.ERROR)
 
-    async def register_async(self, user_email: str) -> UserRegistryResponse:
+    async def register(self, user_email: str) -> UserRegistryResponse:
         if not user_email or not user_email.strip():
             return UserRegistryResponse(code=UserRegistryResponseCode.ERROR, error_message="Email is required")
         user_email = user_email.strip().lower()
