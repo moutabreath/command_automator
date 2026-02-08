@@ -1,16 +1,16 @@
 import logging
 from dependency_injector import providers
-from ..core.config import settings
-from ..jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
+from ...core.config import settings
+from ...jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
 
-from .job_search.services.online_job_search.online_job_sources import GlassdoorJobsSearchService, LinkedInJobsSearchService
-from .job_search.services import JobsSaverService, JobsFilterService
-from .job_search.services.online_job_search import  JobSearchRunnerService
+from ..job_search.services.online_job_search.online_job_sources import GlassdoorJobsSearchService, LinkedInJobsSearchService
+from ..job_search.services import JobsSaverService, JobsFilterService
+from ..job_search.services.online_job_search import  JobSearchRunnerService
 
-from .resume.services import ResumeLoaderService
-from ..jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
+from ..resume.services import ResumeLoaderService
+from ...jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
 
-from ..utils.dependency_container import Container
+from ...utils.dependency_container import Container
 
 class MCPContainer(Container):
 

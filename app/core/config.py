@@ -18,7 +18,7 @@ class Settings(BaseSettings):
   
     # Database Names
     mongo_db_name: str = Field(default="job_tracker_db", validation_alias="MONGODB_DB_NAME")
-    job_application_collection_name: str = Field(default="job_applications", validation_alias="COLLECTION_NAME")
+    job_application_collection_name: str = Field(default="job_applications", validation_alias="APPLICATION_COLLECTION_NAME")
 
 
     
@@ -27,8 +27,11 @@ class Settings(BaseSettings):
         validation_alias="MONGO_URI"
     ) 
 
-    mcp_mongo_db_name: str = Field(default="job_tracker_db", validation_alias="MONGODB_DB_NAME")
-    mcp_job_tracking_collection_name: str = Field(default="job_applications", validation_alias="COLLECTION_NAME")
+    mcp_mongo_db_name: str = Field(default="job_tracker_db", validation_alias="MCP_MONGODB_DB_NAME")
+    mcp_job_tracking_collection_name: str = Field(default="job_applications", validation_alias="MCP_APPLICATION_COLLECTION_NAME")
+
+    mcp_host: str = Field(default="127.0.0.1", validation_alias="MCP_HOST")
+    mcp_port: int = Field(default=8765, validation_alias="MCP_PORT")
 
 
     # Scaling/Logging Levels
