@@ -1,6 +1,7 @@
 import logging
 import pymongo.errors as mongo_errors
-from motor.motor_asyncio import AsyncIOMotorClient
+
+from app.jobs_tracking.repository.abstract_job_tracking_persist_mongo import AbstractJobTrackingPersistMongo
 
 
 from .mapper import EntitiesMapper
@@ -10,25 +11,9 @@ from .models.queries import GetTrackedJobsQuery
 
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
-class JobTrackingReadPersistMongo:
+class JobTrackingReadPersistMongo(AbstractJobTrackingPersistMongo):
 
 
-    def __init__(self, connection_string: str, db_name: str):
-        
-        self.async_client = AsyncIOMotorClient(
-            connection_string
-        )
-        
-        logging.getLogger("pymongo").setLevel(logging.WARNING)
-        self.job_applications = self.async_client[db_name]
-    
-    async def close(self):
-        """Close MongoDB connection."""
-        if self.async_client:
-            self.async_client.close()
-            self.async_client = None
-            self.job_applications = None
-   
   
     async def get_tracked_jobs(self, query: GetTrackedJobsQuery) -> PersistenceResponse[list[JobWithCompanyContext]]:        
         """Get all application by user and company"""
@@ -37,6 +22,10 @@ class JobTrackingReadPersistMongo:
             result_dict = await self.job_applications.find_one({
                 "user_id": user_id, "company_name": company_name
             })
+            
+            if result_dict is None:
+                return PersistenceResponse(data=None, code=PersistenceErrorCode.NOT_FOUND)
+
 
             entity = EntitiesMapper.to_company_document(result_dict)
             tracked_jobs_context = [

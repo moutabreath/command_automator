@@ -30,27 +30,28 @@ class Container(containers.DeclarativeContainer):
     
     config.mongo.connection_string.from_value(str(settings.mongo_uri))
     config.mongo.db_name.from_value(settings.mongo_db_name)
+    config.mongo.application_collection_name.from_value(settings.job_application_collection_name)
+    
+    
 
     job_tracking_read_persist = providers.Resource(
         JobTrackingReadPersistMongo,
         connection_string=config.mongo.connection_string,
-        db_name=config.mongo.db_name
+        db_name=config.mongo.db_name,
+        collection_name=config.mongo.application_collection_name
     )
-    
-
     job_tracking_read_service = providers.Singleton(
         JobTrackingReadService,
-        application_persist=job_tracking_read_persist
+        application_persist=job_tracking_read_persist,
     )
 
     
     job_tracking_write_persist = providers.Resource(
         JobTrackingWritePersistMongo,
         connection_string=config.mongo.connection_string,
-        db_name=config.mongo.db_name
+        db_name=config.mongo.db_name,
+        collection_name=config.mongo.application_collection_name
     )
-    
-
     job_tracking_write_service = providers.Singleton(
         JobTrackingWriteService,
         application_persist=job_tracking_write_persist

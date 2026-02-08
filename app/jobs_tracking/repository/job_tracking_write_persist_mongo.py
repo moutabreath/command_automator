@@ -6,7 +6,9 @@ from datetime import datetime, timezone
 
 import pymongo.errors as mongo_errors
 from pymongo import UpdateOne
-from motor.motor_asyncio import AsyncIOMotorClient
+
+
+from .abstract_job_tracking_persist_mongo import AbstractJobTrackingPersistMongo
 
 
 from .models.entities import CompanyJobsDocument, JobEntity
@@ -23,16 +25,10 @@ from .models.queries import (
 )
 
 
-class JobTrackingWritePersistMongo:
-
+class JobTrackingWritePersistMongo(AbstractJobTrackingPersistMongo):
     
-    def __init__(self, connection_string: str, db_name: str):
-        
-        self.async_client = AsyncIOMotorClient(
-            connection_string
-        )
-        logging.getLogger("pymongo").setLevel(logging.WARNING)
-        self.job_applications = self.async_client[db_name]
+    def __init__(self, connection_string: str, db_name: str, collection_name: str):
+        super().__init__(connection_string, db_name, collection_name)
         #fields to ignore on update
         self.excluded_fields = {'job_url', 'user_id', 'company_name', 'job_id', 'company_id', 'update_time'}
       

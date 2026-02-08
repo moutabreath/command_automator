@@ -18,13 +18,15 @@ class MCPContainer(Container):
     
     config.mongo.connection_string.from_value(str(settings.mcp_mongo_uri))
     config.mongo.db_name.from_value(settings.mcp_mongo_db_name)
+    config.mongo.application_collection_name.from_value(settings.mcp_job_tracking_collection_name)
 
     
     # MongoDB persistence
     job_tracking_reader_persist = providers.Resource(
         JobTrackingReadPersistMongo,
         connection_string=config.mongo.connection_string,
-        db_name=config.mongo.db_name
+        db_name=config.mongo.db_name,
+        collection_name=config.mongo.application_collection_name
     )
     
     # Services
