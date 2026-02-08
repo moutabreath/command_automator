@@ -1,7 +1,8 @@
 import pytest
 import mongomock
 
-from app.jobs_tracking.repository.job_tracking_writer_persist_mongo import JobTrackingWriterPersistMongo
+from app.jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
+from app.jobs_tracking.repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
 from app.user.repository.user_mongo_persist import UserMongoPersist
 
 
@@ -124,12 +125,13 @@ class MockUserMongoPersist(UserMongoPersist):
         self.async_db = AsyncMockDatabase(db)
         self.users = self.async_db.users
 
-class MockCompanyMongoWritePersist(JobTrackingWriterPersistMongo):
+class MockCompanyMongoWritePersist(JobTrackingWritePersistMongo):
     def __init__(self, db):
         self.async_db = AsyncMockDatabase(db)
+        self.excluded_fields = {'job_url', 'user_id', 'company_name', 'job_id', 'company_id', 'update_time'}
         self.job_applications = self.async_db.job_applications
 
-class MockCompanyMongoReadPersist(JobTrackingWriterPersistMongo):
+class MockCompanyMongoReadPersist(JobTrackingReadPersistMongo):
     def __init__(self, db):
         self.async_db = AsyncMockDatabase(db)
         self.job_applications = self.async_db.job_applications
