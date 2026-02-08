@@ -16,9 +16,9 @@ from ..services.domain.commands import (
 )
 from ...utils.utils import is_valid_uuid4
 from .job_tracking_mapper import (
-    map_dto_to_tracked_job,
-    map_dto_to_domain_companies,
-    create_job_tracking_response,
+    dto_to_tracked_job,
+    dto_list_to_domain_company_list,
+    create_job_tracking_api_response,
     create_company_api_response
 )
 
@@ -59,7 +59,7 @@ async def track_new_job(
         logging.error("Missing required parameter: user_id, company_name, job_dto, job url or job title")
         raise HTTPException(status_code=400, detail="Missing required parameters")
     
-    tracked_job = map_dto_to_tracked_job(request.job_dto)
+    tracked_job = dto_to_tracked_job(request.job_dto)
     
     command = TrackNewJobCommand(
         user_id=request.user_id,
@@ -67,7 +67,7 @@ async def track_new_job(
         tracked_job=tracked_job
     )
     response = await job_tracking_service.track_new_job(command)
-    return create_job_tracking_response(response)
+    return create_job_tracking_api_response(response)
 
 
 @router.post("/track-existing", response_model=JobTrackingApiResponse)
@@ -86,7 +86,7 @@ async def track_existing_job(request: TrackExistingJobRequest,
         logging.error("Invalid parameter: job_dto.job_id")
         raise HTTPException(status_code=400, detail="Invalid job_id format")
     
-    tracked_job = map_dto_to_tracked_job(request.job_dto)
+    tracked_job = dto_to_tracked_job(request.job_dto)
     
     command = TrackExistingJobCommand(
         user_id=request.user_id,
@@ -94,7 +94,7 @@ async def track_existing_job(request: TrackExistingJobRequest,
         tracked_job=tracked_job
     )
     response = await job_tracking_service.track_existing_job(command)
-    return create_job_tracking_response(response)
+    return create_job_tracking_api_response(response)
 
 
 @router.post("/get-tracked", response_model=CompanyApiResponse)
@@ -153,7 +153,7 @@ async def delete_tracked_jobs(
         logging.error("Missing required parameter: companies_jobs")
         raise HTTPException(status_code=400, detail="Missing companies_jobs")
     
-    domain_companies = map_dto_to_domain_companies(request.companies_jobs)
+    domain_companies = dto_list_to_domain_company_list(request.companies_jobs)
     command = DeleteTrackedJobsCommand(user_id=request.user_id, companies_jobs=domain_companies)
     success = await job_tracking_service.delete_tracked_jobs(command)
     return {"success": success}
