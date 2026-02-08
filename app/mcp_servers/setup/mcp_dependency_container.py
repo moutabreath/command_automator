@@ -23,8 +23,8 @@ class MCPContainer(Container):
     # MongoDB persistence
     job_tracking_reader_persist = providers.Resource(
         JobTrackingReadPersistMongo,
-        connection_string=Container.config.mongo.connection_string,
-        db_name=Container.config.mongo.db_name
+        connection_string=config.mongo.connection_string,
+        db_name=config.mongo.db_name
     )
     
     # Services
@@ -33,13 +33,11 @@ class MCPContainer(Container):
     glassdoor_jobs_search_service = providers.Factory(GlassdoorJobsSearchService)
     job_saver_service = providers.Factory(JobsSaverService)
 
-    # Company MCP Service
     job_tracking_reader_service = providers.Singleton(
         JobTrackingReadService,
         application_persist=job_tracking_reader_persist
     )
     
-    # Jobs Filter Service
     jobs_filter_service = providers.Factory(
         JobsFilterService,
         job_tracking_reader_service=job_tracking_reader_service

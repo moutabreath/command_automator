@@ -1,6 +1,11 @@
 import logging
 import asyncio
 from dependency_injector import containers, providers
+
+from ..jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
+from ..jobs_tracking.repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
+from ..jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
+from ..jobs_tracking.services.job_tracking_write_service import JobTrackingWriteService
 from ..core.config import settings
 
 
@@ -25,6 +30,33 @@ class Container(containers.DeclarativeContainer):
     
     config.mongo.connection_string.from_value(str(settings.mongo_uri))
     config.mongo.db_name.from_value(settings.mongo_db_name)
+
+    job_tracking_read_persist = providers.Resource(
+        JobTrackingReadPersistMongo,
+        connection_string=config.mongo.connection_string,
+        db_name=config.mongo.db_name
+    )
+    
+
+    job_tracking_read_service = providers.Singleton(
+        JobTrackingReadService,
+        application_persist=job_tracking_read_persist
+    )
+
+    
+    job_tracking_write_persist = providers.Resource(
+        JobTrackingWritePersistMongo,
+        connection_string=config.mongo.connection_string,
+        db_name=config.mongo.db_name
+    )
+    
+
+    job_tracking_write_service = providers.Singleton(
+        JobTrackingWriteService,
+        application_persist=job_tracking_write_persist
+    )
+
+
 
     @classmethod
     def get_container(cls) -> 'Container':

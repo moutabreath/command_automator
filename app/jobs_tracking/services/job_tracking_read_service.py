@@ -17,8 +17,8 @@ from ...utils import file_utils
 
 class JobTrackingReadService:
 
-    def __init__(self, job_tracking_reader_persist_mongo: JobTrackingReadPersistMongo):        
-        self.application_persist = job_tracking_reader_persist_mongo
+    def __init__(self, application_persist: JobTrackingReadPersistMongo):        
+        self.application_persist = application_persist
 
       
     async def get_tracked_jobs(self, get_tracked_jobs_command: GetTrackedJobsCommand) -> CompanyResponse:

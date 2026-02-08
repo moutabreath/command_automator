@@ -2,7 +2,8 @@ import uuid
 from datetime import datetime, timezone
 from bson import ObjectId
 
-from ..services.domain.models import JobApplicationState
+from ..services.domain.enums import JobApplicationState
+
 
 from ..services.domain.models import TrackedJob
 from .models.entities import JobEntity, CompanyJobsDocument

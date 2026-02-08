@@ -2,7 +2,6 @@ import logging
 from urllib.parse import urlparse
 from typing import Optional
 
-from .job_tracking_attributes_parser import extract_job_title_and_company
 
 from ..repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
 from ..repository.models.projections import JobWithCompanyContext
@@ -23,8 +22,8 @@ from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
 class JobTrackingWriteService:
 
-    def __init__(self, company_writer_persist_mongo: JobTrackingWritePersistMongo):        
-        self.application_persist = company_writer_persist_mongo
+    def __init__(self, application_persist: JobTrackingWritePersistMongo):        
+        self.application_persist = application_persist
 
        
     async def track_new_job(self, track_new_job_command: TrackNewJobCommand) -> JobTrackingResponse:

@@ -1,8 +1,11 @@
 """
 FastAPI application for Commands Automator
 """
+from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
+from .utils.dependency_container import Container
 
 from .core.logger_config import setup_logging
 
@@ -14,11 +17,17 @@ from .user.user_router import router as user_router
 # Configure logging
 setup_logging()
 
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    await Container.init_container()
+    yield
+
 # Create FastAPI application
 app = FastAPI(
     title="Job Seeker Automator API",
-    description="API for automating job tracking, LLM operations, and user management",
-    version="0.1.0"
+    description="API for automating job tracking, LLM operations",
+    version="0.1.0",
+    lifespan=lifespan
 )
 
 # Add CORS middleware
