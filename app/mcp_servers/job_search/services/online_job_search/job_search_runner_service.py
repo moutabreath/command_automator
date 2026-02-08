@@ -1,7 +1,7 @@
 import logging
 from typing import List, Dict, Any, Optional, Tuple
 
-from .....jobs_tracking.services.job_tracking_reader_service import JobTrackingReaderService
+from .....jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
 
 from .online_job_sources import AbstractJobsSearchService, GlassdoorJobsSearchService, LinkedInJobsSearchService
 
@@ -15,7 +15,7 @@ class JobSearchRunnerService:
     """Service class for handling job applicant MCP operations"""
     
     def __init__(self, linkedin_jobs_search_service: LinkedInJobsSearchService, glassdoor_jobs_search_service: GlassdoorJobsSearchService,
-                 job_tracking_reader_service: JobTrackingReaderService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
+                 job_tracking_reader_service: JobTrackingReadService, jobs_filter_service: JobsFilterService, jobs_saver_service:JobsSaverService):
         self.job_tracking_reader_service = job_tracking_reader_service
         self.linkedin_jobs_search_service = linkedin_jobs_search_service
         self.glasdoor_jobs_search_service = glassdoor_jobs_search_service

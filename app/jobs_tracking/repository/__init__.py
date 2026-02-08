@@ -1,6 +1,6 @@
-from app.jobs_tracking.repository.job_tracking_reader_persist_mongo import JobTrackingReaderPersistMongo
-from app.jobs_tracking.repository.job_tracking_writer_persist_mongo import JobTrackingWriterPersistMongo
+from app.jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
+from app.jobs_tracking.repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
 __all__ = [
-    "JobTrackingReaderPersistMongo",
-    "JobTrackingWriterPersistMongo"
+    "JobTrackingReadPersistMongo",
+    "JobTrackingWritePersistMongo"
 ]

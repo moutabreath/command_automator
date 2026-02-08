@@ -1,7 +1,7 @@
 import logging
 from typing import Optional
 
-from ..repository import JobTrackingReaderPersistMongo
+from ..repository import JobTrackingReadPersistMongo
 from ..repository.models.projections import JobWithCompanyContext
 from .domain.models import Company, TrackedJob
 from .domain.results import CompanyResponse, JobTrackingResponse, JobTrackingResponseCode, UserApplicationResponse, UserApplicationResponseCode
@@ -11,14 +11,13 @@ from .domain.commands import (
 from ..repository.models.queries import (
     GetTrackedJobsQuery
 )
-from .job_tracking_attributes_parser import extract_job_title_and_company
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 from ...utils import file_utils
 
 
-class JobTrackingReaderService:
+class JobTrackingReadService:
 
-    def __init__(self, job_tracking_reader_persist_mongo: JobTrackingReaderPersistMongo):        
+    def __init__(self, job_tracking_reader_persist_mongo: JobTrackingReadPersistMongo):        
         self.application_persist = job_tracking_reader_persist_mongo
 
       

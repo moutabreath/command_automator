@@ -23,7 +23,7 @@ from .models.queries import (
 )
 
 
-class JobTrackingWriterPersistMongo:
+class JobTrackingWritePersistMongo:
 
     
     def __init__(self, connection_string: str, db_name: str):

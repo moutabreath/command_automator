@@ -10,7 +10,7 @@ from .models.queries import GetTrackedJobsQuery
 
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
-class JobTrackingReaderPersistMongo:
+class JobTrackingReadPersistMongo:
 
 
     def __init__(self, connection_string: str, db_name: str):

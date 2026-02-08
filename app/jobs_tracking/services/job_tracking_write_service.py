@@ -4,15 +4,14 @@ from typing import Optional
 
 from .job_tracking_attributes_parser import extract_job_title_and_company
 
-from ..repository.job_tracking_writer_persist_mongo import JobTrackingWriterPersistMongo
+from ..repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
 from ..repository.models.projections import JobWithCompanyContext
 from .domain.models import TrackedJob
 from .domain.results import JobTrackingResponse, JobTrackingResponseCode
 from .domain.commands import (
     TrackNewJobCommand,
     TrackExistingJobCommand,
-    DeleteTrackedJobsCommand,
-    ExtractJobInfoCommand
+    DeleteTrackedJobsCommand
 )
 from ..repository.models.queries import (
     TrackNewJobDbQuery,
@@ -22,9 +21,9 @@ from ..repository.models.queries import (
 from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
 
-class JobTrackingService:
+class JobTrackingWriteService:
 
-    def __init__(self, company_writer_persist_mongo: JobTrackingWriterPersistMongo):        
+    def __init__(self, company_writer_persist_mongo: JobTrackingWritePersistMongo):        
         self.application_persist = company_writer_persist_mongo
 
        

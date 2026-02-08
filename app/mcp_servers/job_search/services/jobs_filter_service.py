@@ -1,7 +1,7 @@
 import logging
 from typing import List, Tuple
 
-from app.jobs_tracking.services.job_tracking_reader_service import JobTrackingReaderService
+from app.jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
 from ..models import ScrapedJob
 
 from ...services.models import UserApplicationResponseCode
@@ -10,7 +10,7 @@ from ...services.models import UserApplicationResponseCode
 class JobsFilterService:
     """Handles filtering of scraped jobs against applied jobs"""
     
-    def __init__(self, job_tracking_reader_service: JobTrackingReaderService):
+    def __init__(self, job_tracking_reader_service: JobTrackingReadService):
         self.job_tracking_reader_service = job_tracking_reader_service
     
     async def filter_jobs(self, scraped_jobs: List[ScrapedJob], user_id: str) -> Tuple[List, List]:

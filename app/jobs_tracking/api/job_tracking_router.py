@@ -6,7 +6,7 @@ from .schemas.requests import TrackNewJobRequest, TrackExistingJobRequest, GetTr
 from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
 from ..services.domain.models import JobApplicationState
 from ..services.domain.results import CompanyResponse
-from ..services.job_tracking_writer_service import JobTrackingService
+from ..services.job_tracking_write_service import JobTrackingWriteService
 from ..services.domain.commands import (
     TrackNewJobCommand,
     TrackExistingJobCommand,
@@ -30,7 +30,7 @@ from ...utils.dependency_container import Container
 router = APIRouter(prefix="/api/jobs", tags=["job-tracking"])
 
 
-def get_job_tracking_service() -> JobTrackingService:
+def get_job_tracking_service() -> JobTrackingWriteService:
     """Dependency injection for JobTrackingService"""
     return Container.get_container().job_tracking_service()
 
@@ -48,7 +48,7 @@ async def get_job_application_states():
 @router.post("/track-new", response_model=JobTrackingApiResponse)
 async def track_new_job(
     request: TrackNewJobRequest,
-    job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)
+    job_tracking_service: JobTrackingWriteService = Depends(get_job_tracking_service)
 ):
     """Track a new job for a user"""
     if not is_valid_uuid4(request.user_id):
@@ -72,7 +72,7 @@ async def track_new_job(
 
 @router.post("/track-existing", response_model=JobTrackingApiResponse)
 async def track_existing_job(request: TrackExistingJobRequest,
-                             job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)):
+                             job_tracking_service: JobTrackingWriteService = Depends(get_job_tracking_service)):
     """Track an existing job for a user"""
     if not is_valid_uuid4(request.user_id) or not is_valid_uuid4(request.company_id):
         logging.error(f"Invalid id: '{request.user_id}' or '{request.company_id}' is not a valid UUID4")
@@ -100,7 +100,7 @@ async def track_existing_job(request: TrackExistingJobRequest,
 @router.post("/get-tracked", response_model=CompanyApiResponse)
 async def get_tracked_jobs(
     request: GetTrackedJobsRequest,
-    job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)
+    job_tracking_service: JobTrackingWriteService = Depends(get_job_tracking_service)
 ):
     """Get all tracked jobs for a company"""
     if not is_valid_uuid4(request.user_id):
@@ -142,7 +142,7 @@ async def extract_job_title_and_company(
 @router.post("/delete-tracked", response_model=dict)
 async def delete_tracked_jobs(
     request: DeleteTrackedJobsRequest,
-    job_tracking_service: JobTrackingService = Depends(get_job_tracking_service)
+    job_tracking_service: JobTrackingWriteService = Depends(get_job_tracking_service)
 ):
     """Delete tracked jobs"""
     if not is_valid_uuid4(request.user_id):

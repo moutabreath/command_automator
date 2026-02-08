@@ -1,14 +1,14 @@
 import logging
 from dependency_injector import providers
 from ..core.config import settings
-from ..jobs_tracking.services.job_tracking_reader_service import JobTrackingReaderService
+from ..jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
 
 from .job_search.services.online_job_search.online_job_sources import GlassdoorJobsSearchService, LinkedInJobsSearchService
 from .job_search.services import JobsSaverService, JobsFilterService
 from .job_search.services.online_job_search import  JobSearchRunnerService
 
 from .resume.services import ResumeLoaderService
-from ..jobs_tracking.repository.job_tracking_reader_persist_mongo import JobTrackingReaderPersistMongo
+from ..jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
 
 from ..utils.dependency_container import Container
 
@@ -22,7 +22,7 @@ class MCPContainer(Container):
     
     # MongoDB persistence
     job_tracking_reader_persist = providers.Resource(
-        JobTrackingReaderPersistMongo,
+        JobTrackingReadPersistMongo,
         connection_string=Container.config.mongo.connection_string,
         db_name=Container.config.mongo.db_name
     )
@@ -35,7 +35,7 @@ class MCPContainer(Container):
 
     # Company MCP Service
     job_tracking_reader_service = providers.Singleton(
-        JobTrackingReaderService,
+        JobTrackingReadService,
         application_persist=job_tracking_reader_persist
     )
     
