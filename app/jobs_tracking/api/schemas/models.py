@@ -3,7 +3,6 @@ from pydantic import BaseModel
 from ...services.domain.enums import JobApplicationState
 
 class TrackedJobDto(BaseModel):
-    company_id: Optional[str] = None
     job_id: Optional[str]
     job_url: str
     job_title: str

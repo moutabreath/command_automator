@@ -5,12 +5,12 @@ Handles conversion between DTOs, domain models, and API responses
 from typing import List
 
 from .schemas.models import CompanyDto, TrackedJobDto
-from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
+from .schemas.response import CompanyTrackingApiResponseCode
 from ..services.domain.models import TrackedJob, Company
-from ..services.domain.results import JobTrackingResponseCode, JobTrackingResponse, CompanyResponse
+from ..services.domain.results import JobTrackingResponseCode, CompanyResponse
 
-
-def dto_to_tracked_job(job_dto: TrackedJobDto) -> TrackedJob:
+# DTO to Model
+def api_tracked_job_to_model_tracked_job(job_dto: TrackedJobDto) -> TrackedJob:
     """Convert TrackedJobDto to domain TrackedJob"""
     return TrackedJob(
         job_id=job_dto.job_id,
@@ -22,21 +22,33 @@ def dto_to_tracked_job(job_dto: TrackedJobDto) -> TrackedJob:
         contact_email=job_dto.contact_email
     )
 
+def api_company_to_domain_company(company_dto: CompanyDto) -> Company:
+    domain_jobs = [
+        api_tracked_job_to_model_tracked_job(job_dto)
+        for job_dto in company_dto.tracked_jobs
+    ]
+    
+    return Company(
+        company_id=company_dto.company_id,
+        company_name=company_dto.company_name,
+        tracked_jobs=domain_jobs
+    )
 
-def dto_list_to_domain_company_list(companies_jobs: List[CompanyDto]) -> List[Company]:
+def api_company_list_to_domain_company_list(companies_jobs: List[CompanyDto]) -> List[Company]:
     """Convert list of CompanyDto to domain Company objects"""
     domain_companies = []
     for company in companies_jobs:
         domain_company = Company(
             company_id=company.company_id,
             company_name=company.company_name,
-            tracked_jobs=[dto_to_tracked_job(job) for job in company.tracked_jobs]
+            tracked_jobs=[api_tracked_job_to_model_tracked_job(job) for job in company.tracked_jobs]
         )
         domain_companies.append(domain_company)
     return domain_companies
 
+# Model To DTO
 
-def tracked_job_to_dto(job: TrackedJob) -> TrackedJobDto:
+def domain_tracked_job_to_api_tracked_job(job: TrackedJob) -> TrackedJobDto:
     """Convert domain TrackedJob to DTO"""
     return TrackedJobDto(
         job_id=job.job_id,
@@ -50,21 +62,9 @@ def tracked_job_to_dto(job: TrackedJob) -> TrackedJobDto:
     )
 
 
-def company_dto_to_company_domain(company_dto: CompanyDto) -> Company:
+def domain_company_to_api_company(company: Company) -> CompanyDto:
     domain_jobs = [
-        dto_to_tracked_job(job_dto)
-        for job_dto in company_dto.tracked_jobs
-    ]
-    
-    return Company(
-        company_id=company_dto.company_id,
-        company_name=company_dto.company_name,
-        tracked_jobs=domain_jobs
-    )
-
-def company_domain_to_company_dto(company: Company) -> CompanyDto:
-    domain_jobs = [
-        tracked_job_to_dto(domain_job)
+        domain_tracked_job_to_api_tracked_job(domain_job)
         for domain_job in company.tracked_jobs
     ]
     
@@ -74,22 +74,16 @@ def company_domain_to_company_dto(company: Company) -> CompanyDto:
         tracked_jobs=domain_jobs
     )
 
+# Create API Responses
 
-
-def create_company_api_response(response: CompanyResponse) -> CompanyApiResponse:
+def create_company_api_response(response: CompanyResponse) -> CompanyResponse:
     """Convert CompanyResponse to CompanyApiResponse"""
     if response and response.code == JobTrackingResponseCode.OK:
-        company_dto = company_domain_to_company_dto(response.company)
-        return CompanyApiResponse(company=company_dto, code=JobTrackingApiResponseCode.OK)
+        company_dto = domain_company_to_api_company(response.company)
+        return CompanyResponse(company=company_dto, code=CompanyTrackingApiResponseCode.OK)
     
     if response and response.code == JobTrackingResponseCode.NO_TRACKED_JOBS:
-        return CompanyApiResponse(company=None, code=JobTrackingApiResponseCode.NO_TRACKED_JOBS)
+        return CompanyResponse(company=None, code=CompanyTrackingApiResponseCode.NO_TRACKED_JOBS)
 
-    return CompanyApiResponse(code=JobTrackingApiResponseCode.ERROR)
+    return CompanyResponse(code=CompanyTrackingApiResponseCode.ERROR)
 
-def create_job_tracking_api_response(response: JobTrackingResponse) -> JobTrackingApiResponse:
-    """Convert JobTrackingResponse to JobTrackingApiResponse"""
-    if response and response.code == JobTrackingResponseCode.OK:
-        job_dto = tracked_job_to_dto(response.job)
-        return JobTrackingApiResponse(job=job_dto, code=JobTrackingApiResponseCode.OK)
-    return JobTrackingApiResponse(code=JobTrackingApiResponseCode.ERROR)

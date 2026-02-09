@@ -2,21 +2,16 @@ from enum import StrEnum
 from typing import Optional
 from pydantic import BaseModel
 
-from .models import CompanyDto, TrackedJobDto
+from .models import CompanyDto
 
 
 
-class JobTrackingApiResponseCode(StrEnum):
+class CompanyTrackingApiResponseCode(StrEnum):
     OK = "OK"
     ERROR = "ERROR"
     INVALID_PARAMETER = "INVALID_PARAMETER"
     NO_TRACKED_JOBS = "NO_TRACKED_JOBS"
 
-class JobTrackingApiResponse(BaseModel):    
-    code: JobTrackingApiResponseCode
-    job: Optional[TrackedJobDto] = None
-
-
 class CompanyApiResponse(BaseModel):    
-    code: JobTrackingApiResponseCode
+    code: CompanyTrackingApiResponseCode
     company: Optional[CompanyDto] = None

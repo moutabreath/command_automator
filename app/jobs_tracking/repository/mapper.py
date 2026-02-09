@@ -20,7 +20,7 @@ class EntitiesMapper:
             user_id=data["user_id"],
             jobs=[
                 JobEntity(
-                    job_id = job["job_id"],
+                    job_id = job["job_id"] if job.get("job_id") else str(uuid.uuid4()),
                     job_url=job["job_url"],
                     job_title=job["job_title"],
                     job_state=job["job_state"],

@@ -2,11 +2,13 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
+from ..api.schemas.models import TrackedJobDto
+
 from ..services.job_tracking_read_service import JobTrackingReadService
 from ..services.job_tracking_write_service import JobTrackingWriteService
 
 from .schemas.requests import TrackNewJobRequest, TrackExistingJobRequest, GetTrackedJobsRequest, DeleteTrackedJobsRequest
-from .schemas.response import JobTrackingApiResponse, JobTrackingApiResponseCode, CompanyApiResponse
+from .schemas.response import CompanyTrackingApiResponseCode, CompanyApiResponse
 from ..services.domain.models import JobApplicationState
 from ..services.domain.results import CompanyResponse
 from ..services.domain.commands import (
@@ -18,9 +20,8 @@ from ..services.domain.commands import (
 )
 from ...utils.utils import is_valid_uuid4
 from .job_tracking_mapper import (
-    dto_to_tracked_job,
-    dto_list_to_domain_company_list,
-    create_job_tracking_api_response,
+    api_tracked_job_to_model_tracked_job,
+    api_company_list_to_domain_company_list,
     create_company_api_response
 )
 
@@ -53,48 +54,36 @@ async def get_job_application_states():
         raise HTTPException(status_code=500, detail="Error getting job application states")
 
 
-@router.post("/track-new", response_model=JobTrackingApiResponse)
+@router.post("/track-new", response_model=CompanyResponse)
 async def track_new_job(
     request: TrackNewJobRequest,
     job_tracking_write_service: JobTrackingWriteService = Depends(get_job_tracking_write_service)
 ):
     """Track a new job for a user"""
-    if not is_valid_uuid4(request.user_id):
-        logging.error(f"Invalid user_id: '{request.user_id}' is not a valid UUID4")
-        raise HTTPException(status_code=400, detail="Invalid user_id format")
+    _validate_job_parameters(request.user_id, request.company_name, request.job_dto)
     
     if not request.company_name or not request.job_dto or not request.job_dto.job_title or not request.job_dto.job_url:
         logging.error("Missing required parameter: user_id, company_name, job_dto, job url or job title")
         raise HTTPException(status_code=400, detail="Missing required parameters")
     
-    tracked_job = dto_to_tracked_job(request.job_dto)
+    tracked_job = api_tracked_job_to_model_tracked_job(request.job_dto)
     
     command = TrackNewJobCommand(
         user_id=request.user_id,
         company_name=request.company_name,
         tracked_job=tracked_job
     )
-    response = await job_tracking_write_service.track_new_job(command)
-    return create_job_tracking_api_response(response)
+    response: CompanyResponse = await job_tracking_write_service.track_new_job(command)
+    return create_company_api_response(response)
 
 
-@router.post("/track-existing", response_model=JobTrackingApiResponse)
+@router.post("/track-existing", response_model=CompanyResponse)
 async def track_existing_job(request: TrackExistingJobRequest,
                              job_tracking_write_service: JobTrackingWriteService = Depends(get_job_tracking_write_service)):
     """Track an existing job for a user"""
-    if not is_valid_uuid4(request.user_id) or not is_valid_uuid4(request.company_id):
-        logging.error(f"Invalid id: '{request.user_id}' or '{request.company_id}' is not a valid UUID4")
-        raise HTTPException(status_code=400, detail="Invalid user_id or company_id format")
+    _validate_job_parameters(request.user_id, request.company_name, request.job_dto)
     
-    if not request.job_dto:
-        logging.error("Missing required parameter: job_dto")
-        raise HTTPException(status_code=400, detail="Missing job_dto")
-    
-    if not is_valid_uuid4(request.job_dto.job_id):
-        logging.error("Invalid parameter: job_dto.job_id")
-        raise HTTPException(status_code=400, detail="Invalid job_id format")
-    
-    tracked_job = dto_to_tracked_job(request.job_dto)
+    tracked_job = api_tracked_job_to_model_tracked_job(request.job_dto)
     
     command = TrackExistingJobCommand(
         user_id=request.user_id,
@@ -102,10 +91,9 @@ async def track_existing_job(request: TrackExistingJobRequest,
         tracked_job=tracked_job
     )
     response = await job_tracking_write_service.track_existing_job(command)
-    return create_job_tracking_api_response(response)
+    return create_company_api_response(response)
 
-
-@router.post("/get-tracked", response_model=CompanyApiResponse)
+@router.post("/get-tracked", response_model=CompanyResponse)
 async def get_tracked_jobs(
     request: GetTrackedJobsRequest,
     job_tracking_read_service: JobTrackingReadService = Depends(get_job_tracking_read_service)
@@ -124,7 +112,7 @@ async def get_tracked_jobs(
     
     if company_response:
         api_response = create_company_api_response(company_response)
-        if api_response.code != JobTrackingApiResponseCode.ERROR:
+        if api_response.code != CompanyTrackingApiResponseCode.ERROR:
             return api_response
     
     raise HTTPException(status_code=500, detail="Error retrieving tracked jobs")
@@ -161,7 +149,19 @@ async def delete_tracked_jobs(
         logging.error("Missing required parameter: companies_jobs")
         raise HTTPException(status_code=400, detail="Missing companies_jobs")
     
-    domain_companies = dto_list_to_domain_company_list(request.companies_jobs)
+    domain_companies = api_company_list_to_domain_company_list(request.companies_jobs)
     command = DeleteTrackedJobsCommand(user_id=request.user_id, companies_jobs=domain_companies)
     success = await job_tracking_write_service.delete_tracked_jobs(command)
     return {"success": success}
+
+
+def _validate_job_parameters(user_id: str, company_name: str, tracked_job: TrackedJobDto):
+    if not tracked_job or not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
+        raise HTTPException(status_code=400, detail="Missing required parameters for job operation")
+    
+    if tracked_job.contact_name and not all(character.isalpha() or character in (' ', '-', "'") for character in tracked_job.contact_name):
+        raise HTTPException(status_code=400, detail="Contact name must contain only letters")
+    
+    if not is_valid_uuid4(user_id):
+        logging.error(f"Invalid user_id: '{user_id}' is not a valid UUID4")
+        raise HTTPException(status_code=400, detail="Invalid user_id format")
