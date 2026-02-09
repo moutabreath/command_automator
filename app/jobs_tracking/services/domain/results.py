@@ -3,7 +3,6 @@ from enum import StrEnum
 from typing import Optional
 
 from .models import TrackedJob, Company
-from ....repository.models import PersistenceErrorCode
 
 
 class JobTrackingResponseCode(StrEnum):
@@ -25,7 +24,7 @@ class JobTrackingResponse:
 
 @dataclass
 class CompanyResponse:
-    code: PersistenceErrorCode
+    code: JobTrackingResponseCode
     company: Optional[Company] = None
     error_message: Optional[str] = None
 

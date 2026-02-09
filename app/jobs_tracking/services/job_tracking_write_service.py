@@ -4,9 +4,8 @@ from typing import Optional
 
 
 from ..repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
-from ..repository.models.projections import JobWithCompanyContext
-from .domain.models import TrackedJob
-from .domain.results import JobTrackingResponse, JobTrackingResponseCode
+from .domain.models import Company, TrackedJob
+from .domain.results import CompanyResponse, JobTrackingResponseCode
 from .domain.commands import (
     TrackNewJobCommand,
     TrackExistingJobCommand,
@@ -26,7 +25,7 @@ class JobTrackingWriteService:
         self.application_persist = application_persist
 
        
-    async def track_new_job(self, track_new_job_command: TrackNewJobCommand) -> JobTrackingResponse:
+    async def track_new_job(self, track_new_job_command: TrackNewJobCommand) -> CompanyResponse:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -46,11 +45,11 @@ class JobTrackingWriteService:
             job_url = urlparse(tracked_job.job_url).geturl()
         except (ValueError, AttributeError) as e:
             logging.error(f"Invalid job_url format: {e}")
-            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+            return CompanyResponse(code=JobTrackingResponseCode.ERROR)
         
         tracked_job.job_url = job_url
                 
-        persistence_response: PersistenceResponse[JobWithCompanyContext] = await self.application_persist.track_new_job(
+        persistence_response: PersistenceResponse[Company] = await self.application_persist.track_new_job(
             TrackNewJobDbQuery(
                 user_id=user_id,
                 company_name=company_name,
@@ -60,7 +59,7 @@ class JobTrackingWriteService:
         return self._create_job_tracking_response(persistence_response, company_name, tracked_job)
     
 
-    async def track_existing_job(self, command: TrackExistingJobCommand) -> JobTrackingResponse:
+    async def track_existing_job(self, command: TrackExistingJobCommand) -> CompanyResponse:
         """Add or update a job in a company application
         
         Jobs are matched by job_url. If a job with the same URL exists, it's updated.
@@ -79,7 +78,7 @@ class JobTrackingWriteService:
             job_url = urlparse(tracked_job.job_url).geturl()
         except (ValueError, AttributeError) as e:
             logging.error(f"Invalid job_url format: {e}")
-            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+            return CompanyResponse(code=JobTrackingResponseCode.ERROR, error_message="Invalid job_url format")
         
         tracked_job.job_url = job_url
                 
@@ -90,7 +89,7 @@ class JobTrackingWriteService:
                 tracked_job=tracked_job
             )
         )
-        return self._create_job_tracking_response(persistence_response, company_id, tracked_job)
+        return self._create_job_tracking_response(persistence_response, company_id)
     
 
     
@@ -105,23 +104,20 @@ class JobTrackingWriteService:
             DeleteTrackedJobsDbQuery(user_id=user_id, companies=companies_jobs)
         )
 
-    def _create_job_tracking_response(self, persistence_response: PersistenceResponse, company_id: str, tracked_job: TrackedJob) -> JobTrackingResponse:
+    def _create_job_tracking_response(self, persistence_response: PersistenceResponse[Company], company_id: str) -> CompanyResponse:
         if persistence_response.code == PersistenceErrorCode.SUCCESS:
-            data = persistence_response.data
-            if isinstance(data, JobWithCompanyContext):
-                return JobTrackingResponse(job=data.job, company_id=data.company_id, code=JobTrackingResponseCode.OK)
-            elif isinstance(data, TrackedJob):
-                return JobTrackingResponse(job=data, company_id=company_id, code=JobTrackingResponseCode.OK)
+            company = persistence_response.data
+            return CompanyResponse(code=JobTrackingResponseCode.OK, company=company)
             
         logging.error(f"Failed to add job for company {company_id}: {persistence_response.code}")
-        return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+        return CompanyResponse(code=JobTrackingResponseCode.ERROR)
 
-    def _validate_job_parameters(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> Optional[JobTrackingResponse]:
+    def _validate_job_parameters(self, user_id: str, company_name: str, tracked_job: TrackedJob) -> Optional[CompanyResponse]:
         if not user_id or not company_name or not tracked_job.job_url or not tracked_job.job_title:
             logging.error("Missing required parameters for job operation")
-            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+            return CompanyResponse(code=JobTrackingResponseCode.ERROR, error_message="Missing required parameters for job operation")
         
         if tracked_job.contact_name and not all(c.isalpha() or c in (' ', '-', "'") for c in tracked_job.contact_name):
-            logging.error("Contact name must contain only letters")
-            return JobTrackingResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR)
+            logging.error(f"Contact name must contain only letters, got {tracked_job.contact_name}")
+            return CompanyResponse(job=tracked_job, code=JobTrackingResponseCode.ERROR, error_message=f"Contact name must contain only letters, got {tracked_job.contact_name}")
         return None
