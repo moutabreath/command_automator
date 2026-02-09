@@ -1,7 +1,7 @@
 import logging
 import pymongo.errors as mongo_errors
 
-from app.jobs_tracking.repository.abstract_job_tracking_persist_mongo import AbstractJobTrackingPersistMongo
+from .abstract_job_tracking_persist_mongo import AbstractJobTrackingPersistMongo
 
 
 from .mapper import EntitiesMapper
