@@ -1,11 +1,12 @@
 import logging
 import pymongo.errors as mongo_errors
 
+from ..services.domain.models import Company
+
 from .abstract_job_tracking_persist_mongo import AbstractJobTrackingPersistMongo
 
 
 from .mapper import EntitiesMapper
-from .models.projections import CompanyContext, JobWithCompanyContext
 from .models.queries import GetTrackedJobsQuery
 
 
@@ -13,9 +14,8 @@ from ...repository.models import PersistenceErrorCode, PersistenceResponse
 
 class JobTrackingReadPersistMongo(AbstractJobTrackingPersistMongo):
 
-
   
-    async def get_tracked_jobs(self, query: GetTrackedJobsQuery) -> PersistenceResponse[list[JobWithCompanyContext]]:        
+    async def get_tracked_jobs(self, query: GetTrackedJobsQuery) -> PersistenceResponse[Company]:        
         """Get all application by user and company"""
         user_id, company_name = query.user_id, query.company_name
         try:
@@ -27,19 +27,12 @@ class JobTrackingReadPersistMongo(AbstractJobTrackingPersistMongo):
                 return PersistenceResponse(data=None, code=PersistenceErrorCode.NOT_FOUND)
 
 
-            entity = EntitiesMapper.to_company_document(result_dict)
-            tracked_jobs_context = [
-                JobWithCompanyContext(
-                    company_id=entity.company_id,
-                    company_name=entity.company_name,
-                    # Entity handles the inner Job data
-                    job=EntitiesMapper.to_domain(job_entity)
-                ) for job_entity in entity.jobs
-            ]
+            company_entity = EntitiesMapper.mongo_dict_to_company_entity(result_dict)
+            company = EntitiesMapper.entity_company_to_domain_company(company_entity)
         
             return PersistenceResponse(
-                id=entity.company_id, 
-                data=tracked_jobs_context, 
+                id=company_entity.company_id, 
+                data=company, 
                 code=PersistenceErrorCode.SUCCESS
             )
         except mongo_errors.OperationFailure as e:
@@ -60,7 +53,7 @@ class JobTrackingReadPersistMongo(AbstractJobTrackingPersistMongo):
                 error_message=str(e)
             )
 
-    async def get_all_applications(self, user_id: str) -> PersistenceResponse[CompanyContext]:
+    async def get_all_applications(self, user_id: str) -> PersistenceResponse[list[Company]]:
         """Get all applications for a user"""
         try:
             cursor = self.job_applications.find({"user_id": user_id})
@@ -70,16 +63,16 @@ class JobTrackingReadPersistMongo(AbstractJobTrackingPersistMongo):
                 return PersistenceResponse(data=[], code=PersistenceErrorCode.SUCCESS)
 
             # Map the first document to our root Entity
-            company_document = EntitiesMapper.to_company_document(results_dicts[0])
+            company_entity = EntitiesMapper.mongo_dict_to_company_entity(results_dicts[0])
 
-            # 3. Transform into the Context projection
+            # 3. Transform into the Company domain model
             data = [
-                JobWithCompanyContext(
-                    company_id=company_document.company_id,
-                    company_name=company_document.company_name,
-                    job=EntitiesMapper.to_domain(job_entity)
+                Company(
+                    company_id=company_entity.company_id,
+                    company_name=company_entity.company_name,
+                    job=EntitiesMapper.entity_job_to_domain_job(job_entity)
                 )
-                for job_entity in company_document.jobs
+                for job_entity in company_entity.jobs
             ]
 
             return PersistenceResponse(

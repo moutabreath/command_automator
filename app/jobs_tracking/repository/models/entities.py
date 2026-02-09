@@ -17,15 +17,11 @@ class JobEntity:
     contact_url: Optional[str] = None
     contact_linkedin: Optional[str] = None
     contact_email: Optional[str] = None
-    
-    # Some entries in your JSON have company_id inside the job object too
-    company_id: Optional[str] = None
 
 @dataclass
-class CompanyJobsDocument:
-    """The root MongoDB document for the 'jobs' collection"""    
+class CompanyEntity:
+    """The root MongoDB document for the 'company' collection"""    
     company_id: str
     company_name: str
     user_id: str
     jobs: list[JobEntity] = field(default_factory=list)
-    id: Optional[ObjectId] = field(default=None, metadata={"name": "_id"})
