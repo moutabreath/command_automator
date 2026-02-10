@@ -38,25 +38,25 @@ class ResumeRefinerService:
         resume_highlighted_sections = resume_data_dict.get('resume_highlighted_sections', '')
             
         resume_file_name = self.resume_saver_service.get_resume_file_name(
-                text=refined_resume_response.text,
+                text=refined_resume_response.result_text,
                 applicant_name=applicant_name,
                 )
             
         self.resume_saver_service.save_file(
-                text=refined_resume_response.text,
+                text=refined_resume_response.result_text,
                 output_dir_path=output_file_path,
                 applicant_name=applicant_name,
                 file_name=resume_file_name,                                                 
                 resume_highlighted_sections=resume_highlighted_sections
                 )
             
-        text = refined_resume_response.text
+        text = refined_resume_response.result_text
         cover_letter_response = await self.get_cover_letter(resume_data_dict)
         if cover_letter_response.code == MCPResponseCode.OK:
             cover_letter_file_name = f"{resume_file_name}_Cover_Letter"
-            self.resume_saver_service.save_file(cover_letter_response.text, output_file_path, applicant_name, cover_letter_file_name)
-            text = f"{text}\n\n\n{cover_letter_response.text}"
-        return MCPResponse(text=text,code=MCPResponseCode.OK)
+            self.resume_saver_service.save_file(cover_letter_response.result_text, output_file_path, applicant_name, cover_letter_file_name)
+            text = f"{text}\n\n\n{cover_letter_response.result_text}"
+        return MCPResponse(result_text=text,code=MCPResponseCode.OK)
     
     async def get_refined_resume(self, resume_data_dict: dict) -> MCPResponse:
         prompt = self.format_prompts_for_resume(resume_data_dict)

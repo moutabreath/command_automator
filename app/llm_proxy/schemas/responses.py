@@ -1,5 +1,7 @@
 from enum import Enum
-from dataclasses import dataclass
+from typing import Optional
+
+from pydantic import BaseModel
 
 class MCPResponseCode(Enum):
     """Enumeration of possible MCP operation results"""
@@ -12,8 +14,10 @@ class MCPResponseCode(Enum):
     ERROR_MODEL_QUOTA_EXCEEDED = 7
     OPERATION_CANCELLED = 8
 
-@dataclass(frozen=True)
-class MCPResponse:
-    text: str
+class MCPResponse(BaseModel):    
     code: MCPResponseCode
+    result_text: Optional[str]
+    error_message: Optional[str]
+
+
 

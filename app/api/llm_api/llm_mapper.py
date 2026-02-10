@@ -6,7 +6,7 @@ from typing import Dict, Any
 
 from .schemas.responses import LLMApiResponse, LLMApiResponseCode
 
-from ...llm_proxy.models import MCPResponse, MCPResponseCode
+from ...llm_proxy.schemas.responses import MCPResponse, MCPResponseCode
 
 
 
@@ -21,7 +21,7 @@ def mcp_response_to_api_response(result: MCPResponse) -> Dict[str, Any]:
     
     match result.code:
         case MCPResponseCode.OK:
-            resp = LLMApiResponse(result_text=result.text, code=LLMApiResponseCode.OK)
+            resp = LLMApiResponse(result_text=result.result_text, code=LLMApiResponseCode.OK)
         case MCPResponseCode.ERROR_MODEL_OVERLOADED:
             resp = LLMApiResponse(error_message="Model overloaded", code=LLMApiResponseCode.ERROR_MODEL_OVERLOADED)
         case MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED:

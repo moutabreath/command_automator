@@ -4,20 +4,22 @@ import json, aiohttp, logging, asyncio
 from mcp.client.streamable_http import streamable_http_client
 from mcp import ClientSession
 
+from .setup.llm_proxy_settings import llm_proxy_settings
+
 from ..gemini.models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolResponseCode
 from ..gemini.gemini_client_wrapper import GeminiClientWrapper
 
-from .models import MCPResponse, MCPResponseCode
+from .schemas.responses import MCPResponse, MCPResponseCode
 from .services.job_unifier_service import JobUnifierService
 from .services.resume_refiner_service import ResumeRefinerService
 
 
 class LLMProxyService:
-    """An intelligent client that uses LLM to decide when to use MCP tools."""
+    """A proxy between the API and the llm that may use MCP Tools"""
 
-    def __init__(self, mcp_server_url=None):
+    def __init__(self):
         # MCP server settings
-        self.mcp_server_url = mcp_server_url or "http://127.0.0.1:8765/mcp"
+        self.mcp_server_url =  f"http://{llm_proxy_settings.mcp_server_host}:{llm_proxy_settings.mcp_server_port}/mcp"
        
         self.gemini_client_wrapper: GeminiClientWrapper = GeminiClientWrapper()
         self.resume_chat = self.gemini_client_wrapper.init_chat()
@@ -30,7 +32,8 @@ class LLMProxyService:
         # List of MCP tools with their name and parameters
         self.available_tools_descriptions = {}
 
-    async def process_query(self,  query: str, base64_decoded: str = None, output_file_path: str = None, user_id: str = None) -> MCPResponse:
+    async def process_query(self,  query: str, base64_decoded: str = None, output_file_path: str = None, 
+                            user_id: str = None) -> MCPResponse:
         """
         Process a user query using a combination of Gemini and MCP server.
 
@@ -60,32 +63,32 @@ class LLMProxyService:
                 if tool_response.code == LLMToolResponseCode.USING_TOOL:
                     if tool_response.selected_tool is None:
                         logging.error("Error with tool selection")
-                        return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,text="Error with tool selection")
+                        return MCPResponse(code=MCPResponseCode.ERROR_WITH_TOOL_RESPONSE,error_message="Error with tool selection")
                     selected_tool,tool_args = tool_response.selected_tool, tool_response.args
                     return await self._use_tool(selected_tool, tool_args, session, output_file_path)
                 elif tool_response.code == LLMToolResponseCode.MODEL_OVERLOADED:
-                    return MCPResponse(tool_response.error_message, MCPResponseCode.ERROR_MODEL_OVERLOADED)
+                    return MCPResponse(error_message=tool_response.error_message, code=MCPResponseCode.ERROR_MODEL_OVERLOADED)
                 else:
                     agent_response = await self.gemini_client_wrapper.get_response_from_gemini(query, self.resume_chat, base64_decoded)
                     return self._convert_llm_response_to_mcp_response(agent_response)                
         except asyncio.CancelledError:
             logging.debug("MCP query was cancelled")
-            return MCPResponse("Operation was cancelled", MCPResponseCode.OPERATION_CANCELLED)
+            return MCPResponse(error_message="Operation was cancelled", code=MCPResponseCode.OPERATION_CANCELLED)
         except Exception as e:
             logging.exception(f"Error communicating with Gemini or MCP server {e}")
-            return MCPResponse("An error occurred while processing your request. Please try again.", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+            return MCPResponse(error_message="An error occurred while processing your request. Please try again.", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
         
     @staticmethod
     def _convert_llm_response_to_mcp_response(llm_response: LLMResponse) -> MCPResponse:
         match llm_response.code:
             case LLMResponseCode.OK:
-                return MCPResponse(llm_response.text, MCPResponseCode.OK)
+                return MCPResponse(result_text=llm_response.text, code= MCPResponseCode.OK)
             case LLMResponseCode.MODEL_OVERLOADED:
-                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_MODEL_OVERLOADED)
+                return MCPResponse(error_message=llm_response.text, code=MCPResponseCode.ERROR_MODEL_OVERLOADED)
             case LLMResponseCode.RESOURCE_EXHAUSTED:
-                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
+                return MCPResponse(error_message=llm_response.text, code=MCPResponseCode.ERROR_MODEL_QUOTA_EXCEEDED)
             case _:
-                return MCPResponse(llm_response.text, MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+                return MCPResponse(error_message=llm_response.text, code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
 
     async def _is_mcp_server_ready(self, timeout=2):
         try:
