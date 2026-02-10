@@ -1,5 +1,5 @@
 import logging
-from dependency_injector import providers
+from dependency_injector import containers, providers
 from ...core.config import settings
 from ...jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
 
@@ -10,9 +10,8 @@ from ..job_search.services.online_job_search import  JobSearchRunnerService
 from ..resume.services import ResumeLoaderService
 from ...jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
 
-from ...utils.dependency_container import Container
 
-class MCPContainer(Container):
+class MCPContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
     
