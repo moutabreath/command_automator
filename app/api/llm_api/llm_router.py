@@ -4,11 +4,12 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any, Optional
 
-from ..utils.dependency_container import Container
-from ..llm_proxy import LLMProxyService
 from .models import LLMApiResponse, LLMApiResponseCode
-from ..utils.utils import run_async_method, cancel_current_async_operation
 from .llm_mapper import mcp_response_to_api_response
+
+from ...utils.dependency_container import Container
+from ...llm_proxy import LLMProxyService
+
 
 router = APIRouter(prefix="/api/llm", tags=["llm"])
 
@@ -60,14 +61,3 @@ async def call_llm(
     decoded_data = _decode_image_data(image_data)
     response = await llm_proxy.process_query(prompt, decoded_data, output_file_path, user_id)
     return mcp_response_to_api_response(response)
-
-
-@router.post("/cancel")
-async def cancel_operation():
-    """Cancel the current LLM operation"""
-    try:
-        cancel_current_async_operation()
-        return {"status": "cancelled"}
-    except Exception as e:
-        logging.exception(f"Error cancelling operation: {e}")
-        raise HTTPException(status_code=500, detail="Error cancelling operation")

@@ -2,12 +2,12 @@
 Mapper utilities for Job Tracking API
 Handles conversion between DTOs, domain models, and API responses
 """
-from typing import List
 
 from .schemas.models import CompanyDto, TrackedJobDto
 from .schemas.response import CompanyTrackingApiResponseCode
-from ..services.domain.models import TrackedJob, Company
-from ..services.domain.results import JobTrackingResponseCode, CompanyResponse
+
+from ...jobs_tracking.services.domain.models import TrackedJob, Company
+from ...jobs_tracking.services.domain.results import JobTrackingResponseCode, CompanyResponse
 
 # DTO to Model
 def api_tracked_job_to_model_tracked_job(job_dto: TrackedJobDto) -> TrackedJob:
@@ -34,7 +34,7 @@ def api_company_to_domain_company(company_dto: CompanyDto) -> Company:
         tracked_jobs=domain_jobs
     )
 
-def api_company_list_to_domain_company_list(companies_jobs: List[CompanyDto]) -> List[Company]:
+def api_company_list_to_domain_company_list(companies_jobs: list[CompanyDto]) -> list[Company]:
     """Convert list of CompanyDto to domain Company objects"""
     domain_companies = []
     for company in companies_jobs:

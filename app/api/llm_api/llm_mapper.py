@@ -4,8 +4,10 @@ Handles conversion between MCP responses and API responses
 """
 from typing import Dict, Any
 
-from ..llm_proxy.models import MCPResponse, MCPResponseCode
 from .models import LLMApiResponse, LLMApiResponseCode
+
+from ...llm_proxy.models import MCPResponse, MCPResponseCode
+
 
 
 def mcp_response_to_api_response(result: MCPResponse) -> Dict[str, Any]:

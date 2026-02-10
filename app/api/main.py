@@ -5,14 +5,14 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from .utils.dependency_container import Container
+from ..utils.dependency_container import Container
 
-from .core.logger_config import setup_logging
+from ..core.logger_config import setup_logging
 
 # Import routers
-from .jobs_tracking.api.job_tracking_router import router as job_tracking_router
+from .job_tracking_api.job_tracking_router import router as job_tracking_router
 from .llm_api.llm_router import router as llm_router
-from .user.user_router import router as user_router
+from ..user.user_router import router as user_router
 
 # Configure logging
 setup_logging()

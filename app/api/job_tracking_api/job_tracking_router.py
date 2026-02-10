@@ -2,16 +2,22 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from typing import List
 
-from ..api.schemas.models import TrackedJobDto
 
-from ..services.job_tracking_read_service import JobTrackingReadService
-from ..services.job_tracking_write_service import JobTrackingWriteService
-
+from .schemas.models import TrackedJobDto
 from .schemas.requests import TrackNewJobRequest, TrackExistingJobRequest, GetTrackedJobsRequest, DeleteTrackedJobsRequest
-from .schemas.response import CompanyTrackingApiResponseCode, CompanyApiResponse
-from ..services.domain.models import JobApplicationState
-from ..services.domain.results import CompanyResponse
-from ..services.domain.commands import (
+from .schemas.response import CompanyTrackingApiResponseCode
+from .job_tracking_mapper import (
+    api_tracked_job_to_model_tracked_job,
+    api_company_list_to_domain_company_list,
+    create_company_api_response
+)
+
+from ...jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
+from ...jobs_tracking.services.job_tracking_write_service import JobTrackingWriteService
+
+from ...jobs_tracking.services.domain.models import JobApplicationState
+from ...jobs_tracking.services.domain.results import CompanyResponse
+from ...jobs_tracking.services.domain.commands import (
     TrackNewJobCommand,
     TrackExistingJobCommand,
     GetTrackedJobsCommand,
@@ -19,13 +25,9 @@ from ..services.domain.commands import (
     ExtractJobInfoCommand
 )
 from ...utils.utils import is_valid_uuid4
-from .job_tracking_mapper import (
-    api_tracked_job_to_model_tracked_job,
-    api_company_list_to_domain_company_list,
-    create_company_api_response
-)
 
-from ..services.job_tracking_attributes_parser import extract_job_title_and_company
+
+from ...jobs_tracking.services.job_tracking_attributes_parser import extract_job_title_and_company
 
 
 from ...utils.dependency_container import Container
