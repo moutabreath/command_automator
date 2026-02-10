@@ -1,10 +1,9 @@
 import base64
 import logging
 
-from fastapi import APIRouter, HTTPException, Depends, Body
+from fastapi import APIRouter, HTTPException, Depends, Body, Form, Query
 from typing import Dict, Any, Optional
 
-from .schemas.requests import LLMProcessRequest
 
 from .schemas.responses import LLMApiResponse, LLMApiResponseCode
 from .llm_mapper import mcp_response_to_api_response
@@ -48,22 +47,33 @@ def _decode_image_data(image_data: Optional[str]) -> Optional[bytes]:
 
 @router.post("/process", response_model=LLMApiResponse)
 async def call_llm(
-    request: LLMProcessRequest = Body(...),
+    prompt: str = Form(...),
+    image_data: Optional[str] = Form(default=None),
+    output_file_path: Optional[str] = Form(default=None),
+    user_id: Optional[str] = Form(default=None),
     llm_proxy: LLMProxyService = Depends(get_llm_proxy_service)
 ) -> Dict[str, Any]:
-    """Process a query with the LLM. Send JSON body with prompt and optional parameters."""
-    if not request.prompt or not request.prompt.strip():
+    """
+    Process a query with the LLM using form-data.
+    
+    Parameters:
+    - prompt (required): The prompt to send to LLM
+    - image_data (optional): Base64 encoded image data
+    - output_file_path (optional): Path to save output
+    - user_id (optional): User identifier
+    """
+    if not prompt or not prompt.strip():
         resp = LLMApiResponse(
             error_message="Prompt cannot be empty",
             code=LLMApiResponseCode.ERROR_COMMUNICATING_WITH_LLM
         )
         raise HTTPException(status_code=400, detail=resp.model_dump())
     
-    decoded_data = _decode_image_data(request.image_data)
+    decoded_data = _decode_image_data(image_data)
     response = await llm_proxy.process_query(
-        request.prompt, 
+        prompt, 
         decoded_data, 
-        request.output_file_path, 
-        request.user_id
+        output_file_path, 
+        user_id
     )
     return mcp_response_to_api_response(response)
