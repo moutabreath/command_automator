@@ -5,12 +5,25 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "MCP Server",
+            "type": "debugpy",
+            "request": "launch",
+            "module": "app.mcp_servers.mcp_runner",
+            "console": "integratedTerminal",
+            "cwd": "${workspaceFolder}",
+            "env": {
+                "MCP_HOST": "127.0.0.1",
+                "MCP_PORT": "8001",
+                "LOG_LEVEL": "DEBUG"
+            }
+        },
+        {
             "name": "Job Seeker Automator",
             "type": "debugpy",
             "request": "launch",
             "module": "uvicorn",
             "args": [
-                "app.main:app",
+                "app.api.main:app",
                 "--reload",
                 "--host",
                 "127.0.0.1",
