@@ -1,12 +1,12 @@
 import sys
 from pymongo import MongoClient, ASCENDING
-from app.core.config import settings
+from app.api.setup.aplication_settings import application_settings
 
 
 def create_database(): 
 
-    connection_string = str(settings.mongo_uri)
-    database_name = settings.mongo_db_name
+    connection_string = str(application_settings.mongo_uri)
+    database_name = application_settings.mongo_db_name
 
 
     print(f"Connecting to MongoDB at {connection_string}...")

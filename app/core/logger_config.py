@@ -3,7 +3,7 @@ import logging.handlers
 import os
 import sys
 
-from ..api.setup.api_settings import application_settings
+from ..api.setup.aplication_settings import application_settings
 
 
 
