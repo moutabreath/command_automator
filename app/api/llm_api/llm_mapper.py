@@ -4,7 +4,7 @@ Handles conversion between MCP responses and API responses
 """
 from typing import Dict, Any
 
-from .models import LLMApiResponse, LLMApiResponseCode
+from .schemas.responses import LLMApiResponse, LLMApiResponseCode
 
 from ...llm_proxy.models import MCPResponse, MCPResponseCode
 
