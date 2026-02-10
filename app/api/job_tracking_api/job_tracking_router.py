@@ -30,7 +30,7 @@ from ...utils.utils import is_valid_uuid4
 from ...jobs_tracking.services.job_tracking_attributes_parser import extract_job_title_and_company
 
 
-from ...utils.dependency_container import Container
+from ..setup.api_dependency_container import Container
 
 router = APIRouter(prefix="/api/jobs", tags=["job-tracking"])
 

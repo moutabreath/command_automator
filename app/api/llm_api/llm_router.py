@@ -8,7 +8,7 @@ from typing import Dict, Any, Optional
 from .schemas.responses import LLMApiResponse, LLMApiResponseCode
 from .llm_mapper import mcp_response_to_api_response
 
-from ...utils.dependency_container import Container
+from ..setup.api_dependency_container import Container
 from ...llm_proxy import LLMProxyService
 
 

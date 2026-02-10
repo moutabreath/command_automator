@@ -5,7 +5,7 @@ from contextlib import asynccontextmanager
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from ..utils.dependency_container import Container
+from .setup.api_dependency_container import Container
 
 from ..core.logger_config import setup_logging
 
