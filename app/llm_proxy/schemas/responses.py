@@ -16,8 +16,5 @@ class MCPResponseCode(Enum):
 
 class MCPResponse(BaseModel):    
     code: MCPResponseCode
-    result_text: Optional[str]
-    error_message: Optional[str]
-
-
-
+    result_text: Optional[str] = None
+    error_message: Optional[str] = None

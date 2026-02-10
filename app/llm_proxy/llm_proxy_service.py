@@ -218,13 +218,13 @@ If no tool should be selected, respond to the query directly. Query: {query}
             response = await session.call_tool(selected_tool, tool_args)
             
             if response is None:
-                return MCPResponse(f"Tool execution failed to return an answer", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
+                return MCPResponse(error_message=f"Tool execution failed to return an answer", code=MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if not response.content or len(response.content) == 0:
-                return MCPResponse("Tool execution returned empty response", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
+                return MCPResponse(error_message="Tool execution returned empty response", code=MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
             if response.isError:
                 error_msg = response.content[0].text if response and response.content and len(response.content) > 0  else "Unknown error"
                 logging.error(f"Tool execution returned error: {error_msg}")
-                return MCPResponse(f"Tool execution returned error: {error_msg}", MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
+                return MCPResponse(error_message=f"Tool execution returned error: {error_msg}", code=MCPResponseCode.ERROR_TOOL_RETURNED_NO_RESULT)
 
             tool_result = response.content[0].text
             logging.debug(f"Tool response received ({len(tool_result)} characters)")
@@ -233,11 +233,11 @@ If no tool should be selected, respond to the query directly. Query: {query}
             
         except Exception as e:
             logging.exception(f"Error using tool: {e}")
-            return MCPResponse("Sorry, I couldn't execute tool.", MCPResponseCode.ERROR_COMMUNICATING_WITH_TOOL)
+            return MCPResponse(error_message="Sorry, I couldn't execute tool.", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_TOOL)
         
     async def _use_tool_result(self, selected_tool, tool_result, output_file_path) -> MCPResponse:
         if selected_tool == 'get_resume_files':
             return await self.resume_refiner_service.refine_resume(tool_result, output_file_path)
         if selected_tool == 'search_jobs_from_the_internet':
             return await self.job_unifier_service.get_unified_jobs()
-        return MCPResponse(tool_result, MCPResponseCode.OK)
+        return MCPResponse(result_text=tool_result, code=MCPResponseCode.OK)

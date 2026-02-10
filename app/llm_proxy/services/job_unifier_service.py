@@ -20,7 +20,7 @@ class JobUnifierService:
             file_paths = self.get_job_files_path()         
 
             if not file_paths:
-                return MCPResponse("No job files found in the directory", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+                return MCPResponse(error_message="No job files found in the directory", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
             
             # Prepare the prompt for Gemini
             prompt = self.phrase_prompt()
@@ -31,14 +31,14 @@ class JobUnifierService:
                                                                      prompt=prompt,
                                                                      file_paths=file_paths)
             if response.code == LLMResponseCode.OK:
-                return MCPResponse(response.text, MCPResponseCode.OK)
+                return MCPResponse(result_text=response.text, code=MCPResponseCode.OK)
             if response.code == LLMResponseCode.MODEL_OVERLOADED:
-                return MCPResponse("LLM Model is overloaded. try again later", MCPResponseCode.ERROR_MODEL_OVERLOADED)
-            return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+                return MCPResponse(error_message="LLM Model is overloaded. try again later", code=MCPResponseCode.ERROR_MODEL_OVERLOADED)
+            return MCPResponse(error_message="Error with LLM response", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
         except Exception as e:
-            logging.error(f"Error processing unified jobs: {e}", exc_info=True)
-            return MCPResponse("Error with LLM response", MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
+            logging.exception(f"Error processing unified jobs: {e}")
+            return MCPResponse(error_message="Error with LLM response", code=MCPResponseCode.ERROR_COMMUNICATING_WITH_LLM)
     
     def phrase_prompt(self) -> str:
         """Build the prompt for Gemini to unify and filter job listings.
