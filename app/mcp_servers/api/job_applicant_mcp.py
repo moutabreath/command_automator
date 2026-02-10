@@ -1,9 +1,7 @@
-from typing import List
-
 from mcp.server.fastmcp import FastMCP
 
-from .setup.mcp_dependency_container import MCPContainer
-from .resume import ResumeData
+from ..setup.mcp_dependency_container import MCPContainer
+from ..resume import ResumeData
 
 
 # Initialize FastMCP
@@ -35,7 +33,7 @@ async def get_jobs_from_linkedin(job_title: str | None = None, location: str | N
 
 @mcp.tool()
 async def get_jobs_from_glassdoor(job_title: str | None = None, location: str | None = None, 
-                                  remote: bool | str | None = None, user_id: str | None = None) -> List:
+                                  remote: bool | str | None = None, user_id: str | None = None) -> list:
     """Search for jobs on Glassdoor"""
     job_search_service = MCPContainer.get_container().job_search_service()
     if isinstance(remote, str):

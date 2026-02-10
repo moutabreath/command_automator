@@ -1,11 +1,12 @@
-import asyncio, logging
+import asyncio
+import logging
 
-from app.mcp_servers import job_applicant_mcp
 
-from .mcp_dependency_container import MCPContainer
+from .api.job_applicant_mcp import mcp
+from .setup.mcp_dependency_container import MCPContainer
+from ..core.logger_config import setup_logging
+from ..core.config import settings
 
-from ...core.logger_config import setup_logging
-from ...core.config import settings
 
 class MCPRunner:
     """Manages the MCP server subprocess"""
@@ -18,7 +19,6 @@ class MCPRunner:
             
             # Initialize DI container in the child process
             await MCPContainer.init_container()
-            mcp = job_applicant_mcp.mcp
 
             # Set server configuration
             mcp.settings.mount_path = "/mcp"

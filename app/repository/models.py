@@ -18,10 +18,7 @@ T = TypeVar('T')
 
 @dataclass(slots=True, frozen=True)
 class PersistenceResponse(Generic[T]):
-    """
-    Note: dataclasses don't support __slots__ directly in Python < 3.10.
-    In Python 3.10+, you can use @dataclass(slots=True, frozen=True)
-    """
+    
     code: PersistenceErrorCode
     data: Optional[T]
     id: Optional[str] = None
