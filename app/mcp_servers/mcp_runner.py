@@ -1,10 +1,11 @@
 import logging
 
+from .setup import mcp_server_settings
+
 
 from .api.job_applicant_mcp import mcp
 from .setup.mcp_dependency_container import MCPContainer
 from ..core.logger_config import setup_logging
-from ..core.config import settings
 
 
 class MCPRunner:
@@ -21,8 +22,8 @@ class MCPRunner:
 
             # Set server configuration
             mcp.settings.mount_path = "/mcp"
-            mcp.settings.port = settings.mcp_port
-            mcp.settings.host = settings.mcp_host
+            mcp.settings.port = mcp_server_settings.mcp_port
+            mcp.settings.host = mcp_server_settings.mcp_host
             
             logging.info("Starting MCP server in subprocess...")
             logging.debug(f"Server URL: http://{mcp.settings.host}:{mcp.settings.port}{mcp.settings.mount_path}")

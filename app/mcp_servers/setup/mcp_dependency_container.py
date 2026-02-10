@@ -1,6 +1,5 @@
 import logging
 from dependency_injector import containers, providers
-from ...core.config import settings
 from ...jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
 
 from ..job_search.services.online_job_search.online_job_sources import GlassdoorJobsSearchService, LinkedInJobsSearchService
@@ -9,15 +8,16 @@ from ..job_search.services.online_job_search import  JobSearchRunnerService
 
 from ..resume.services import ResumeLoaderService
 from ...jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
+import mcp_server_settings
 
 
 class MCPContainer(containers.DeclarativeContainer):
 
     config = providers.Configuration()
     
-    config.mongo.connection_string.from_value(str(settings.mcp_mongo_uri))
-    config.mongo.db_name.from_value(settings.mcp_mongo_db_name)
-    config.mongo.application_collection_name.from_value(settings.mcp_job_tracking_collection_name)
+    config.mongo.connection_string.from_value(str(mcp_server_settings.mcp_mongo_uri))
+    config.mongo.db_name.from_value(mcp_server_settings.mcp_mongo_db_name)
+    config.mongo.application_collection_name.from_value(mcp_server_settings.mcp_job_tracking_collection_name)
 
     
     # MongoDB persistence
