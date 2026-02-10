@@ -2,6 +2,8 @@ import logging
 import asyncio
 from dependency_injector import containers, providers
 
+from ..llm_proxy.llm_proxy_service import LLMProxyService
+
 from ..jobs_tracking.repository.job_tracking_read_persist_mongo import JobTrackingReadPersistMongo
 from ..jobs_tracking.repository.job_tracking_write_persist_mongo import JobTrackingWritePersistMongo
 from ..jobs_tracking.services.job_tracking_read_service import JobTrackingReadService
@@ -55,6 +57,11 @@ class Container(containers.DeclarativeContainer):
     job_tracking_write_service = providers.Singleton(
         JobTrackingWriteService,
         application_persist=job_tracking_write_persist
+    )
+
+    llm_proxy_service = providers.Singleton(
+        LLMProxyService,
+        mcp_server_url=f"http://{settings.mcp_host}:{settings.mcp_port}/mcp"
     )
 
 
