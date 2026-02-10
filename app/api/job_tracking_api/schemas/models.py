@@ -1,6 +1,7 @@
 from typing import Optional
 from pydantic import BaseModel
-from ...services.domain.enums import JobApplicationState
+
+from ....jobs_tracking.services.domain.enums import JobApplicationState
 
 class TrackedJobDto(BaseModel):
     job_id: Optional[str]

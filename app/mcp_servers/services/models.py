@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from enum import Enum
 
-from ....jobs_tracking.services.domain.models import TrackedJob
+from ...jobs_tracking.services.domain.models import TrackedJob
 
 class UserApplicationResponseCode(Enum):
     SUCCESS = 1
