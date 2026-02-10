@@ -1,4 +1,3 @@
-import asyncio
 import logging
 
 
@@ -9,16 +8,16 @@ from ..core.config import settings
 
 
 class MCPRunner:
-    """Manages the MCP server subprocess"""
+    
 
-    async def run_mcp(self):
+    def run_mcp(self):
         """Run the MCP server in the subprocess"""
         try:
             # Initialize logging in the child process
             setup_logging()
             
             # Initialize DI container in the child process
-            await MCPContainer.init_container()
+            MCPContainer.init_container()
 
             # Set server configuration
             mcp.settings.mount_path = "/mcp"
@@ -34,13 +33,13 @@ class MCPRunner:
             logging.error(f"Error running MCP server: {ex}", exc_info=True)
             raise
 
-async def main():
+def main():
     """Main entry point"""
     
     setup_logging()
     
     mcp_runner = MCPRunner()
-    await mcp_runner.run_mcp()
+    mcp_runner.run_mcp()
 
 if __name__ == '__main__':
-    asyncio.run(main())
+    main()

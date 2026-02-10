@@ -55,7 +55,7 @@ class MCPContainer(Container):
     )
 
     @classmethod
-    async def init_container(cls) -> 'MCPContainer':
+    def init_container(cls) -> 'MCPContainer':
         """Initialize the dependency injection container"""
      
         logging.info("Initializing MCP DI container")
