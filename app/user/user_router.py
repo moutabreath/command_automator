@@ -2,7 +2,8 @@ import logging
 from fastapi import APIRouter, HTTPException, Depends
 from typing import Dict, Any
 
-from .models import UserApiResponse, UserApiResponseCode
+from ..api.setup.api_dependency_container import Container
+from .schemas.responses import UserApiResponse, UserApiResponseCode
 from .services.models import UserRegistryResponseCode
 from .services.user_registry_service import UserRegistryService
 
@@ -11,8 +12,8 @@ router = APIRouter(prefix="/api/users", tags=["users"])
 
 def get_user_registry_service() -> UserRegistryService:
     """Dependency injection for UserRegistryService"""
-    from ..utils.dependency_container import container
-    return container.user_registry_service()
+    
+    return Container.user_registry_service()
 
 
 @router.post("/login", response_model=UserApiResponse)
