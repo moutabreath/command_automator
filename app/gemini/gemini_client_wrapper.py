@@ -10,7 +10,7 @@ from .models import LLMResponse, LLMResponseCode, LLMToolResponse, LLMToolRespon
 from ..utils import file_utils
 
 class GeminiClientWrapper:
-    GEMINI_MODEL = "gemini-2.5-flash"
+    GEMINI_MODEL = "gemini-3.1-flash-lite-preview"
 
     CONFIG_RESPONSE_MIME_TYPE = "response_mime_type"
 
