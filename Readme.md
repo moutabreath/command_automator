@@ -22,9 +22,8 @@ LLM:
 
 Preconfigure LLM usage:
 
-    1. Open the file set_google_api_key.cmd in notepad
-    2. Replace 'your_api_key_here' with your google_Api_key
-    3. Click on it
+    Run publish\set_google_api_key.cmd YOUR_GOOGLE_API_KEY from Command Prompt.
+    This sets GOOGLE_API_KEY for the current session and permanently for your user account.
 
 Usage:
 
